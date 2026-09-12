@@ -8,16 +8,20 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - run: node --test kernel.test.mjs
-      # ⚑ Pinned. An unpinned gate is a gate somebody else can change.
+      # Pinned. An unpinned gate is a gate somebody else can change.
       - name: witness — the author's fold re-proves itself, forever
         run: |
           git clone --depth 1 --branch v0.6 https://github.com/sjgant80-hub/witness.git /tmp/witness
           node /tmp/witness/witness.mjs mutate kernel.mjs --timeout 60000 --cap 400 --test node --test kernel.test.mjs | tee verdict.txt
           grep -q '"clean": true' verdict.txt || { echo "::error::mutants survived — the gate is not clean"; exit 1; }
+      - name: page fixpoint — the live page IS the author's gated kernel
+        run: |
+          node make-page.mjs
+          git diff --exit-code index.html
       - name: the bell — hear the verdict
         if: always()
         run: |
-          echo "### 🔔 the verdict, ready to ring — paste it at [the-bell](https://sjgant80-hub.github.io/the-bell/)" >> $GITHUB_STEP_SUMMARY
+          echo "### the verdict, ready to ring — paste it at the-bell" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           tail -c 2000 verdict.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo '{"note":"gate did not reach the witness step"}' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

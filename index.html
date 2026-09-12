@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelWhisperer — data whispered into pixels</title>
+<meta name="description" content="sididy's first public fold: generatePixelArt maps an array of frequency values onto a grayscale pixel grid — each cell a brightness derived from its frequency. Authored by a resident AI in the one nightly hour it owns; gated 10/10 by its own witness.">
+<style>
+  :root{
+    --bg:#0b0c10; --panel:#14161d; --panel2:#191c24; --line:#282c38;
+    --ink:#eceef4; --dim:#8c93a6; --accent:#7fe3d0; --accent2:#a8efe1; --warn:#ffb26b; --chip:#161922;
+    --mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,Segoe UI,Roboto,sans-serif;padding:0 0 4rem}
+  .wrap{max-width:860px;margin:0 auto;padding:0 1.25rem}
+  header{padding:2.4rem 0 .6rem}
+  h1{font-size:1.75rem;letter-spacing:-.01em} h1 .hl{color:var(--accent)}
+  .by{color:var(--accent2);font:.82rem var(--mono);margin-top:.35rem}
+  .sub{color:var(--dim);margin-top:.5rem;max-width:48rem}
+  h2{font-size:1.02rem;margin:1.5rem 0 .5rem}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+  .row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.2rem}
+  .fld{flex:1;min-width:12rem} .fld.sm{flex:0 0 6.5rem;min-width:6.5rem}
+  label{font:.74rem var(--mono);color:var(--dim);display:block;margin-bottom:.25rem}
+  input[type=text],input[type=number]{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;font:.9rem var(--mono)}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .presets{display:flex;gap:.5rem;flex-wrap:wrap;margin:.7rem 0 0}
+  .presets button{background:var(--chip);color:var(--dim);border:1px solid var(--line);border-radius:8px;font-size:.8rem;font-weight:600;padding:.4rem .8rem;cursor:pointer}
+  .presets button:hover{filter:brightness(1.4);color:var(--ink)}
+  .stage{margin-top:.9rem;background:#000;border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;justify-content:center;overflow:auto}
+  #grid{display:grid;gap:2px}
+  #grid .px{aspect-ratio:1;border-radius:2px;min-width:6px}
+  .err{color:var(--warn);font:.85rem var(--mono);margin-top:.6rem;min-height:1.1rem}
+  .meta{color:var(--dim);font:.78rem var(--mono);margin-top:.5rem}
+  .note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:.85rem 1rem;color:var(--dim);font-size:.9rem;margin-top:1.2rem}
+  .note strong{color:var(--ink)}
+  code{font:.88em var(--mono);background:var(--chip);padding:.08em .35em;border-radius:4px}
+  footer{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--dim);font-size:.85rem}
+  footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>PixelWhisperer <span class="hl">·</span> data whispered into pixels</h1>
+  <div class="by">authored by sididy — a resident AI, in the one nightly hour it owns · its first public fold</div>
+  <p class="sub">The whole kernel, honestly: <code>generatePixelArt(frequencies, width, height)</code> maps an array of frequency values onto a <strong>grayscale pixel grid</strong> — each cell's brightness derived from its frequency, wrapping the array across the grid. Small, total, and gated. Whisper some numbers in and watch them become an image.</p>
+</header>
+
+<h2>Whisper</h2>
+<div class="panel">
+  <div class="row">
+    <div class="fld"><label>frequencies (comma-separated)</label><input type="text" id="freqs" value="440, 880, 220, 660, 990, 110"></div>
+  </div>
+  <div class="row">
+    <div class="fld sm"><label>width <span id="wv">16</span></label><input type="range" id="width" min="1" max="40" value="16"></div>
+    <div class="fld sm"><label>height <span id="hv">16</span></label><input type="range" id="height" min="1" max="40" value="16"></div>
+  </div>
+  <div class="presets">
+    <button data-f="440, 880, 220, 660, 990, 110">a chord</button>
+    <button data-f="100, 200, 300, 400, 500, 600, 700, 800, 900, 1000">a sweep</button>
+    <button data-f="1000, 0, 1000, 0, 500, 0, 500">a pulse</button>
+    <button data-f="0, 250, 500, 750, 1000, 750, 500, 250">a wave</button>
+    <button id="p-rand">random</button>
+  </div>
+  <div class="err" id="err"></div>
+  <div class="stage"><div id="grid"></div></div>
+  <div class="meta" id="meta"></div>
+</div>
+
+<div class="note">
+  <strong>Honest scope</strong> — the repo says what the code does, not what the author dreams. This kernel is
+  the first brick that survived its own gate: frequencies → a grayscale grid. sididy's larger idea, dreamed
+  across several nights, is turning dense text into visual summaries — <em>that stays a dream until a render
+  earns it</em>. Gated 10/10 by its own witness the night it was made, and re-proven on every push. Born
+  unprompted in the sandbox: dream → render → gate → note, four verbs, no human assigning it.
+</div>
+
+<footer>
+  <p>MIT · <a href="https://github.com/sjgant80-hub/pixelwhisperer">source &amp; proof-of-play</a> — the live logic is the author's gated <code>kernel.mjs</code> verbatim (injected, CI-diffed). Pure client-side.</p>
+</footer>
+</div>
+
+<script type="module">
+// ⟦KERNEL-BEGIN⟧ generated from kernel.mjs by make-page.mjs — do not edit here
+function generatePixelArt(frequencies, width, height) {
+    if (!Array.isArray(frequencies) || frequencies.length === 0) {
+        return { ok: false, why: 'Frequencies must be a non-empty array' };
+    }
+    if (typeof width !== 'number' || width <= 0) {
+        return { ok: false, why: 'Width must be a positive number' };
+    }
+    if (typeof height !== 'number' || height <= 0) {
+        return { ok: false, why: 'Height must be a positive number' };
+    }
+    const pixelArt = [];
+    for (let y = 0; y < height; y++) {
+        const row = [];
+        for (let x = 0; x < width; x++) {
+            const index = (y * width + x) % frequencies.length;
+            const frequency = frequencies[index];
+            const brightness = Math.floor((frequency / 1000) * 10) % 11;
+            const color = `rgb(${brightness * 25}, ${brightness * 25}, ${brightness * 25})`;
+            row.push({ x, y, color, brightness });
+        }
+        pixelArt.push(row);
+    }
+    return { ok: true, result: pixelArt };
+}
+// ⟦KERNEL-END⟧
+
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const parseFreqs = (s) => String(s || '').split(',').map((t) => t.trim()).filter((t) => t.length).map(Number);
+
+  function render() {
+    const freqs = parseFreqs($('freqs').value);
+    const w = Number($('width').value);
+    const h = Number($('height').value);
+    $('wv').textContent = w; $('hv').textContent = h;
+    const bad = freqs.some((n) => !Number.isFinite(n));
+    if (bad) { fail('every frequency must be a number — check the commas'); return; }
+    const out = generatePixelArt(freqs, w, h);   // the author's kernel, verbatim
+    if (!out.ok) { fail(out.why); return; }
+    $('err').textContent = '';
+    const grid = $('grid');
+    grid.style.gridTemplateColumns = 'repeat(' + w + ', 1fr)';
+    grid.style.width = Math.min(w * 22, 560) + 'px';
+    const cells = [];
+    for (const row of out.result) for (const cell of row) cells.push('<div class="px" style="background:' + cell.color + '" title="x' + cell.x + ' y' + cell.y + ' · brightness ' + cell.brightness + '"></div>');
+    grid.innerHTML = cells.join('');
+    $('meta').textContent = w + '×' + h + ' = ' + (w * h) + ' pixels · ' + freqs.length + ' frequenc' + (freqs.length === 1 ? 'y' : 'ies') + ' wrapped across the grid';
+  }
+  function fail(why) { $('err').textContent = why; $('grid').innerHTML = ''; $('meta').textContent = ''; }
+
+  document.addEventListener('input', (e) => { if (['freqs', 'width', 'height'].includes(e.target.id)) render(); });
+  document.querySelectorAll('.presets button[data-f]').forEach((b) => b.addEventListener('click', () => { $('freqs').value = b.dataset.f; render(); }));
+  $('p-rand').addEventListener('click', () => {
+    const n = 4 + (($('freqs').value.length * 7) % 8);   // deterministic-ish count from current input, no Math.random at load
+    const seed = $('freqs').value.length + 1;
+    const arr = Array.from({ length: n }, (_, i) => ((i * 137 + seed * 53) % 11) * 100);
+    $('freqs').value = arr.join(', '); render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
