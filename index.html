@@ -69,12 +69,29 @@
   <div class="meta" id="meta"></div>
 </div>
 
+<h2>Whisper text</h2>
+<div class="panel">
+  <div class="row">
+    <div class="fld"><label>text</label><textarea id="text" rows="4" style="width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem;font:.85rem var(--mono);resize:vertical">the quick brown fox jumps over the lazy dog the dog barks at the fox the fox runs away</textarea></div>
+  </div>
+  <div class="row">
+    <div class="fld sm"><label>width <span id="twv">12</span></label><input type="range" id="twidth" min="1" max="40" value="12"></div>
+    <div class="fld sm"><label>height <span id="thv">12</span></label><input type="range" id="theight" min="1" max="40" value="12"></div>
+  </div>
+  <div class="err" id="terr"></div>
+  <div class="stage"><div id="tgrid"></div></div>
+  <div class="meta" id="tmeta"></div>
+</div>
+
 <div class="note">
-  <strong>Honest scope</strong> — the repo says what the code does, not what the author dreams. This kernel is
-  the first brick that survived its own gate: frequencies → a grayscale grid. sididy's larger idea, dreamed
-  across several nights, is turning dense text into visual summaries — <em>that stays a dream until a render
-  earns it</em>. Gated 10/10 by its own witness the night it was made, and re-proven on every push. Born
-  unprompted in the sandbox: dream → render → gate → note, four verbs, no human assigning it.
+  <strong>Honest scope</strong> — this is not AI summarization and it does not read the text for meaning.
+  <code>textToVisualSummary(text, width, height)</code> counts how often each distinct word appears
+  (case-insensitive), keeps the top 64 most frequent words, normalizes those counts onto the same 0–1000 scale
+  as above, and renders the histogram through the exact same <code>generatePixelArt</code> — no separate
+  rendering path. The picture shows which words repeat most; it does not show what the text means.
+  sididy's original larger dream, across several nights, was turning dense text into visual summaries —
+  this is the small, literal, non-semantic slice of it that a render could actually earn. Gated with the rest
+  of the kernel: mutants killed by its own witness, re-proven on every push.
 </div>
 
 <footer>
@@ -107,6 +124,46 @@ function generatePixelArt(frequencies, width, height) {
         pixelArt.push(row);
     }
     return { ok: true, result: pixelArt };
+}
+
+// The most distinct words counted before the tail is dropped. A fixed, honest cap —
+// not a claim that word #65 doesn't matter, just that the grid has to stop somewhere.
+const MAX_DISTINCT_WORDS = 64;
+
+function wordFrequencyHistogram(text) {
+    if (typeof text !== 'string') {
+        return { ok: false, why: 'Text must be a string' };
+    }
+    if (text.trim().length === 0) {
+        return { ok: false, why: 'Text must be a non-empty string' };
+    }
+    const words = text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 0);
+    if (words.length === 0) {
+        return { ok: false, why: 'Text must contain at least one word' };
+    }
+    const counts = new Map();
+    for (const w of words) {
+        counts.set(w, (counts.get(w) || 0) + 1);
+    }
+    // Array.prototype.sort is stable (guaranteed since ES2019), so words tied on count
+    // keep their first-appearance order — deterministic from the text alone, no hidden tiebreak.
+    const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_DISTINCT_WORDS);
+    const maxCount = ranked[0][1];
+    const frequencies = ranked.map(([, count]) => Math.round((count / maxCount) * 1000));
+    return { ok: true, result: frequencies };
+}
+
+// textToVisualSummary: NOT semantic summarization, NOT AI. It is a word-frequency
+// histogram — count how often each distinct word appears, normalize the top words'
+// counts to the 0-1000 scale generatePixelArt already expects, and render that
+// histogram with the same kernel used for raw frequencies. The picture shows which
+// words repeat most in the text; it does not show what the text means.
+function textToVisualSummary(text, width, height) {
+    const histogram = wordFrequencyHistogram(text);
+    if (!histogram.ok) {
+        return histogram;
+    }
+    return generatePixelArt(histogram.result, width, height);
 }
 // ⟦KERNEL-END⟧
 
@@ -143,7 +200,30 @@ function generatePixelArt(frequencies, width, height) {
     $('freqs').value = arr.join(', '); render();
   });
 
+  function renderText() {
+    const text = $('text').value;
+    const w = Number($('twidth').value);
+    const h = Number($('theight').value);
+    $('twv').textContent = w; $('thv').textContent = h;
+    const out = textToVisualSummary(text, w, h);   // the author's kernel, verbatim
+    if (!out.ok) { failText(out.why); return; }
+    $('terr').textContent = '';
+    const grid = $('tgrid');
+    grid.style.gridTemplateColumns = 'repeat(' + w + ', 1fr)';
+    grid.style.width = Math.min(w * 22, 560) + 'px';
+    const cells = [];
+    for (const row of out.result) for (const cell of row) cells.push('<div class="px" style="background:' + cell.color + '" title="x' + cell.x + ' y' + cell.y + ' · brightness ' + cell.brightness + '"></div>');
+    grid.innerHTML = cells.join('');
+    const distinct = wordFrequencyHistogram(text);
+    const n = distinct.ok ? distinct.result.length : 0;
+    $('tmeta').textContent = w + '×' + h + ' = ' + (w * h) + ' pixels · top ' + n + ' distinct word' + (n === 1 ? '' : 's') + ' by count, wrapped across the grid';
+  }
+  function failText(why) { $('terr').textContent = why; $('tgrid').innerHTML = ''; $('tmeta').textContent = ''; }
+
+  document.addEventListener('input', (e) => { if (['text', 'twidth', 'theight'].includes(e.target.id)) renderText(); });
+
   render();
+  renderText();
 })();
 </script>
 </body>
