@@ -14,6 +14,11 @@ body{margin:0;background:radial-gradient(1200px 600px at 50% -200px,#3a0d6e 0%,v
 a{color:var(--cyan)}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,390px);gap:28px;align-items:center}
+.herocards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:860px){.hero{grid-template-columns:1fr}.herocards{max-width:340px}}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.4em 0 1em}
+.tw table{min-width:520px}
 header.top{padding:28px 0 8px}
 .eyebrow{color:var(--cyan);letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;margin:0}
 h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:.2em 0 .3em;text-shadow:0 0 18px rgba(255,43,214,.55)}
@@ -99,7 +104,8 @@ footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;colo
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
+<header class="top"><div class="wrap hero">
+ <div class="herotext">
   <p class="eyebrow">PixelWhisperer Kards &middot; the DIGI card's art engine</p>
   <h1>Every card has a <span>face</span> only its facts can draw.</h1>
   <p class="lede">A DIGI card is a sealed picture that carries a living, ownable intelligence. This engine draws that picture: a blocky voxel creature born from the card's own id, in a neon synthwave world or a blockcraft island, with the title, level, rarity, dataset, lineage and id printed in a pixel font. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
@@ -107,10 +113,12 @@ footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;colo
   <ul class="badges" aria-label="Facts about this build">
     <li><b>2</b> themes, append-only</li><li><b>2<sup>64</sup></b> creatures</li><li><b>integer-only</b> drawing</li><li><b>mutation-witnessed</b>, none baselined</li><li>drawn live <b>in your browser</b></li>
   </ul>
+ </div>
+ <div class="herocards" aria-label="The same card in both themes"><canvas class="card" id="hero-a" width="384" height="560" role="img" aria-label="A legendary card in synthwave"></canvas><canvas class="card" id="hero-b" width="384" height="560" role="img" aria-label="The same legendary card in blockcraft"></canvas></div>
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a>
 </div></nav>
 
 <main class="wrap">
@@ -210,7 +218,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 <section id="blueprint" aria-labelledby="bp-h">
   <h2 id="bp-h">The blueprint</h2>
   <p>One pure ES module, no imports, no browser or Node APIs. The organs, in the order a card flows through them:</p>
-  <table>
+  <div class="tw" role="region" aria-label="Blueprint organs (scrolls sideways on a small screen)" tabindex="0"><table>
     <thead><tr><th scope="col">Organ</th><th scope="col">What it owns</th></tr></thead>
     <tbody>
       <tr><td><code>checkFacts</code></td><td>the contract: id (16 hex), title (&le; 24, <code>A-Za-z0-9 &amp;'.-</code>), dataset, department (&le; 16, <code>a-z0-9-</code>), stage 0-99, rarity, generation 0-99, up to 2 parents. Total: never throws.</td></tr>
@@ -222,8 +230,85 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>paintArt</code></td><td>the one call: facts, theme id, width, height to RGB bytes, or a refusal.</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
     </tbody>
-  </table>
+  </table></div>
+  <p>Read it: <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.mjs">kardart.mjs</a> (the engine), <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.test.mjs">its tests</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.pins.mjs">the published pins</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/witness-kards.mjs">the witness</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardpng.mjs">kardpng.mjs</a> and <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/costcase.mjs">costcase.mjs</a>.</p>
   <p>Proof sits beside it: <code>kardart.test.mjs</code>, a pinned-hash smoke test, a static check of the source, and <code>witness-kards.mjs</code>, a mutation gate whose every mutant must be killed.</p>
+</section>
+
+<section id="decide" aria-labelledby="decide-h">
+  <h2 id="decide-h">For the people who decide</h2>
+  <p>A collectible card product lives or dies on its picture. PixelWhisperer Kards turns a few facts about a card into a unique, rarity-coded, re-skinnable face, drawn on the viewer's own device in a fraction of a second: no art budget per card, no image service to rent, nothing that can drift between two machines.</p>
+  <h3>What each role gets</h3>
+  <div class="cols">
+    <div class="box"><h3>CEO</h3><p>Every card is its own character, visibly rarer as it gets rarer, parents printed on its face, shareable by link. You get collectibility without commissioning art, and a new season is a new theme, not a rebuild.</p></div>
+    <div class="box"><h3>CFO</h3><p>The marginal cost of one more card's art is zero: it is drawn on the viewer's device. No per-image fee, no per-seat licence, no cloud bill for art. The case below is arithmetic on your own numbers, not ours.</p></div>
+    <div class="box"><h3>COO</h3><p>One module and one call. There is nothing to host, schedule or scale: no server, no queue, no storage, no dependencies. If a device can show a page, it can draw a card.</p></div>
+    <div class="box"><h3>CTO and CISO</h3><p>Pure integer code with no network access and no imports, in one file you pin by SHA-256. Deterministic: the same facts give the same bytes in any browser, so a reader can verify a card's picture by re-drawing it. Hostile input is refused, never thrown. Proven by tests, hash pins and a mutation witness in which every mutant is killed.</p></div>
+    <div class="box"><h3>Product and design</h3><p>Two finished themes today. A new theme is a new id (for example <code>synthwave-v2</code>) and never breaks an old card. The gallery and workshop above show every fact on the card before you commit to anything.</p></div>
+    <div class="box"><h3>Community and marketing</h3><p>Cards that look different from each other, rarity you can read from across a room, a link that shows the same card on any phone, and a download button. All twelve sample cards, in both themes, are on this page.</p></div>
+  </div>
+
+  <h3>The cost case, on your numbers</h3>
+  <p>These four inputs are yours. What falls out is arithmetic, computed by <code>costcase.mjs</code>, which is tested and mutation-witnessed like the engine. The starting values are illustrative only: not a quote, and not a price from anyone. Replace them with what you pay.</p>
+  <form class="panel" id="cost-form" autocomplete="off" novalidate>
+    <div><label for="c-cards">Cards a year</label><input id="c-cards" type="number" min="0" step="1" value="10000" inputmode="numeric"></div>
+    <div><label for="c-percard">What one card's art costs you today, in pence or cents (250 means 2.50)</label><input id="c-percard" type="number" min="0" step="1" value="250" inputmode="numeric"></div>
+    <div><label for="c-hours">Hours to adopt the engine</label><input id="c-hours" type="number" min="0" step="1" value="16" inputmode="numeric"></div>
+    <div><label for="c-rate">What an hour of your team costs, in whole currency units</label><input id="c-rate" type="number" min="0" step="1" value="60" inputmode="numeric"></div>
+    <p class="msg full" id="cost-msg" role="status" aria-live="polite"></p>
+  </form>
+  <div class="trace" id="cost-out" aria-live="polite"></div>
+  <p class="hint">The engine's own cost per card is 0: it draws on the viewer's device. If the saving shows as negative, that is the honest answer for those numbers.</p>
+
+  <h3>Against what you pay now</h3>
+  <div class="tw" role="region" aria-label="Comparison (scrolls sideways on a small screen)" tabindex="0"><table>
+    <thead><tr><th scope="col"><span class="sr">Question</span></th><th scope="col">This engine</th><th scope="col">Commissioned art</th><th scope="col">An image-generation service</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Cost of one more card</th><td>none, drawn on the viewer's device</td><td>your quote, per card</td><td>a fee per image: check your plan</td></tr>
+      <tr><th scope="row">Same facts, same picture, every time</th><td>yes, byte for byte</td><td>not applicable</td><td>not reproducible byte for byte in general</td></tr>
+      <tr><th scope="row">A reader can check the picture against the facts</th><td>yes: re-draw and compare</td><td>no</td><td>no</td></tr>
+      <tr><th scope="row">Works offline</th><td>yes</td><td>yes, it is a file</td><td>no</td></tr>
+      <tr><th scope="row">Card data leaves the device</th><td>no</td><td>to the artist, once</td><td>yes, to the service</td></tr>
+      <tr><th scope="row">A new season without touching old cards</th><td>yes: a new theme id</td><td>a new commission</td><td>re-generate, and old cards may differ</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Security, data protection and compliance</h3>
+  <ul>
+    <li><b>Network:</b> none. The module imports nothing and this page makes no requests; a test fails the build if either changes.</li>
+    <li><b>Data:</b> the only inputs are a card's own facts (id, title, dataset, department, level, rarity, generation, parents). They are processed where the code runs and never sent anywhere by it. The engine holds no personal data of its own; what a card's title says is the card owner's choice, limited to 24 characters of letters, digits and a few marks.</li>
+    <li><b>Supply chain:</b> one file, no dependencies, vendored byte for byte and pinned by SHA-256. CI re-checks the harness and the pins on every push.</li>
+    <li><b>Hostile input:</b> every entry point is total. Null, BigInt, circular objects, throwing getters and proxies come back as a refusal with a reason.</li>
+    <li><b>Audit:</b> published themes are pinned by hash. If a theme's pixels ever change, the build fails.</li>
+    <li><b>Assets and trademarks:</b> no third-party art, fonts or images: the font, icons and every creature are in the source. "Blockcraft" is a style name only.</li>
+    <li><b>Accessibility:</b> this page works by keyboard, and every card on it carries a text description of its facts.</li>
+    <li><b>Certifications:</b> none claimed. It is a library, not a service.</li>
+  </ul>
+
+  <h3>Deployment and roll-out</h3>
+  <ol>
+    <li>Vendor <code>kards/kardart.mjs</code> byte for byte; record the commit and the file's SHA-256.</li>
+    <li>Call <code>paintArt(facts, themeId, 384, 560)</code> for each card's face and place it under your header band.</li>
+    <li>Store the theme id with the card. Readers re-draw from the facts and compare every byte.</li>
+    <li>For a new season, append a theme and its pins. Nothing else changes and no existing card is affected.</li>
+  </ol>
+  <p>The effort is one import and one call; you size it for your team in the calculator.</p>
+
+  <h3>Support and ownership</h3>
+  <p>Built by Kar, the estate's resident builder, in the open repository. Vendoring means you hold the file: there is no runtime dependency on anyone. Updates arrive as new commits you choose to take, and because a published theme cannot change, taking an update never alters an existing card. Questions and defects go to the repository's issues.</p>
+
+  <h3>Risks, answered straight</h3>
+  <ul>
+    <li><b>Taste.</b> The art is generated, and the last inch of taste is the owner's to judge. Themes are cheap to add, so a look you dislike is replaced by a new theme, not endured.</li>
+    <li><b>Frozen themes.</b> A mistake in a published theme cannot be edited away, only superseded by a new id. That is the price of old cards re-drawing exactly.</li>
+    <li><b>Family resemblance.</b> The 2<sup>64</sup> figure counts distinct genomes. Creatures share one anatomy (a 9 &times; 14 &times; 7 voxel body), so expect relatives to look related; every one of 1,000 random ids was tested to give a different creature.</li>
+    <li><b>Not a seal.</b> A face proves a picture matches its facts. Who made the card and who owns it is the card's seal's job.</li>
+    <li><b>Text limits.</b> Titles and departments use a restricted alphabet and length, because nothing else can be printed.</li>
+    <li><b>Speed.</b> About 25 ms for a 384 &times; 560 face on the machine that built it; the trace above shows the figure for your device, live. Draw once and keep the bytes.</li>
+  </ul>
+
+  <h3>The case for the board</h3>
+  <p>Collectible, verifiable, season-proof card art at zero marginal cost per card, from a one-file, no-dependency, no-network component that is proven by tests, hash pins and a mutation witness instead of promised. The downside is bounded: it is a single file that you can delete.</p>
 </section>
 
 <section id="adoption" aria-labelledby="ad-h">
@@ -242,7 +327,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 
 <section id="proof" aria-labelledby="proof-h">
   <h2 id="proof-h">The proof</h2>
-  <table>
+  <div class="tw" role="region" aria-label="Proof claims (scrolls sideways on a small screen)" tabindex="0"><table>
     <thead><tr><th scope="col">Claim</th><th scope="col">How it is proven</th></tr></thead>
     <tbody>
       <tr><td>Same facts and theme, same bytes</td><td>sha256 of hero cards (384 &times; 560), a 36-card corpus and odd sizes pinned in <code>kardart.pins.mjs</code>, re-checked on every push.</td></tr>
@@ -250,9 +335,9 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the kernel and the tests must kill every mutant, with nothing baselined.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">187</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
-  </table>
+  </table></div>
   <h3>Check it in your own browser</h3>
   <p>The pins were made by Node. This button re-draws the ten hero cards in <em>your</em> JavaScript engine and compares each card's SHA-256 with the pin.</p>
   <p><button type="button" class="act" id="verify">Re-draw and verify the hero cards</button></p>
@@ -282,6 +367,7 @@ import { THEMES, paintArt, spriteOf, checkFacts } from './kardart.mjs';
 import { pngOf } from './kardpng.mjs';
 import { SAMPLES } from './samples.mjs';
 import { PINS } from './kardart.pins.mjs';
+import { costCase, verdict } from './costcase.mjs';
 
 const $ = (s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
@@ -349,13 +435,13 @@ async function renderWork() {
   $('#o-stage').textContent = F.stage.value;
   const f = readWork(), c = checkFacts(f);
   if (!c.ok) { msg.className = 'msg bad'; msg.textContent = 'Not a card yet: ' + c.why + '.'; return; }
-  const mine = ++tick, r = paint($('#work-canvas'), f, workTheme);
+  const mine = ++tick, t0 = performance.now(), r = paint($('#work-canvas'), f, workTheme), took = performance.now() - t0;
   lastGood = f;
   msg.className = 'msg ok'; msg.textContent = THEMES[workTheme].name + ' · ' + describe(f);
   $('#work-canvas').setAttribute('aria-label', describe(f, THEMES[workTheme].name));
   history.replaceState(null, '', '#card=' + encodeURIComponent(JSON.stringify({ t: workTheme, f })));
   const digest = await sha(r.px);
-  if (mine === tick) trace(f, digest);
+  if (mine === tick) trace(f, digest, took);
 }
 for (const el of Object.values(F)) el.addEventListener('input', renderWork);
 $('#roll').addEventListener('click', () => { const b = crypto.getRandomValues(new Uint8Array(8)); F.id.value = hex(b); renderWork(); });
@@ -377,13 +463,13 @@ const NAMES = {
   crown: ['none', 'ears', 'horns', 'antenna', 'cap', 'side ears', 'mohawk', 'twin antennae'], eyes: ['beady', 'googly', 'glowing', 'cat', 'wide-set', 'visor', 'angry', 'sleepy'],
   mouth: ['none', 'small', 'wide', 'snout'], back: ['none', 'tail', 'wings', 'mane'], pattern: ['plain', 'belly', 'stripes', 'spots'],
 };
-function trace(f, digest) {
+function trace(f, digest, took) {
   const s = spriteOf(f.id), g = s.g, voxels = s.v.reduce((n, c) => n + (c ? 1 : 0), 0), box = $('#trace');
   const cells = [
     ['id', f.id], ['whitened (hi, lo)', s.hi.toString(16).padStart(8, '0') + ' ' + s.lo.toString(16).padStart(8, '0')], ['body colour', g.hueA + ' of 16'], ['accent colour', g.hueB + ' of 8'],
     ['head shape', g.head + ' of 8'], ['torso shape', g.torso + ' of 8'], ['legs', NAMES.legs[g.legs]], ['arms', NAMES.arms[g.arms]], ['crown', NAMES.crown[g.crown]], ['eyes', NAMES.eyes[g.eyes]],
     ['mouth', NAMES.mouth[g.mouth]], ['back', NAMES.back[g.back]], ['pattern', NAMES.pattern[g.pattern]], ['speckle', g.speck.join('')], ['voxels', String(voxels)], ['theme', workTheme],
-    ['sha256 of the 384x560 bytes', digest.slice(0, 24) + '…'],
+    ['drawn in', Math.round(took) + ' ms (in this tab)'], ['sha256 of the 384x560 bytes', digest.slice(0, 24) + '…'],
   ];
   box.textContent = '';
   for (const [k, v] of cells) { const d = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = v; d.append(a, b); box.append(d); }
@@ -406,12 +492,26 @@ $('#verify').addEventListener('click', async () => {
   }
 });
 
+// ── the cost case, on the reader's numbers ───────────────────────────────────────────────────────────────────────────────
+const money = (minor) => (minor < 0 ? '-' : '') + new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(minor) / 100);
+function cost() {
+  const num = (id) => { const v = $('#c-' + id).value; return v.trim() === '' ? NaN : Number(v); };
+  const r = costCase({ cards: num('cards'), perCard: num('percard'), hours: num('hours'), rate: num('rate') }), out = $('#cost-out'), m = $('#cost-msg');
+  out.textContent = '';
+  m.className = 'msg full ' + (r.ok ? 'ok' : 'bad'); m.textContent = verdict(r, money, (n) => n.toLocaleString());
+  if (!r.ok) return;
+  for (const [k, v] of [['A year of art today', money(r.today)], ['One-off adoption', money(r.adoption)], ['First-year saving', money(r.saving)], ['Cards until it has paid for itself', r.payback === null ? 'art is free today: nothing to repay' : r.payback.toLocaleString()]]) { const d = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = v; d.append(a, b); out.append(d); }
+}
+for (const id of ['cards', 'percard', 'hours', 'rate']) $('#c-' + id).addEventListener('input', cost);
+
 // ── start ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 (function start() {
   let first = SAMPLES[4], theme = 'synthwave-v1';
   try { const h = location.hash.startsWith('#card=') ? JSON.parse(decodeURIComponent(location.hash.slice(6))) : null; if (h && checkFacts(h.f).ok && THEME_IDS.includes(h.t)) { first = h.f; theme = h.t; } } catch { /* an unreadable link is ignored */ }
   $('#theme-blurb').textContent = THEMES[mode].blurb;
+  paint($('#hero-a'), SAMPLES[4], 'synthwave-v1'); paint($('#hero-b'), SAMPLES[4], 'blockcraft-v1');
   buildGallery();
+  cost();
   setWork(first, theme);
 })();
 </script>

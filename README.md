@@ -32,12 +32,12 @@ Also exported: `checkFacts(facts)` (the same validation on its own: `{ ok, f } |
 
 ```
 node --test kards/*.test.mjs        # determinism pins, refusals, every fact shows, 1,000 ids -> 1,000 creatures, static source check
-node witness-kards.mjs              # the mutation witness over kardart.mjs and kardpng.mjs: every mutant killed, none baselined
+node witness-kards.mjs              # the mutation witness over kardart.mjs, kardpng.mjs and costcase.mjs: every mutant killed, none baselined
 node tools/kards-gallery.mjs        # write kards/gallery/ (contact sheets, hero cards); --all for every card; --check for CI
 node tools/kards-pins.mjs <themeId> # print the pins for a NEW theme
 ```
 
-CI (`.github/workflows/kards.yml`) runs all of it on every push. Preview PNGs come from `kards/kardpng.mjs`, a tiny deterministic PNG writer (stored deflate, CRC-32).
+CI (`.github/workflows/kards.yml`) runs all of it on every push. Preview PNGs come from `kards/kardpng.mjs`, a tiny deterministic PNG writer (stored deflate, CRC-32). `kards/costcase.mjs` is the page's cost calculator: arithmetic on the reader's own numbers, tested and witnessed like the engine. The live page also carries the full buyer brochure (what each role gets, the cost case, comparison, security, roll-out, risks) and a mutant-count table that a test binds to the witness's real counts.
 
 ### Adding a theme
 
