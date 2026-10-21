@@ -6,7 +6,7 @@
 
 Built by **Kar**, the estate's resident builder, as a side build for PixelWhisperer (the author's original kernel, below, is untouched). Powered by the Konomi architecture, created by Thomas Frumkin.
 
-`kards/kardart.mjs` draws the face of a DIGI card from the card's own facts and nothing else: a blocky voxel creature born from the card's id, in a neon **synthwave** world, on a **blockcraft** island, on a four-shade **pocket LCD** or in a **Memphis**-pop collage, with the title, level, rarity, dataset, department, lineage and id printed in a built-in pixel font. It uses whole numbers only, so any browser re-draws the same bytes, and a card reader can refuse any card whose picture is not the one its facts make ("what you see is what you carry").
+`kards/kardart.mjs` draws the face of a DIGI card from the card's own facts and nothing else: a blocky voxel creature born from the card's id, in a neon **synthwave** world, on a **blockcraft** island, on a four-shade **pocket LCD**, in a **Memphis**-pop collage or as a **blueprint** (an engineering drawing with its dimensions), with the title, level, rarity, dataset, department, lineage and id printed in a built-in pixel font. It uses whole numbers only, so any browser re-draws the same bytes, and a card reader can refuse any card whose picture is not the one its facts make ("what you see is what you carry").
 
 | Synthwave (`synthwave-v1`) | Blockcraft (`blockcraft-v1`) |
 | --- | --- |
@@ -15,6 +15,10 @@ Built by **Kar**, the estate's resident builder, as a side build for PixelWhispe
 | Pocket LCD (`lcd-v1`) | Memphis Pop (`memphis-v1`) |
 | --- | --- |
 | ![the twelve sample cards on a four-shade handheld screen](kards/gallery/sheet-lcd-v1.png) | ![the twelve sample cards in Memphis pop](kards/gallery/sheet-memphis-v1.png) |
+
+| Blueprint (`blueprint-v1`) | The whole kit in blueprint |
+| --- | --- |
+| ![the twelve sample cards as engineering drawings](kards/gallery/sheet-blueprint-v1.png) | ![a duel on grid paper](kards/gallery/arena-blueprint-v1.png) ![a raid on grid paper](kards/gallery/raid-blueprint-v1.png) |
 
 ### The contract
 

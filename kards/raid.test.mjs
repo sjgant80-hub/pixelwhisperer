@@ -12,13 +12,14 @@ import { violations } from './source-check.mjs';
 const sha = (u8) => createHash('sha256').update(u8).digest('hex');
 const same = (a, b) => Buffer.from(a).equals(Buffer.from(b));
 const refused = (r, why) => { assert.equal(r.ok, false); assert.equal(typeof r.why, 'string'); if (why) assert.match(r.why, why); };
-const THEME_IDS = Object.keys(THEMES).slice(0, 4);
+const THEME_IDS = Object.keys(THEMES);   // every published theme: a theme that some painter cannot draw turns this red
 const KEYS = ['hospital-admissions', 'hospital-clinical', 'hospital-pharmacy', 'hospital-history', 'hospital-discharge', 'bank-credit', 'adult-employer', 'credit-billing'];
 const RAID = Object.freeze({ dataset: 'hospital', department: 'admissions', best: 554000, attempts: 12 });
 const LOOT = Object.freeze({ id: idOf('first-admissions'), rarity: 'epic', title: 'Admit Oracle' });
 const FALLEN = Object.freeze({ ...RAID, best: 612300, attempts: 31, loot: LOOT });
 const draw = (r, theme = 'synthwave-v1', w = 240, h = 160) => { const x = paintRaid(r, theme, w, h); assert.equal(x.ok, true, x.why); return x.px; };
 const PINS = {   // the published raid pictures and boss sprites: a change to how a raid is drawn is a new theme id, as with the cards
+  'blueprint-v1': 'a7559c81b755b8d0ebbdc7caa38f943a1791801b11fa7d5ca675bc0088ee7bc1',
   sprites: 'b6091ff50f06447a66e3e1495d28c085c36a8313b8a4dba102013f874ae5eb31', 'synthwave-v1': 'ed91658642c0f7df50f045926fa0cfe7caa7b6fcbc701bf2c70e39b743aac3a0', 'blockcraft-v1': 'e08d60969fb080ea25fed9945ce34edd2e4522c430addeb0d3e92b9d10532800', 'lcd-v1': '6475caca258a2dbe507e3714baae351ec063730ea3a9930afd132793e71e268d', 'memphis-v1': 'd54ef2610e11751dcfbd02a7216e77d35c232aac14bb4b466c47e5ad70f94215',
   fallen: '01cc1c1c1b4dc47d99a61ad6447d1012a08e98360fc74d00aed3b526b871414f', unscored: '091005edd0360e0b7d12aba876a30357431494b15fa054c8229590d632c430f8', wide: 'a07a63817ede2f09396a993aeb12327a1498ab75b1e7385b04a99c00aa78cf14',
 };

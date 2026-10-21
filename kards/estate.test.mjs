@@ -19,6 +19,7 @@ const same = (a, b) => Buffer.from(a).equals(Buffer.from(b));
 const refused = (r, why) => { assert.equal(r.ok, false); assert.equal(typeof r.why, 'string'); if (why) assert.match(r.why, why); };
 
 const PINS = {   // the published estate pictures: a change to how an estate is drawn is a new theme id, as with the cards
+  'blueprint-v1': '7df1ab9c17ee1065dede5236b01d9d55760706dc287695bd19fa82514bd482bc',
   empty: '1e4135bf0822f3f6f116af96cc9d6faf55d4cdb73d0193f6d001f506be037f6d',
   'synthwave-v1': 'b13d6ac8ac3a0fc596e93f4f8db6e35d08a15350c96b280d400fa0315f0d712d', 'blockcraft-v1': '53f8ff8b2caed1e60e359835b7bf4bdf2d7783648ac4e3fe2e8fb8ce064ad314', 'lcd-v1': 'a226c826c79c726edc67df5a73b61d84ec6ef4d3c5ff074de2781a8a9f83d257', 'memphis-v1': 'd6b808add51aa743cc1edf16971e434f4f456abec28ff09028ab63d8a85e7fc9',
   snapshot: '7661549c0132036ea16e9162d887af5bd1c0c185784d81c7eaaee981582fb461', crowded: '090e38fcb34e6487c7706786da4d17f492809c7a20941c2a14374693205322d7', full: 'af6a033f3cd04dc0adfbb4482453fbbd65bb06fd52735479b2cf74c914de1580',
@@ -132,7 +133,7 @@ test('the pocket LCD estate is four shades, and the painter never throws', () =>
 const ITEMS = ['app', 'pwa', 'node', 'app', 'talker', 'node', 'talker', 'pwa', 'talker', 'router', 'router'].map((form, n) => ({ id: idOf('item-' + n), form, tier: ['prototype', 'works', 'proven'][n % 3], fresh: n === 2 }));
 const SWARMS = [{ id: idOf('swarm-a'), members: [CARDS[0].id, CARDS[3].id, CARDS[6].id] }, { id: idOf('swarm-b'), members: [CARDS[1].id, CARDS[2].id] }];
 const IHOLD = { cards: CARDS, wires: HOLD.wires, items: ITEMS, swarms: SWARMS, levels: 3 };
-const ipins = { 'synthwave-v1': '9a728a0d148319a658208810e42462b3aea66914a754fb72e6e567bc0430aa10', 'blockcraft-v1': 'cf92eb776c73b8414854c8f596d1b73bb97957df5d42a11a35ee8add0befc6c3', 'lcd-v1': '183db6dc926cf253f2f2752533bbbd8deb3b3d8a1f47ba5492dafa35957ed806', 'memphis-v1': 'c2d01395064cc2c1e60fc8bfdaa981d2c4d7ab5450fe7b7a7bca1af7cb081f64', snapshot: '0c85fb1bbdaf67db62d3c65174beffd747e902535b176d5936462ef176a60d50', empty: '2c60b6a5d4e27cc7927026a9f71bc6f69a15ffcc55db8be29801edaa4ec1a8cb', many: 'a09e05ff12ebb0df67e8a3f975e8d374503ae4de4f68ba9b8a7f55b9ea035e51', full36: 'e832cb0e896a7cbb453da9e54dc2fb1c78ae1d2db536ea53ab8c0ab87eb6e1d6' };
+const ipins = { 'blueprint-v1': '1baabdd9b2c2a446d77ef18cc2a15eb5160e7b09dfdd1bd1fbdd9d799df3bcba', 'synthwave-v1': '9a728a0d148319a658208810e42462b3aea66914a754fb72e6e567bc0430aa10', 'blockcraft-v1': 'cf92eb776c73b8414854c8f596d1b73bb97957df5d42a11a35ee8add0befc6c3', 'lcd-v1': '183db6dc926cf253f2f2752533bbbd8deb3b3d8a1f47ba5492dafa35957ed806', 'memphis-v1': 'c2d01395064cc2c1e60fc8bfdaa981d2c4d7ab5450fe7b7a7bca1af7cb081f64', snapshot: '0c85fb1bbdaf67db62d3c65174beffd747e902535b176d5936462ef176a60d50', empty: '2c60b6a5d4e27cc7927026a9f71bc6f69a15ffcc55db8be29801edaa4ec1a8cb', many: 'a09e05ff12ebb0df67e8a3f975e8d374503ae4de4f68ba9b8a7f55b9ea035e51', full36: 'e832cb0e896a7cbb453da9e54dc2fb1c78ae1d2db536ea53ab8c0ab87eb6e1d6' };
 const many = (form, n, from = 0) => Array.from({ length: n }, (_, i) => ({ id: idOf(form + '-many-' + (from + i)), form, tier: 'works' }));
 const teams = (n) => Array.from({ length: n }, (_, i) => ({ id: idOf('team-' + i), members: [CARDS[i % 8].id, CARDS[(i + 3) % 8].id] }));
 
@@ -186,7 +187,7 @@ test('items and swarms: checked, put in order, and refused with a reason when th
 });
 
 test('full-plot estates re-draw byte for byte: pinned, in any order, and every item and swarm changes the picture', () => {
-  for (const t of Object.keys(THEMES).slice(0, 4)) assert.equal(sha(draw(IHOLD, t, 480, 320)), ipins[t], t);
+  for (const t of Object.keys(THEMES)) assert.equal(sha(draw(IHOLD, t, 480, 320)), ipins[t], t);
   assert.equal(sha(draw({ ...IHOLD, snapshot: true }, 'blockcraft-v1', 1200, 630)), ipins.snapshot);
   assert.equal(sha(draw({ cards: [], items: [] })), ipins.empty);
   assert.equal(sha(draw({ cards: CARDS, items: [...many('app', 20), ...many('node', 20), ...many('talker', 40), ...many('router', 40)], swarms: teams(40) }, 'synthwave-v1', 480, 320)), ipins.many);
@@ -216,7 +217,7 @@ test('full-plot estates re-draw byte for byte: pinned, in any order, and every i
 });
 
 const DIGI = { cards: CARDS, wires: HOLD.wires, items: ITEMS.filter((it) => it.form === 'app'), swarms: SWARMS, districts: ['scorer', 'tools', 'swarm'] };
-const dpins = { 'synthwave-v1': '8de28d87acc5a06d68ab97a52523b59f27bae186d7b3154600a502a21ac4ca5e', 'blockcraft-v1': '2951f40b899fb483bbf7f8f92f01dc0a7202414b113c03e5f72d7d7bdf219f56', 'lcd-v1': 'c1aa418a37158e9547228fff574db257042dd772814ec72e54bebea7ceaf7cd8', 'memphis-v1': '3bc77bf2dcef39c3b210b07c9e0d4df707fdcc3ec635d61da6ee0942946abf5b', snapshot: '8f964f4ce4264620e1d57176ae9765f7bb5d3625c6b2bfe7cefaf7a3d8bb761d', bare: '17b3a8cb154c54f1dc1e46e1dd8d51b78a8f5a336a23c1a4f6ffde4bf1e74cd1' };
+const dpins = { 'blueprint-v1': '737fecc9c42d89c4855348bc97eac00f96448b60ec7e2c6638e5cb672aaa68a8', 'synthwave-v1': '8de28d87acc5a06d68ab97a52523b59f27bae186d7b3154600a502a21ac4ca5e', 'blockcraft-v1': '2951f40b899fb483bbf7f8f92f01dc0a7202414b113c03e5f72d7d7bdf219f56', 'lcd-v1': 'c1aa418a37158e9547228fff574db257042dd772814ec72e54bebea7ceaf7cd8', 'memphis-v1': '3bc77bf2dcef39c3b210b07c9e0d4df707fdcc3ec635d61da6ee0942946abf5b', snapshot: '8f964f4ce4264620e1d57176ae9765f7bb5d3625c6b2bfe7cefaf7a3d8bb761d', bare: '17b3a8cb154c54f1dc1e46e1dd8d51b78a8f5a336a23c1a4f6ffde4bf1e74cd1' };
 
 test('a plot of only the districts a game holds: named in the holdings, drawn with nothing fenced', () => {
   const c = checkHoldings(DIGI);
@@ -235,7 +236,7 @@ test('a plot of only the districts a game holds: named in the holdings, drawn wi
   assert.deepEqual(estateStats(DIGI).tiles, { scorer: 24, tools: 12, swarm: 12, total: 48 }, 'only the districts drawn');
   assert.deepEqual(estateStats({ cards: [], districts: ['scorer'] }).tiles, { scorer: 8, total: 8 });
   assert.ok(same(draw({ ...IHOLD, districts: ['scorer', 'tools', 'talker', 'swarm', 'router'] }), draw(IHOLD)), 'all five named: the full plot, byte for byte');
-  for (const t of Object.keys(THEMES).slice(0, 4)) assert.equal(sha(draw(DIGI, t, 480, 320)), dpins[t], t);
+  for (const t of Object.keys(THEMES)) assert.equal(sha(draw(DIGI, t, 480, 320)), dpins[t], t);
   assert.equal(sha(draw({ ...DIGI, snapshot: true }, 'blockcraft-v1', 1200, 630)), dpins.snapshot);
   assert.equal(sha(draw({ cards: [], districts: ['scorer'] })), dpins.bare);
   const pictures = [['scorer'], ['scorer', 'tools'], ['scorer', 'swarm'], ['scorer', 'tools', 'swarm'], ['scorer', 'talker'], ['scorer', 'router']].map((d) => sha(draw({ cards: CARDS, districts: d })));

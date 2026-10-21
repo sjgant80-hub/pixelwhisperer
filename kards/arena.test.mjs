@@ -12,11 +12,12 @@ import { violations } from './source-check.mjs';
 const sha = (u8) => createHash('sha256').update(u8).digest('hex');
 const same = (a, b) => Buffer.from(a).equals(Buffer.from(b));
 const refused = (r, why) => { assert.equal(r.ok, false); assert.equal(typeof r.why, 'string'); if (why) assert.match(r.why, why); };
-const THEME_IDS = Object.keys(THEMES).slice(0, 4);
+const THEME_IDS = Object.keys(THEMES);   // every published theme: a theme that some painter cannot draw turns this red
 const CASES = Array.from({ length: 48 }, (_, n) => { const h = parseInt(idOf('case-' + n).slice(0, 4), 16); return [h & 1, (h >> 1) & 1]; });
 const DUEL = Object.freeze({ left: { id: idOf('duel-left'), rarity: 'epic', rating: 1640, title: 'Churn Hunter' }, right: { id: idOf('duel-right'), rarity: 'rare', rating: 1585, title: 'Bank Sentinel' }, cases: CASES, decided: 30 });
 const draw = (d, theme = 'synthwave-v1', w = 240, h = 160) => { const r = paintDuel(d, theme, w, h); assert.equal(r.ok, true, r.why); return r.px; };
 const PINS = {   // the published duel pictures: a change to how a duel is drawn is a new theme id, as with the cards
+  'blueprint-v1': '6f2e12cb96d74947ccaa47077382450c2dca90e1d215aeb30933ac1fe87cf692',
   kitted: 'd7ea7cedcbea4fec7cefc1843733440b540489256c12962f5690eaae1204a98d',
   draw: '047a04d557e478ce68b77f0c198fde0a0c6514e917904ef50e660ab2f94db97d',
   'synthwave-v1': 'e270ce29d81798b6070c6690115666d5ea48afaa3c7443084e83ba538e4c75b3', 'blockcraft-v1': '5ed4ab440a3001bd36fdef6ee2e6cdf71d1989df46321dab33c3411a55329575', 'lcd-v1': 'd4d8481bf42b10471a6f33534d02ebf905388a82f5ec43d79f9f10baac7de820', 'memphis-v1': '384a22051dc18fa6ae76f8feb77d5848e46dfeec882280697ed55e944aca88c9',

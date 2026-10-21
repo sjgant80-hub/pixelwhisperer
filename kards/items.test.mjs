@@ -10,10 +10,11 @@ import { idOf } from './corpus.mjs';
 const sha = (x) => createHash('sha256').update(Buffer.from(x)).digest('hex');
 const same = (a, b) => Buffer.from(a).equals(Buffer.from(b));
 const refused = (r, why) => { assert.equal(r.ok, false); assert.equal(typeof r.why, 'string'); if (why) assert.match(r.why, why); };
-const THEME_IDS = Object.keys(THEMES).slice(0, 4);
+const THEME_IDS = Object.keys(THEMES);   // every published theme: a theme that some painter cannot draw turns this red
 const ITEM = Object.freeze({ form: 'app', id: idOf('item-0'), name: 'Churn Radar', source: 'divorcerbot', tier: 'works' });
 const draw = (f, theme = 'synthwave-v1', w = 192, h = 280) => { const r = paintArt(f, theme, w, h); assert.equal(r.ok, true, r.why); return r.px; };
 const PINS = {   // the published item faces: a change to how an item is drawn is a new theme id, as with the scorers
+  'blueprint-v1': '834128e9a246e76b711fade0c61acd079a7d4f72b55535fa0de527910681ce96',
   kit: 'fe5b76950613533deff7a424abd17c0aafd43117e82e9b0cb5d08bb3cbd31a5e',
   licensed: '7e6feda311a2f818a7025311929014edd44e5db2795bfc22ba8bb869a56015bf',
   'synthwave-v1': 'ca04c4258fc4dfe438833b3f1ea65a009dca48f6682f39496c134695a824990e', 'blockcraft-v1': 'd2097bf2b69fb76a6e49ba47e54ac3e3385123d2f9c3285846972a5ca910be77', 'lcd-v1': '37ed491968907fc25ee850e9d35d13596a0461837a0f71c78dd690863c6554ef', 'memphis-v1': 'f9f6957ecb1799fa4c138e657a8a24a081728438c9c70f68ebf04466cbb61905', big: '7bc44870159e51b31a868ca57870a421d216ba6e3a321153e80378622640b986',

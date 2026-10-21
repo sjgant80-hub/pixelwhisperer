@@ -71,6 +71,7 @@ const PAL = {   // the frame's two outer tones per rarity, by theme: common, unc
   shared: { hi: [0xc8ccd6, 0x86ff92, 0x80c4ff, 0xdba2ff, 0xffe680], mid: [0x8a8f9e, 0x36c44c, 0x3a7ee8, 0x9c4ee2, 0xf2b422] },
   'lcd-v1': { hi: [0xd8dccf, 0xc8e078, 0xb8d4ff, 0xe0c8ff, 0xffe890], mid: [0x9aa095, 0x8bac0f, 0x5f8fe8, 0xa06ad8, 0xd09a20] },
   'memphis-v1': { hi: [0x646b79, 0x16a34a, 0x2563eb, 0x9333ea, 0xd97706], mid: [0x9aa3b2, 0x4ade80, 0x60a5fa, 0xc084fc, 0xfbbf24] },
+  'blueprint-v1': { hi: [0xc0c8d4, 0x86f0a0, 0x8fd0ff, 0xd8a0ff, 0xffd84a], mid: [0x8a96a8, 0x3cc46a, 0x4a9ae8, 0xa05ae6, 0xe8a832] },
 };
 test('the card has the facts of the card: the frame is the rarity palette (grey, green, blue, purple, gold) in every theme', () => {
   const r = (c) => c >> 16, g = (c) => (c >> 8) & 255, b = (c) => c & 255;

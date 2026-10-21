@@ -12,11 +12,11 @@ import { violations } from './source-check.mjs';
 const sha = (u8) => createHash('sha256').update(u8).digest('hex');
 const same = (a, b) => Buffer.from(a).equals(Buffer.from(b));
 const refused = (r, why) => { assert.equal(r.ok, false); assert.equal(typeof r.why, 'string'); if (why) assert.match(r.why, why); };
-const THEME_IDS = Object.keys(THEMES).slice(0, 4);
+const THEME_IDS = Object.keys(THEMES);   // every published theme: a theme that some painter cannot draw turns this red
 const CARD = Object.freeze({ id: idOf('node-card'), rarity: 'rare' }), ITEM = Object.freeze({ id: idOf('tool-app'), tier: 'proven' });
 const SLOTS = [{ kind: 'node' }, { kind: 'node', card: CARD, worth: 19727 }, { kind: 'node', card: { ...CARD, rarity: 'epic' }, worth: -39000 }, { kind: 'node', card: CARD, joined: false }, { kind: 'tool' }, { kind: 'tool', item: ITEM }, { kind: 'tool', item: { ...ITEM, tier: 'works' } }];
 const draw = (s, theme = 'synthwave-v1', w = 56, h = 64) => { const r = paintSlot(s, theme, w, h); assert.equal(r.ok, true, r.why); return r.px; };
-const PINS = { edges: '59257a4e7c9a32bfbd1da3108c201b9842e46c42f5b85282aa9c7ead00bc1e42', 'synthwave-v1': 'fb10021b99909101ac28962948bf392cc09775545681fb0e1ae7aa83d4f56522', 'blockcraft-v1': '0c673e4fae05ce981811f02ca56548075f8d948b52085ddb0870fb3afd31050b', 'lcd-v1': '3ee7172301c530a4375bf5e1891103826a5a0f96f9e62e2e708c264be3e317a1', 'memphis-v1': 'c80963fa4c056f3e717f20f879f48050907728a3b0f67e885d19e00c733a3a65', big: '6c0f3796e153c9663c0838dd6b9971c542767dd506239b31ea6e1006ece12d33', badges: '7fc9c3e3855ac0c12ec5967322affb2c8a6986128c8771ef35a9aa982caf71b4' };
+const PINS = { 'blueprint-v1': '958c9d40ace7cd28d60f773bc9af8d259227e425436ff3fb03ae69ccbcb558a0', edges: '59257a4e7c9a32bfbd1da3108c201b9842e46c42f5b85282aa9c7ead00bc1e42', 'synthwave-v1': 'fb10021b99909101ac28962948bf392cc09775545681fb0e1ae7aa83d4f56522', 'blockcraft-v1': '0c673e4fae05ce981811f02ca56548075f8d948b52085ddb0870fb3afd31050b', 'lcd-v1': '3ee7172301c530a4375bf5e1891103826a5a0f96f9e62e2e708c264be3e317a1', 'memphis-v1': 'c80963fa4c056f3e717f20f879f48050907728a3b0f67e885d19e00c733a3a65', big: '6c0f3796e153c9663c0838dd6b9971c542767dd506239b31ea6e1006ece12d33', badges: '7fc9c3e3855ac0c12ec5967322affb2c8a6986128c8771ef35a9aa982caf71b4' };
 
 test('a slot: read once, and anything that is not one refused with a reason', () => {
   assert.deepEqual(SLOT_KINDS, ['node', 'tool']); assert.ok(Object.isFrozen(SLOT_KINDS));
