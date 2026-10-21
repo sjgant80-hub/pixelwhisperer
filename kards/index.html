@@ -541,7 +541,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 </div></footer>
 
 <script type="module">
-import { THEMES, FORMS, TIERS, GEAR, paintArt, spriteOf, checkFacts } from './kardart.mjs';
+import { THEMES, FORMS, TIERS, GEAR, KIT_SLOTS, paintArt, spriteOf, checkFacts } from './kardart.mjs';
 import { pngOf } from './kardpng.mjs';
 import { SAMPLES } from './samples.mjs';
 import { PINS } from './kardart.pins.mjs';
@@ -727,7 +727,7 @@ function renderItem() {
   const f = readItem(), c = checkFacts(f), m = $('#item-msg');
   if (!c.ok) { m.className = 'msg bad'; m.textContent = 'Not an item yet: ' + c.why + '.'; return; }
   paint($('#item-canvas'), f, I.theme.value); lastItem = f;
-  m.className = 'msg ok'; m.textContent = (f.name || 'An unnamed item') + ': ' + ('aeiou'.includes(f.form[0]) ? 'an ' : 'a ') + f.form + ', ' + f.tier + ' (' + RARITIES[c.f.ri] + '), minted from ' + f.source + ', fits the ' + GEAR[f.form] + ' slot';
+  m.className = 'msg ok'; m.textContent = (f.name || 'An unnamed item') + ': ' + ('aeiou'.includes(f.form[0]) ? 'an ' : 'a ') + f.form + ', ' + f.tier + ' (' + RARITIES[c.f.ri] + '), minted from ' + f.source + ', fits ' + (f.kit ? 'a ' + KIT_SLOTS[f.form] : 'the ' + GEAR[f.form]) + ' slot';
   $('#item-canvas').setAttribute('aria-label', m.textContent + ' (' + THEMES[I.theme.value].name + ')');
   history.replaceState(null, '', '#item=' + encodeURIComponent(JSON.stringify({ t: I.theme.value, f })));
   renderGear(f);
