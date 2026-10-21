@@ -192,6 +192,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
       <div class="full"><label for="i-name">Name (at most 24 of A-Z a-z 0-9 space &amp; ' . -)</label><input id="i-name" maxlength="24" value="Churn Radar"></div>
       <div><label for="i-source">Minted from (1 to 20 of A-Z a-z 0-9 . -)</label><input id="i-source" maxlength="20" spellcheck="false" value="divorcerbot"></div>
       <div><label for="i-theme">Theme</label><select id="i-theme"></select></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="i-kit" type="checkbox" style="width:auto;min-height:0"><label for="i-kit" style="margin:0">Name the slot in the words of the DIGI kit (a node slot, a tool slot)</label></div>
       <div class="full"><label for="i-id">Id (16 lowercase hex)</label><div class="row"><input id="i-id" maxlength="16" spellcheck="false"><button type="button" class="act alt" id="i-roll">Roll an id</button></div></div>
       <div class="actions"><button type="button" class="act" id="i-dl">Download PNG</button><button type="button" class="act alt" id="i-json">Copy the facts as JSON</button><span class="msg" id="i-act" role="status" aria-live="polite"></span></div>
     </form>
@@ -226,6 +227,7 @@ kitBadge(fielded, slots, scale)                                     // the kitte
         <button type="button" class="act alt" id="est-wire">Wire two cards</button>
       </div>
       <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-items" type="checkbox" style="width:auto;min-height:0"><label for="est-items" style="margin:0">Hold items and swarms: the full plot, every district open</label></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-digi" type="checkbox" style="width:auto;min-height:0"><label for="est-digi" style="margin:0">Draw only what DIGI holds: SCORER, TOOLS and SWARM</label></div>
       <div class="actions"><button type="button" class="act alt" id="est-app">Add an app</button><button type="button" class="act alt" id="est-pwa">Add a pwa</button><button type="button" class="act alt" id="est-node">Add a node</button><button type="button" class="act alt" id="est-talker">Add a talker</button><button type="button" class="act alt" id="est-router">Add a router</button><button type="button" class="act alt" id="est-swarm">Form a swarm</button></div>
       <div><label for="est-tools">Tool blocks: <output id="o-tools"></output></label><input id="est-tools" type="range" min="0" max="40" step="1" value="4"></div>
       <div><label for="est-theme">Theme</label><select id="est-theme"></select></div>
@@ -244,7 +246,8 @@ paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fre
 // a card: stage is its level, 0-99 (a tower grows a block every 25 levels); fresh marks a new child; department and generation are carried, not drawn.
 // px: w &times; h RGB at the size asked for, each logical pixel a scale &times; scale block (480 &times; 320 is scale 2, 1200 &times; 630 is scale 3).
 // snapshot: true adds a title band and a stats band (blocks, tiles, mesh links, and levels when given): the picture a shared link shows.
-// The full plot: items: [{ id, form: 'app' | 'pwa' | 'node' | 'talker' | 'router', tier, fresh? }] and swarms: [{ id, members: [card ids] }] in place of tools.</code></pre>
+// The full plot: items: [{ id, form: 'app' | 'pwa' | 'node' | 'talker' | 'router', tier, fresh? }] and swarms: [{ id, members: [card ids] }] in place of tools.
+// districts: ['scorer', 'tools', 'swarm'] draws only those districts, nothing fenced: what the DIGI game holds.</code></pre>
 </section>
 
 <section id="arena" aria-labelledby="arena-h">
@@ -503,7 +506,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">269</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">158</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">271</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">172</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -704,7 +707,8 @@ for (const f of FORMS.slice(1)) I.form.add(new Option(f, f));
 for (const t of TIERS) I.tier.add(new Option(t, t));
 for (const id of THEME_IDS) I.theme.add(new Option(THEMES[id].name, id));
 I.form.value = 'app'; I.tier.value = 'works'; I.theme.value = 'synthwave-v1'; I.id.value = '7c41e2a9d05b38f6';
-const readItem = () => ({ form: I.form.value, id: I.id.value.trim(), name: I.name.value, source: I.source.value.trim(), tier: I.tier.value });
+const readItem = () => ({ form: I.form.value, id: I.id.value.trim(), name: I.name.value, source: I.source.value.trim(), tier: I.tier.value, ...($('#i-kit').checked ? { kit: true } : {}) });
+$('#i-kit').addEventListener('input', () => renderItem());
 let lastItem = null;
 function slotFigure(slot, label) {   // one kit slot, drawn by paintSlot in the item's theme, at twice its size
   const fig = document.createElement('figure'), c = document.createElement('canvas'), r = paintSlot(slot, I.theme.value, 112, 128), cap = document.createElement('figcaption');
@@ -736,12 +740,12 @@ $('#i-json').addEventListener('click', async () => { try { await navigator.clipb
 
 // ── the estate builder ──────────────────────────────────────────────────────────────────────────────────────────────
 const RARS = ['common', 'uncommon', 'rare', 'epic', 'legendary'], SETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
-const est = { cards: SAMPLES.slice(0, 8).map((s, n) => ({ id: s.id, dataset: s.dataset, department: s.department, stage: s.stage, rarity: s.rarity, generation: s.generation, fresh: n === 1 })), wires: [[SAMPLES[0].id, SAMPLES[2].id], [SAMPLES[2].id, SAMPLES[4].id]], tools: 4, items: [], swarms: [], useItems: false, snapshot: false };
+const est = { cards: SAMPLES.slice(0, 8).map((s, n) => ({ id: s.id, dataset: s.dataset, department: s.department, stage: s.stage, rarity: s.rarity, generation: s.generation, fresh: n === 1 })), wires: [[SAMPLES[0].id, SAMPLES[2].id], [SAMPLES[2].id, SAMPLES[4].id]], tools: 4, items: [], swarms: [], useItems: false, digi: false, snapshot: false };
 let estTheme = 'blockcraft-v1';
 for (const id of THEME_IDS) $('#est-theme').add(new Option(THEMES[id].name, id));
 $('#est-theme').value = estTheme;
 const estSize = () => (est.snapshot ? [1200, 630] : [720, 480]);
-const holdings = () => (est.useItems ? { cards: est.cards, wires: est.wires, items: est.items, swarms: est.swarms, snapshot: est.snapshot } : { cards: est.cards, wires: est.wires, tools: est.tools, snapshot: est.snapshot });
+const holdings = () => (est.useItems ? { cards: est.cards, wires: est.wires, items: est.digi ? est.items.filter((it) => ['app', 'pwa', 'node'].includes(it.form)) : est.items, swarms: est.swarms, snapshot: est.snapshot, ...(est.digi ? { districts: ['scorer', 'tools', 'swarm'] } : {}) } : { cards: est.cards, wires: est.wires, tools: est.tools, snapshot: est.snapshot });
 function renderEstate() {
   const [w, h] = estSize(), H = holdings(), r = paintEstate(H, estTheme, w, h), c = $('#estate-canvas'), s = estateStats(H);
   if (!r.ok) { $('#estate-msg').className = 'msg bad'; $('#estate-msg').textContent = r.why; return; }
@@ -750,7 +754,7 @@ function renderEstate() {
   $('#o-tools').textContent = est.useItems ? 'counted from the items' : est.tools;
   $('#est-tools').disabled = est.useItems; $('#est-items').checked = est.useItems;
   $('#estate-msg').className = 'msg ok'; $('#estate-msg').textContent = s.blocks + ' blocks · ' + s.tiles.total + ' tiles · drawn at scale ' + r.scale;
-  stats($('#estate-stats'), [['BLOCKS', s.blocks], ['SCORER TILES', s.cards + ' cards → ' + s.tiles.scorer], ['TOOLS TILES', s.tools + (est.useItems ? ' apps, pwas, nodes' : ' tools') + ' → ' + s.tiles.tools], ...(est.useItems ? [['TALKER TILES', s.talkers + ' talkers → ' + s.tiles.talker], ['SWARM TILES', s.swarms + ' swarms → ' + s.tiles.swarm], ['ROUTER TILES', s.routers + ' routers → ' + s.tiles.router]] : []), ['MESH LINKS', s.links]]);
+  stats($('#estate-stats'), [['BLOCKS', s.blocks], ['SCORER TILES', s.cards + ' cards → ' + s.tiles.scorer], ['TOOLS TILES', s.tools + (est.useItems ? ' apps, pwas, nodes' : ' tools') + ' → ' + s.tiles.tools], ...(est.useItems ? [['TALKER', s.talkers, s.tiles.talker], ['SWARM', s.swarms, s.tiles.swarm], ['ROUTER', s.routers, s.tiles.router]].filter(([, , t]) => t !== undefined).map(([d, n, t]) => [d + ' TILES', n + ' ' + d.toLowerCase() + 's → ' + t]) : []), ['MESH LINKS', s.links]]);
 }
 for (const form of FORMS.slice(1)) $('#est-' + form).addEventListener('click', () => {
   if (est.items.length >= 80) return;
@@ -758,6 +762,7 @@ for (const form of FORMS.slice(1)) $('#est-' + form).addEventListener('click', (
   est.items.push({ id: randHex(8), form, tier: pick(TIERS), fresh: true }); est.useItems = true; renderEstate();
 });
 $('#est-items').addEventListener('input', () => { est.useItems = $('#est-items').checked; renderEstate(); });
+$('#est-digi').addEventListener('input', () => { est.digi = $('#est-digi').checked; if (est.digi) est.useItems = true; renderEstate(); });
 $('#est-swarm').addEventListener('click', () => {   // two to four of the player's cards, as a consented team
   if (est.swarms.length >= 40 || est.cards.length < 2) return;
   const pool = est.cards.map((c) => c.id), members = [];

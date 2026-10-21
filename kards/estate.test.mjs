@@ -215,6 +215,38 @@ test('full-plot estates re-draw byte for byte: pinned, in any order, and every i
   }
 });
 
+const DIGI = { cards: CARDS, wires: HOLD.wires, items: ITEMS.filter((it) => it.form === 'app'), swarms: SWARMS, districts: ['scorer', 'tools', 'swarm'] };
+const dpins = { 'synthwave-v1': '8de28d87acc5a06d68ab97a52523b59f27bae186d7b3154600a502a21ac4ca5e', 'blockcraft-v1': '2951f40b899fb483bbf7f8f92f01dc0a7202414b113c03e5f72d7d7bdf219f56', 'lcd-v1': 'c1aa418a37158e9547228fff574db257042dd772814ec72e54bebea7ceaf7cd8', 'memphis-v1': '3bc77bf2dcef39c3b210b07c9e0d4df707fdcc3ec635d61da6ee0942946abf5b', snapshot: '8f964f4ce4264620e1d57176ae9765f7bb5d3625c6b2bfe7cefaf7a3d8bb761d', bare: '17b3a8cb154c54f1dc1e46e1dd8d51b78a8f5a336a23c1a4f6ffde4bf1e74cd1' };
+
+test('a plot of only the districts a game holds: named in the holdings, drawn with nothing fenced', () => {
+  const c = checkHoldings(DIGI);
+  assert.equal(c.ok, true); assert.deepEqual(c.h.districts, ['scorer', 'tools', 'swarm']);
+  assert.deepEqual(checkHoldings({ ...DIGI, districts: ['swarm', 'scorer', 'tools'] }).h.districts, ['scorer', 'tools', 'swarm'], 'in the order of the plot');
+  assert.ok(same(draw(DIGI), draw({ ...DIGI, districts: ['tools', 'swarm', 'scorer'] })), 'any order, the same picture');
+  assert.equal(checkHoldings({ cards: CARDS, districts: ['scorer'] }).ok, true, 'districts alone draw the chosen plot');
+  assert.equal(checkHoldings({ cards: CARDS, items: ITEMS, swarms: SWARMS }).h.districts, null, 'without districts: all five');
+  for (const d of ['scorer', ['tools', 'swarm'], ['scorer', 'scorer'], ['scorer', 'coming'], ['scorer', 'TOOLS'], [], null, 5]) refused(checkHoldings({ cards: CARDS, districts: d }), /^districts must list scorer and any of tools, talker, swarm and router, each once$/);
+  refused(checkHoldings({ ...DIGI, items: ITEMS }), /^every item must stand in a district drawn: a talker stands in talker$/);
+  refused(checkHoldings({ ...DIGI, items: [{ id: idOf('r'), form: 'router', tier: 'works' }] }), /^every item must stand in a district drawn: a router stands in router$/);
+  refused(checkHoldings({ ...DIGI, districts: ['scorer', 'swarm'] }), /^every item must stand in a district drawn: a app stands in tools$/);
+  refused(checkHoldings({ ...DIGI, districts: ['scorer', 'tools'] }), /^swarms stand in swarm, which is not among the districts drawn$/);
+  assert.equal(checkHoldings({ ...DIGI, districts: ['scorer', 'tools'], swarms: [] }).ok, true, 'no swarms, no swarm district needed');
+  refused(checkHoldings({ ...DIGI, tools: 3 }), /^tools are counted/);
+  assert.deepEqual(estateStats(DIGI).tiles, { scorer: 24, tools: 12, swarm: 12, total: 48 }, 'only the districts drawn');
+  assert.deepEqual(estateStats({ cards: [], districts: ['scorer'] }).tiles, { scorer: 8, total: 8 });
+  assert.ok(same(draw({ ...IHOLD, districts: ['scorer', 'tools', 'talker', 'swarm', 'router'] }), draw(IHOLD)), 'all five named: the full plot, byte for byte');
+  for (const t of Object.keys(THEMES).slice(0, 4)) assert.equal(sha(draw(DIGI, t, 480, 320)), dpins[t], t);
+  assert.equal(sha(draw({ ...DIGI, snapshot: true }, 'blockcraft-v1', 1200, 630)), dpins.snapshot);
+  assert.equal(sha(draw({ cards: [], districts: ['scorer'] })), dpins.bare);
+  const pictures = [['scorer'], ['scorer', 'tools'], ['scorer', 'swarm'], ['scorer', 'tools', 'swarm'], ['scorer', 'talker'], ['scorer', 'router']].map((d) => sha(draw({ cards: CARDS, districts: d })));
+  assert.equal(new Set(pictures).size, 6, 'each choice of districts its own plot');
+  assert.equal(same(draw(DIGI), draw({ ...DIGI, swarms: SWARMS.slice(1) })), false, 'a swarm in the chosen plot shows');
+  for (const [hold, what] of [[(n) => ({ cards: [], items: many('app', n), districts: ['scorer', 'tools'] }), 'apps'], [(n) => ({ cards: CARDS, swarms: teams(n), districts: ['scorer', 'swarm'] }), 'swarms']]) {
+    const at = (k) => draw(hold(k), 'blockcraft-v1', 480, 320);
+    assert.equal(same(at(36), at(37)), false, what + ' 36 to 37'); assert.equal(same(at(37), at(38)), false, what + ' 37 to 38');
+  }
+});
+
 test('the estate painter keeps the kernel rules, building on the card engine and the UI kit only', () => {
   assert.deepEqual(violations(readFileSync(new URL('./estate.mjs', import.meta.url), 'utf8'), { imports: ['./kardart.mjs', './ui.mjs'] }), []);
 });

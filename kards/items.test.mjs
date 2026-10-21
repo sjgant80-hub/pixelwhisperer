@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { paintArt, checkFacts, spriteOf, THEMES, FORMS, TIERS, GEAR, FORM_ICON_ROWS, creatureSide, itemFront } from './kardart.mjs';
+import { paintArt, checkFacts, spriteOf, THEMES, FORMS, TIERS, GEAR, KIT_SLOTS, FORM_ICON_ROWS, creatureSide, itemFront } from './kardart.mjs';
 import { SAMPLES } from './samples.mjs';
 import { idOf } from './corpus.mjs';
 
@@ -14,6 +14,7 @@ const THEME_IDS = Object.keys(THEMES).slice(0, 4);
 const ITEM = Object.freeze({ form: 'app', id: idOf('item-0'), name: 'Churn Radar', source: 'divorcerbot', tier: 'works' });
 const draw = (f, theme = 'synthwave-v1', w = 192, h = 280) => { const r = paintArt(f, theme, w, h); assert.equal(r.ok, true, r.why); return r.px; };
 const PINS = {   // the published item faces: a change to how an item is drawn is a new theme id, as with the scorers
+  kit: 'fe5b76950613533deff7a424abd17c0aafd43117e82e9b0cb5d08bb3cbd31a5e',
   licensed: '7e6feda311a2f818a7025311929014edd44e5db2795bfc22ba8bb869a56015bf',
   'synthwave-v1': 'ca04c4258fc4dfe438833b3f1ea65a009dca48f6682f39496c134695a824990e', 'blockcraft-v1': 'd2097bf2b69fb76a6e49ba47e54ac3e3385123d2f9c3285846972a5ca910be77', 'lcd-v1': '37ed491968907fc25ee850e9d35d13596a0461837a0f71c78dd690863c6554ef', 'memphis-v1': 'f9f6957ecb1799fa4c138e657a8a24a081728438c9c70f68ebf04466cbb61905', big: '7bc44870159e51b31a868ca57870a421d216ba6e3a321153e80378622640b986',
   fronts: '26d4f4ae9912b2cba4ece2faedc77f0f7382fc53923033630def90ee5bbba945', sides: 'b7786040c6bd9216d7ea475950f9469ad494d1fa7d41ca93325821ae446fd3fd',
@@ -23,17 +24,21 @@ test('the forms, the tiers and the gear slots: one list each, frozen', () => {
   assert.deepEqual(FORMS, ['scorer', 'app', 'pwa', 'node', 'talker', 'router']);
   assert.deepEqual(TIERS, ['prototype', 'works', 'proven']);
   assert.deepEqual(GEAR, { app: 'tool', pwa: 'tool', node: 'ally', talker: 'voice', router: 'ally' });
+  assert.deepEqual(KIT_SLOTS, { app: 'tool', pwa: 'tool', node: 'node', talker: 'voice', router: 'node' }); assert.ok(Object.isFrozen(KIT_SLOTS));
   assert.ok(Object.isFrozen(FORMS) && Object.isFrozen(TIERS) && Object.isFrozen(GEAR) && Object.isFrozen(FORM_ICON_ROWS));
   assert.deepEqual(Object.keys(FORM_ICON_ROWS), FORMS.slice(1));
   for (const rows of Object.values(FORM_ICON_ROWS)) { assert.ok(Object.isFrozen(rows)); assert.equal(rows.length, 16); for (const r of rows) assert.match(r, /^[.#]{16}$/); }
 });
 
 test('item facts: read once, and anything else refused with a reason', () => {
-  assert.deepEqual(checkFacts(ITEM), { ok: true, f: { form: 'app', id: ITEM.id, name: 'Churn Radar', source: 'divorcerbot', tier: 'works', spdx: '', ri: 1 } });
+  assert.deepEqual(checkFacts(ITEM), { ok: true, f: { form: 'app', id: ITEM.id, name: 'Churn Radar', source: 'divorcerbot', tier: 'works', spdx: '', kit: false, ri: 1 } });
   assert.equal(checkFacts({ ...ITEM, spdx: 'Apache-2.0' }).f.spdx, 'Apache-2.0');
   for (const spdx of ['', 'MIT', 'GPL-3.0-or-later', 'BSD-3-Clause']) assert.equal(checkFacts({ ...ITEM, spdx }).ok, true, spdx);
   for (const spdx of ['GPL-3.0-or-later-x', 'GPL-2.0+', 'MIT AND BSD', 7, null]) refused(checkFacts({ ...ITEM, spdx }), /^spdx must be at most 16 characters from A-Z a-z 0-9 . and -$/);
   assert.ok(same(draw({ ...ITEM, spdx: '' }), draw(ITEM)), 'no licence: the face it had');
+  assert.equal(checkFacts({ ...ITEM, kit: true }).f.kit, true);
+  assert.ok(same(draw({ ...ITEM, kit: false }), draw(ITEM)), 'kit: false is the published face');
+  for (const kit of ['yes', 1, null]) refused(checkFacts({ ...ITEM, kit }), /^kit must be true or false$/);
   TIERS.forEach((tier, ri) => assert.equal(checkFacts({ ...ITEM, tier }).f.ri, ri, tier + ' is rarity ' + ri));
   for (const form of FORMS.slice(1)) assert.equal(checkFacts({ ...ITEM, form }).ok, true, form);
   assert.deepEqual(checkFacts({ ...SAMPLES[0], form: 'scorer' }), checkFacts(SAMPLES[0]), 'a scorer that says so reads as one');
@@ -56,6 +61,11 @@ test('item faces re-draw byte for byte: pinned in every theme (five forms, three
     assert.equal(h.digest('hex'), PINS[theme], theme);
   }
   assert.equal(sha(draw({ ...ITEM, form: 'talker', tier: 'proven' }, 'blockcraft-v1', 384, 560)), PINS.big);
+  const kit = createHash('sha256'); for (const form of FORMS.slice(1)) for (const spdx of ['', 'MIT']) kit.update(Buffer.from(draw({ ...ITEM, form, spdx, kit: true }, 'blockcraft-v1')));
+  assert.equal(kit.digest('hex'), PINS.kit, 'in the words of the kit: a node or router fits a node slot, an app or pwa a tool slot, a talker is a voice slot');
+  for (const form of FORMS.slice(1)) assert.equal(same(draw({ ...ITEM, form, kit: true }), draw({ ...ITEM, form })), false, form + ': the kit words differ from the published ones');
+  assert.ok(same(draw({ ...ITEM, form: 'node', kit: true }).subarray(216 * 192 * 3, 226 * 192 * 3), draw({ ...ITEM, form: 'router', kit: true }).subarray(216 * 192 * 3, 226 * 192 * 3)), 'a node and a router fit the same slot');
+  assert.equal(same(draw({ ...ITEM, form: 'talker', kit: true }).subarray(216 * 192 * 3, 226 * 192 * 3), draw({ ...ITEM, form: 'node', kit: true }).subarray(216 * 192 * 3, 226 * 192 * 3)), false, 'a talker is a voice slot');
   assert.equal(sha(draw({ ...ITEM, tier: 'proven', spdx: 'Apache-2.0' }, 'synthwave-v1', 384, 560)), PINS.licensed, 'an app tool as the kit carries it: its licence beside its slot');
 });
 
