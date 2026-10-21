@@ -39,7 +39,7 @@ nav.jump a:hover{background:var(--panel);color:var(--gold)}
 section{padding:34px 0 8px;scroll-margin-top:56px}
 @media(max-width:620px){nav.jump{position:static}section{scroll-margin-top:12px}.preview{position:static}}
 .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:10px 0 18px}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{background:var(--bg2);color:var(--ink);border:0;padding:9px 16px;font:inherit;cursor:pointer;min-height:44px}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed=true]{background:var(--magenta);color:#1a0030;font-weight:700}
@@ -111,6 +111,10 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 .icons canvas{display:block;image-rendering:pixelated;background:#10052a;border:1px solid var(--line);padding:6px;border-radius:6px}
 .icons figcaption{color:var(--muted);margin-top:4px}
 .idrow{display:flex;gap:14px;align-items:center;margin-top:10px}
+.icons button.boss{background:#10052a;border:1px solid var(--line);border-radius:8px;padding:6px;cursor:pointer;color:var(--muted);font:inherit;min-height:44px}
+.icons button.boss[aria-pressed=true]{border-color:var(--magenta);box-shadow:0 0 0 2px var(--magenta);color:var(--ink)}
+.icons button.boss canvas{border:0;padding:0;margin:0 auto}
+#bosses{margin:6px 0 16px}
 #key-face{image-rendering:pixelated;border:1px solid var(--line)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
@@ -120,7 +124,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
  <div class="herotext">
   <p class="eyebrow">PixelWhisperer Kards &middot; the DIGI card's art engine</p>
   <h1>Every card has a <span>face</span> only its facts can draw.</h1>
-  <p class="lede">A DIGI card is a sealed picture that carries a living, ownable intelligence. This engine draws that picture: a blocky voxel creature born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
+  <p class="lede">A DIGI card is a sealed picture that carries a living, ownable intelligence. This engine draws that picture: a blocky voxel creature born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It draws the game around the cards too: item cards (apps, pwas, nodes, talkers), the estate a player grows, duels in the arena and the raid bosses. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
   <p class="byline">Built by <b>Kar</b>, the estate's resident builder, as a side build for PixelWhisperer. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
   <ul class="badges" aria-label="Facts about this build">
     <li><b id="n-themes">4</b> themes, append-only</li><li><b>2<sup>64</sup></b> creatures</li><li><b>integer-only</b> drawing</li><li><b>mutation-witnessed</b>, none baselined</li><li>drawn live <b>in your browser</b></li>
@@ -130,7 +134,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#estate">Estate</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -174,10 +178,41 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
   </div>
 </section>
 
+<section id="items" aria-labelledby="items-h">
+  <h2 id="items-h">Items: apps, pwas, nodes, talkers and routers</h2>
+  <p>A card can be more than a scorer. Its <code>form</code> says what it is: an <b>app</b> is drawn as a window, a <b>pwa</b> as a phone with a bolt, a <b>node</b> as a server, a <b>talker</b> as a terminal with a speech bubble, a <b>router</b> (it picks, case by case, which of its owner's allies answers) as an antenna. Every theme draws the object its own way, from the item's own facts: its name, its form's icon, the source it was minted from, the gear slot it fits, its id and barcode, and a frame in the rarity its verified tier earns (<b>prototype</b> common, <b>works</b> uncommon, <b>proven</b> rare). A scorer card, which names no form, is drawn exactly as before, byte for byte. The form is one of the card's facts like any other: a card with a different form is a different card, with a different face.</p>
+  <div class="work">
+    <div class="preview">
+      <canvas class="card" id="item-canvas" width="384" height="560" role="img" aria-label="An item card"></canvas>
+      <p class="msg" id="item-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="item-form" autocomplete="off" novalidate>
+      <div><label for="i-form">Form</label><select id="i-form"></select></div>
+      <div><label for="i-tier">Verified tier</label><select id="i-tier"></select></div>
+      <div class="full"><label for="i-name">Name (at most 24 of A-Z a-z 0-9 space &amp; ' . -)</label><input id="i-name" maxlength="24" value="Churn Radar"></div>
+      <div><label for="i-source">Minted from (1 to 20 of A-Z a-z 0-9 . -)</label><input id="i-source" maxlength="20" spellcheck="false" value="divorcerbot"></div>
+      <div><label for="i-theme">Theme</label><select id="i-theme"></select></div>
+      <div class="full"><label for="i-id">Id (16 lowercase hex)</label><div class="row"><input id="i-id" maxlength="16" spellcheck="false"><button type="button" class="act alt" id="i-roll">Roll an id</button></div></div>
+      <div class="actions"><button type="button" class="act" id="i-dl">Download PNG</button><button type="button" class="act alt" id="i-json">Copy the facts as JSON</button><span class="msg" id="i-act" role="status" aria-live="polite"></span></div>
+    </form>
+  </div>
+  <h3>The kit: node and tool slots</h3>
+  <p>A card fields <b>node</b> slots (two at birth, three once uncommon, four from rare) and two <b>tool</b> slots. A node is another of its owner's cards, coupled with it; its slot shows the card and its measured worth on GATE in millionths (<b>+19,727</b>), or the card dimmed and hatched when it is not joined. A tool is an app item, framed in its tier; a tool never changes a score. The item above, when it is an app, sits in the first tool slot. The badge a card wears in a duel says how many of its node slots are fielded. Drawn by <code>paintSlot</code> and <code>kitBadge</code>.</p>
+  <div class="icons" id="gear"></div>
+<pre><code>import { paintArt, FORMS, TIERS, GEAR, itemFront } from './kards/kardart.mjs';
+paintArt({ form: 'app', id, name: 'Churn Radar', source: 'divorcerbot', tier: 'works' }, 'synthwave-v1', 384, 560)   // { ok, px } | { ok: false, why }
+// FORMS: scorer app pwa node talker router. TIERS: prototype works proven (common, uncommon, rare). GEAR: an app or pwa is a tool, a node or router an ally, a talker a voice.
+// itemFront(form, id): the item as a 9 x 14 portrait, for an inventory slot
+import { paintSlot, kitBadge, worthText } from './kards/gear.mjs';
+paintSlot({ kind: 'node', card: { id, rarity }, worth: 19727 }, 'synthwave-v1', 112, 128)   // or joined: false; a tool: { kind: 'tool', item: { id, tier } }; empty: { kind }
+kitBadge(fielded, slots, scale)                                     // the kitted overlay: { ok, w, h, px RGBA }</code></pre>
+</section>
+
 <section id="estate" aria-labelledby="estate-h">
   <h2 id="estate-h">The estate: grow your plot</h2>
   <p>Every card a player holds is a tower on an isometric blockcraft plot, its trim in its rarity and its own creature on the sign. Tools are blocks, consented mesh links are cyan wires, and the districts still to come are fenced grey. The plot opens by a published rule: a district holding n blocks has <code>tilesFor(n) = min(36, 8 + 2n)</code> open tiles, so a new player starts with 16. The same holdings always draw the same picture, so a shared snapshot can be replayed and checked.</p>
   <p class="hint">Try it: <b>Add a card</b> raises a new tower; <b>Breed a new child</b> adds a generation-1 card, standing in for one bred from two you hold, and marks it fresh, so its sign sparkles until the next child; <b>Wire two cards</b> joins two of your cards with a consented mesh link, a cyan wire; the slider sets how many tool blocks you hold; tick the snapshot to see the 1200 &times; 630 picture a shared link shows.</p>
+  <p class="hint">Holding items or swarms opens the full plot: nothing fenced, nothing coming. Tick <b>Hold items</b>, or add one: an app or a pwa stands as a tool block, a node as a dark server block with its lights, a talker as a terminal with a speech bubble, a router as an antenna. <b>Form a swarm</b> joins two to four of your cards in a consented team: it stands in SWARM as a stack of its members' blocks, wired to their towers. Every district opens by the same rule and is 6 &times; 6, so the rule holds to 36 tiles in all five. An item's top edge is trimmed in its tier's colour, and a new one sparkles. Holdings of scorer cards alone draw exactly as before.</p>
   <div class="work">
     <div>
       <canvas class="card estate" id="estate-canvas" width="720" height="480" role="img" aria-label="An estate"></canvas>
@@ -190,6 +225,8 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
         <button type="button" class="act alt" id="est-child">Breed a new child</button>
         <button type="button" class="act alt" id="est-wire">Wire two cards</button>
       </div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-items" type="checkbox" style="width:auto;min-height:0"><label for="est-items" style="margin:0">Hold items and swarms: the full plot, every district open</label></div>
+      <div class="actions"><button type="button" class="act alt" id="est-app">Add an app</button><button type="button" class="act alt" id="est-pwa">Add a pwa</button><button type="button" class="act alt" id="est-node">Add a node</button><button type="button" class="act alt" id="est-talker">Add a talker</button><button type="button" class="act alt" id="est-router">Add a router</button><button type="button" class="act alt" id="est-swarm">Form a swarm</button></div>
       <div><label for="est-tools">Tool blocks: <output id="o-tools"></output></label><input id="est-tools" type="range" min="0" max="40" step="1" value="4"></div>
       <div><label for="est-theme">Theme</label><select id="est-theme"></select></div>
       <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-snap" type="checkbox" style="width:auto;min-height:0"><label for="est-snap" style="margin:0">The shared snapshot (title and stats bands, 1200 &times; 630)</label></div>
@@ -204,8 +241,59 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 <pre><code>import { paintEstate, estateStats, tilesFor } from './kards/estate.mjs';
 paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fresh? }], wires?: [[idA, idB]],
               tools?: n, levels?: n, snapshot?: true }, 'blockcraft-v1', 1200, 630)   // { ok, px, scale } | { ok: false, why }
+// a card: stage is its level, 0-99 (a tower grows a block every 25 levels); fresh marks a new child; department and generation are carried, not drawn.
 // px: w &times; h RGB at the size asked for, each logical pixel a scale &times; scale block (480 &times; 320 is scale 2, 1200 &times; 630 is scale 3).
-// snapshot: true adds a title band and a stats band (blocks, tiles, mesh links, and levels when given): the picture a shared link shows.</code></pre>
+// snapshot: true adds a title band and a stats band (blocks, tiles, mesh links, and levels when given): the picture a shared link shows.
+// The full plot: items: [{ id, form: 'app' | 'pwa' | 'node' | 'talker' | 'router', tier, fresh? }] and swarms: [{ id, members: [card ids] }] in place of tools.</code></pre>
+</section>
+
+<section id="arena" aria-labelledby="arena-h">
+  <h2 id="arena-h">The arena: two cards, one batch of cases</h2>
+  <p>Two scorer cards face each other on the same batch of cases. On each case a card either <b>hits</b> (ranks it right) or <b>misses</b>; the side that hits where the other misses ranked that case better, and anything else is a tie. The scoreboard fills as the cases are decided: each side's hit or miss, and between them a block in the colour of the side that ranked the case better (grey for a tie). The latest case puts a tick or a cross beside each fighter, a rating badge sits over each, and the end is a <b>WIN</b> banner over the winner, a <b>DRAW</b> ribbon across both, or a <b>REFUSED</b> ribbon. The tally is published as <code>duelScore</code>, and the same duel always draws the same picture, so a replay can be checked.</p>
+  <p class="hint">Press <b>Play the duel</b> to watch it a case at a time, <b>One case</b> to step, <b>New duel</b> to deal another pair and batch. The badge over each card is its arena rating; the platform and badge colour are its rarity; the pips under the badge, when a card is kitted, are its node slots, lit for each one fielded. In DIGI a duel is decided by each card's <b>AUC</b> on the batch: the chance it ranks a case that is truly positive above one that is not (0.5 is a coin toss, 1.0 is perfect). Equal AUCs are a draw.</p>
+  <div class="work">
+    <div>
+      <canvas class="card estate" id="arena-canvas" width="720" height="480" role="img" aria-label="A duel"></canvas>
+      <p class="msg" id="arena-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="arena-form" autocomplete="off" novalidate>
+      <div class="actions"><button type="button" class="act" id="ar-play">Play the duel</button><button type="button" class="act alt" id="ar-step">One case</button><button type="button" class="act alt" id="ar-new">New duel</button></div>
+      <div><label for="ar-cases">Cases in the batch</label><select id="ar-cases"><option value="16">16</option><option value="48" selected>48</option><option value="96">96</option><option value="192">192</option></select></div>
+      <div><label for="ar-theme">Theme</label><select id="ar-theme"></select></div>
+      <div class="full"><label for="ar-result">How the duel ends</label><select id="ar-result"><option value="auto">By the tally (level is a draw)</option><option value="left">The left card wins</option><option value="right">The right card wins</option><option value="draw">A draw</option><option value="refused">Refused</option></select></div>
+      <div class="actions"><button type="button" class="act alt" id="ar-dl">Download PNG (1200 &times; 630)</button><span class="msg" id="ar-act" role="status" aria-live="polite"></span></div>
+      <div class="trace full" id="arena-stats" aria-live="polite"></div>
+    </form>
+  </div>
+  <p class="hint">In this demo each card has a hidden hit rate for the batch and the cases are dealt in your browser; in DIGI the cases are real, and the AUCs decide the ending. The painter draws whatever duel it is given.</p>
+<pre><code>import { paintDuel, duelScore, checkDuel } from './kards/arena.mjs';
+paintDuel({ left: { id, rarity, rating, title }, right: { id, rarity, rating, title }, cases: [[1, 0], [1, 1], [0, 1]],
+            decided: 3, result: null }, 'synthwave-v1', 1200, 630)   // { ok, px, scale } | { ok: false, why }
+// cases: [leftHit, rightHit] per case, 1 to 192. result: null while it runs, then 'left' or 'right' (WIN), 'draw' or 'refused'.
+// duelScore(duel): { left, right, ties, decided, cases }, counting only the decided cases</code></pre>
+</section>
+
+<section id="raids" aria-labelledby="raids-h">
+  <h2 id="raids-h">Raids: the departments no card has cleared</h2>
+  <p>Each boss is a department where no card has yet reached a GATE of 0.6 on cases it never saw: five in the hospital (admissions, clinical, pharmacy, history, discharge), bank credit, adult employer and credit billing. A boss's health is its distance to the bar, the published rule <code>bossHealth(best) = max(0, 600000 - best)</code> in millionths of GATE: the bar is full at chance (0.5) and empty at 0.6. When a card clears it the boss breaks apart, and the loot is that first card of its department. Click a boss below, then move the best score. <b>GATE</b> is a card's score on cases it never saw while it learned (an AUC: 0.5 is chance, 1.0 perfect); 0.6 is the bar a department must clear. Once a card reaches it, the boss falls for good and that card is the department's loot: the loot's <code>title</code> is that card's name.</p>
+  <div class="icons" id="bosses" role="group" aria-label="The eight bosses"></div>
+  <div class="work">
+    <div>
+      <canvas class="card estate" id="raid-canvas" width="720" height="480" role="img" aria-label="A raid"></canvas>
+      <p class="msg" id="raid-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="raid-form" autocomplete="off" novalidate>
+      <div class="full"><label for="rd-best">Best GATE so far: <output id="o-best"></output></label><input id="rd-best" type="range" min="0" max="700000" step="1000" value="554000"></div>
+      <div><label for="rd-tries">Tries</label><input id="rd-tries" type="number" min="0" max="99999" step="1" value="12"></div>
+      <div><label for="rd-theme">Theme</label><select id="rd-theme"></select></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="rd-none" type="checkbox" style="width:auto;min-height:0"><label for="rd-none" style="margin:0">No score yet</label></div>
+      <div class="actions"><button type="button" class="act alt" id="rd-loot">A different loot card</button><button type="button" class="act alt" id="rd-dl">Download PNG (1200 &times; 630)</button><span class="msg" id="rd-act" role="status" aria-live="polite"></span></div>
+    </form>
+  </div>
+<pre><code>import { paintRaid, bossHealth, BOSSES, bossSprite } from './kards/raid.mjs';
+paintRaid({ dataset: 'hospital', department: 'admissions', best: 554000, attempts: 12 }, 'synthwave-v1', 480, 320)   // { ok, px, scale } | { ok: false, why }
+// best: GATE in millionths, or null for no score yet. From 600000 the boss falls: pass loot: { id, rarity, title? }, the first card to clear it.
+// bossSprite(key, scale): a boss's 32 x 32 sprite as RGBA, for a roster</code></pre>
 </section>
 
 <section id="ui" aria-labelledby="ui-h">
@@ -244,6 +332,7 @@ const face = identicon(publicKeyHex, 4);                          // { ok, size:
     <li><b>Look.</b> Pick a card in the gallery. Flip the theme between Synthwave and Blockcraft.</li>
     <li><b>Tinker.</b> Open it in the workshop and change a fact: the title, the level, the rarity, a parent. Watch where each one lands on the card (the anatomy below shows the map).</li>
     <li><b>Take it.</b> Download the PNG or copy the link. Every card is a pure function of its facts, so the same link shows the same card on any device.</li>
+    <li><b>Play.</b> Make an item card, hold items on your estate and watch TALKER open, play a duel in the arena a case at a time, and run a boss down to 0.6 in a raid. Every one of those pictures is drawn from its facts the same way a card is.</li>
     <li><b>Build with it.</b> One import and one call draws a card's face, for any size from 64 to 1024 pixels:</li>
   </ol>
 <pre><code>import { paintArt, checkFacts, THEMES } from './kards/kardart.mjs';
@@ -296,13 +385,17 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>checkFacts</code></td><td>the contract: id (16 hex), title (&le; 24, <code>A-Za-z0-9 &amp;'.-</code>), dataset, department (&le; 16, <code>a-z0-9-</code>), stage 0-99, rarity, generation 0-99, up to 2 parents. Total: never throws.</td></tr>
       <tr><td><code>whiten</code> / <code>reader</code></td><td>id to 64 bits, bit by bit. Integer hash only (<code>Math.imul</code>, shifts).</td></tr>
       <tr><td><code>modelOf</code> / <code>spriteOf</code></td><td>the genome to a 9 &times; 14 &times; 7 voxel creature, mirrored, with speckle.</td></tr>
+      <tr><td><code>itemModel</code> / <code>itemChrome</code></td><td>an item (<code>facts.form</code>: app, pwa, node, talker) as its object in the same voxel grid, so each theme draws it as it draws a creature, and its own panel: form, tier ladder, source, gear slot, id.</td></tr>
       <tr><td>font and icons</td><td>a 5 &times; 9 pixel font (66 glyphs) and seven 16 &times; 16 dataset icons, kept as readable art in the source.</td></tr>
       <tr><td><code>chrome</code> / <code>frame</code></td><td>everything that is the same in every theme: plate, LV bar, rarity frame and stars, lineage, id barcode.</td></tr>
       <tr><td><code>THEMES</code></td><td>the registry: <span id="theme-list"></span>. Frozen, versioned, append-only.</td></tr>
       <tr><td><code>paintArt</code></td><td>the one call: facts, theme id, width, height to RGB bytes, or a refusal.</td></tr>
       <tr><td><code>ui.mjs</code></td><td>the UI kit: the card font plus the glyphs a label needs (95 in all, a real space, no currency), the dock and action icons, <code>identicon(pubHex)</code> and <code>paintText</code>, all built on kardart.mjs's own tables.</td></tr>
       <tr><td><code>ttf.mjs</code></td><td>a deterministic TrueType writer: the glyph table as <code>fonts/PixelWhisperer.ttf</code>, square-pixel contours, byte for byte on every rebuild.</td></tr>
-      <tr><td><code>estate.mjs</code></td><td>the estate painter: <code>paintEstate</code>, <code>tilesFor</code>, <code>estateStats</code>, drawing a player's holdings as an isometric plot with the card engine's own cube.</td></tr>
+      <tr><td><code>estate.mjs</code></td><td>the estate painter: <code>paintEstate</code>, <code>tilesFor</code>, <code>estateStats</code>, drawing a player's holdings as an isometric plot with the card engine's own cube; items open TALKER and stand as tool, server and terminal blocks.</td></tr>
+      <tr><td><code>arena.mjs</code></td><td>the duel painter: <code>paintDuel</code>, <code>checkDuel</code> and the published tally <code>duelScore</code>; two creatures in profile (<code>creatureSide</code>), rating badges, a scoreboard of every case, WIN or REFUSED.</td></tr>
+      <tr><td><code>raid.mjs</code></td><td>the raids: eight boss sprites built from rectangles and ellipses and shaded by one rule, the published <code>bossHealth</code>, <code>paintRaid</code> for a boss standing or falling with its loot.</td></tr>
+      <tr><td><code>gear.mjs</code></td><td>the kit: <code>paintSlot</code> for a node slot (a card and its worth on GATE, or not joined) or a tool slot (an app item in its tier), empty or filled; <code>kitBadge</code>, the overlay that says how many node slots are fielded; <code>worthText</code>.</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
     </tbody>
   </table></div>
@@ -319,7 +412,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <div class="box"><h3>CFO</h3><p>The marginal cost of one more card's art is zero: it is drawn on the viewer's device. No per-image fee, no per-seat licence, no cloud bill for art. The case below is arithmetic on your own numbers, not ours.</p></div>
     <div class="box"><h3>COO</h3><p>One module and one call. There is nothing to host, schedule or scale: no server, no queue, no storage, no dependencies. If a device can show a page, it can draw a card.</p></div>
     <div class="box"><h3>CTO and CISO</h3><p>Pure integer code with no network access and no imports, in one file you pin by SHA-256. Deterministic: the same facts give the same bytes in any browser, so a reader can verify a card's picture by re-drawing it. Hostile input is refused, never thrown. Proven by tests, hash pins and a mutation witness in which every mutant is killed.</p></div>
-    <div class="box"><h3>Product and design</h3><p>Every theme in the switcher above is finished and pinned. A new theme is a new id (for example <code>synthwave-v2</code>) and never breaks an old card. The gallery and workshop above show every fact on the card before you commit to anything.</p></div>
+    <div class="box"><h3>Product and design</h3><p>Every theme in the switcher above is finished and pinned. A new theme is a new id (for example <code>synthwave-v2</code>) and never breaks an old card. The gallery and workshop above show every fact on the card before you commit to anything. Item cards, the estate, duels and raids are drawn in every theme too, so a re-skin reaches the whole game at once.</p></div>
     <div class="box"><h3>Community and marketing</h3><p>Cards that look different from each other, rarity you can read from across a room, a link that shows the same card on any phone, and a download button. All twelve sample cards, in both themes, are on this page.</p></div>
   </div>
 
@@ -390,7 +483,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
   <h2 id="ad-h">Adoption</h2>
   <div class="cols">
     <div class="box"><h3>For the DIGI card</h3>
-      <p>Vendor <code>kards/kardart.mjs</code> byte for byte at a named commit and call <code>paintArt(facts, themeId, 384, 560)</code> for the 384 &times; 560 area under the card's 16-row data band. To open a card, re-draw the face from the facts the card carries and compare it with the picture: if one byte differs, refuse it. A theme id on the card says which world to draw.</p></div>
+      <p>Vendor <code>kards/kardart.mjs</code> byte for byte at a named commit and call <code>paintArt(facts, themeId, 384, 560)</code> for the 384 &times; 560 area under the card's 16-row data band. To open a card, re-draw the face from the facts the card carries and compare it with the picture: if one byte differs, refuse it. A theme id on the card says which world to draw. The game view builds on the same kit: <code>ui.mjs</code> for the font, icons and key faces, <code>estate.mjs</code> for the home plot, <code>arena.mjs</code> for duels and <code>raid.mjs</code> for the bosses; an item card is <code>paintArt</code> with a <code>form</code>.</p></div>
     <div class="box"><h3>To add a theme</h3>
       <p>A published theme is never edited, because old cards must still re-draw exactly. A redesign is a new id, for example <code>synthwave-v2</code>: append it to <code>THEMES</code>, run <code>node tools/kards-pins.mjs synthwave-v2</code>, paste its pins into <code>kardart.pins.mjs</code>, and let the witness prove it. The old themes' pins stay green.</p></div>
     <div class="box"><h3>For any build that wants collectible graphics</h3>
@@ -410,7 +503,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">233</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">43</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">91</b> in the estate painter and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">269</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">158</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -427,6 +520,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <li>The pixel font covers the characters a title and department may hold; nothing else can be printed, so nothing else is accepted.</li>
     <li>A theme, once published, is frozen. That is the point, and also the cost: a mistake in a published theme is fixed by a new theme, never by an edit.</li>
     <li>"Blockcraft" is a style name for blocky voxel art, "Pocket LCD" for a four-shade handheld look and "Memphis" for the 1980s design movement. None is affiliated with, or derived from, any game or product.</li>
+    <li>The arena draws the duel it is given: who hit, who missed and how it ended. Deciding a duel, or refusing one, is the game's job; this page's demo deals random cases. A raid shows GATE to four decimal places, measured in millionths.</li>
     <li>I own functional correctness. The last inch of taste in the art is the owner's to judge.</li>
   </ul>
 </section>
@@ -444,13 +538,16 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 </div></footer>
 
 <script type="module">
-import { THEMES, paintArt, spriteOf, checkFacts } from './kardart.mjs';
+import { THEMES, FORMS, TIERS, GEAR, paintArt, spriteOf, checkFacts } from './kardart.mjs';
 import { pngOf } from './kardpng.mjs';
 import { SAMPLES } from './samples.mjs';
 import { PINS } from './kardart.pins.mjs';
 import { costCase, verdict } from './costcase.mjs';
-import { CHARSET, UI_ICONS, DATASET_ICONS, STAR, DOCK, ACTIONS, identicon, paintText } from './ui.mjs';
+import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, identicon, paintText } from './ui.mjs';
 import { paintEstate, estateStats } from './estate.mjs';
+import { paintDuel, duelScore } from './arena.mjs';
+import { paintRaid, bossHealth, bossSprite, BOSSES } from './raid.mjs';
+import { paintSlot, kitBadge, worthText } from './gear.mjs';
 
 const $ = (s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
@@ -592,30 +689,83 @@ function cost() {
 }
 for (const id of ['cards', 'percard', 'hours', 'rate']) $('#c-' + id).addEventListener('input', cost);
 
+// ── drawing helpers shared by the item, estate, arena and raid sections ─────────────────────────────────────────────────────
+function putRGB(canvas, px, w, h) { canvas.width = w; canvas.height = h; const img = new ImageData(w, h), d = img.data; for (let i = 0, j = 0; i < px.length; i += 3, j += 4) { d[j] = px[i]; d[j + 1] = px[i + 1]; d[j + 2] = px[i + 2]; d[j + 3] = 255; } canvas.getContext('2d').putImageData(img, 0, 0); }
+function savePNG(px, w, h, name) { const p = pngOf(px, w, h), a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([p.png], { type: 'image/png' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
+const saidIn = (id) => (t) => { const el = $(id); el.textContent = t; setTimeout(() => { if (el.textContent === t) el.textContent = ''; }, 3000); };
+function stats(box, rows) { box.textContent = ''; for (const [k, v] of rows) { const dv = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = String(v); dv.append(a, b); box.append(dv); } }
+const randHex = (n) => hex(crypto.getRandomValues(new Uint8Array(n)));
+const pick = (a) => a[crypto.getRandomValues(new Uint8Array(1))[0] % a.length];
+const byte = () => crypto.getRandomValues(new Uint8Array(1))[0];
+
+// ── items: the item workshop and the gear slots ───────────────────────────────────────────────────────────────────────────
+const I = { form: $('#i-form'), tier: $('#i-tier'), name: $('#i-name'), source: $('#i-source'), theme: $('#i-theme'), id: $('#i-id') };
+for (const f of FORMS.slice(1)) I.form.add(new Option(f, f));
+for (const t of TIERS) I.tier.add(new Option(t, t));
+for (const id of THEME_IDS) I.theme.add(new Option(THEMES[id].name, id));
+I.form.value = 'app'; I.tier.value = 'works'; I.theme.value = 'synthwave-v1'; I.id.value = '7c41e2a9d05b38f6';
+const readItem = () => ({ form: I.form.value, id: I.id.value.trim(), name: I.name.value, source: I.source.value.trim(), tier: I.tier.value });
+let lastItem = null;
+function slotFigure(slot, label) {   // one kit slot, drawn by paintSlot in the item's theme, at twice its size
+  const fig = document.createElement('figure'), c = document.createElement('canvas'), r = paintSlot(slot, I.theme.value, 112, 128), cap = document.createElement('figcaption');
+  putRGB(c, r.px, 112, 128); c.setAttribute('role', 'img'); c.setAttribute('aria-label', label);
+  cap.className = 'pw pw-1'; cap.textContent = label.toUpperCase(); fig.append(c, cap); return fig;
+}
+function renderGear(f) {
+  const box = $('#gear'), node = (s, worth) => ({ kind: 'node', card: { id: s.id, rarity: s.rarity }, worth });
+  box.textContent = '';
+  box.append(slotFigure(node(SAMPLES[0], 19727), 'node ' + worthText(19727)), slotFigure(node(SAMPLES[2], 41696), 'node ' + worthText(41696)), slotFigure({ kind: 'node', card: { id: SAMPLES[5].id, rarity: SAMPLES[5].rarity }, joined: false }, 'node, not joined'), slotFigure({ kind: 'node' }, 'node, empty'));
+  box.append(f.form === 'app' ? slotFigure({ kind: 'tool', item: { id: f.id, tier: f.tier } }, 'tool: ' + (f.name || 'this app')) : slotFigure({ kind: 'tool' }, 'tool, empty'), slotFigure({ kind: 'tool' }, 'tool, empty'));
+  const b = kitBadge(2, 4, 4), fig = document.createElement('figure'), c = document.createElement('canvas'), cap = document.createElement('figcaption');
+  putRGBA(c, b); c.setAttribute('role', 'img'); c.setAttribute('aria-label', 'kitted: 2 of 4 node slots fielded'); cap.className = 'pw pw-1'; cap.textContent = 'KITTED 2 OF 4'; fig.append(c, cap); box.append(fig);
+}
+function renderItem() {
+  const f = readItem(), c = checkFacts(f), m = $('#item-msg');
+  if (!c.ok) { m.className = 'msg bad'; m.textContent = 'Not an item yet: ' + c.why + '.'; return; }
+  paint($('#item-canvas'), f, I.theme.value); lastItem = f;
+  m.className = 'msg ok'; m.textContent = (f.name || 'An unnamed item') + ': ' + ('aeiou'.includes(f.form[0]) ? 'an ' : 'a ') + f.form + ', ' + f.tier + ' (' + RARITIES[c.f.ri] + '), minted from ' + f.source + ', fits the ' + GEAR[f.form] + ' slot';
+  $('#item-canvas').setAttribute('aria-label', m.textContent + ' (' + THEMES[I.theme.value].name + ')');
+  history.replaceState(null, '', '#item=' + encodeURIComponent(JSON.stringify({ t: I.theme.value, f })));
+  renderGear(f);
+}
+for (const el of Object.values(I)) el.addEventListener('input', renderItem);
+$('#i-roll').addEventListener('click', () => { I.id.value = randHex(8); renderItem(); });
+const itemSaid = saidIn('#i-act');
+$('#i-dl').addEventListener('click', () => { if (!lastItem) return itemSaid('Fix the item first.'); savePNG(paintArt(lastItem, I.theme.value, 384, 560).px, 384, 560, 'item-' + lastItem.form + '-' + lastItem.id.slice(0, 8) + '-' + I.theme.value + '.png'); itemSaid('Downloaded.'); });
+$('#i-json').addEventListener('click', async () => { try { await navigator.clipboard.writeText(JSON.stringify(lastItem, null, 2)); itemSaid('Facts copied.'); } catch { itemSaid('Copy failed.'); } });
+
 // ── the estate builder ──────────────────────────────────────────────────────────────────────────────────────────────
 const RARS = ['common', 'uncommon', 'rare', 'epic', 'legendary'], SETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
-const est = { cards: SAMPLES.slice(0, 8).map((s, n) => ({ id: s.id, dataset: s.dataset, department: s.department, stage: s.stage, rarity: s.rarity, generation: s.generation, fresh: n === 1 })), wires: [[SAMPLES[0].id, SAMPLES[2].id], [SAMPLES[2].id, SAMPLES[4].id]], tools: 4, snapshot: false };
+const est = { cards: SAMPLES.slice(0, 8).map((s, n) => ({ id: s.id, dataset: s.dataset, department: s.department, stage: s.stage, rarity: s.rarity, generation: s.generation, fresh: n === 1 })), wires: [[SAMPLES[0].id, SAMPLES[2].id], [SAMPLES[2].id, SAMPLES[4].id]], tools: 4, items: [], swarms: [], useItems: false, snapshot: false };
 let estTheme = 'blockcraft-v1';
 for (const id of THEME_IDS) $('#est-theme').add(new Option(THEMES[id].name, id));
 $('#est-theme').value = estTheme;
 const estSize = () => (est.snapshot ? [1200, 630] : [720, 480]);
+const holdings = () => (est.useItems ? { cards: est.cards, wires: est.wires, items: est.items, swarms: est.swarms, snapshot: est.snapshot } : { cards: est.cards, wires: est.wires, tools: est.tools, snapshot: est.snapshot });
 function renderEstate() {
-  const [w, h] = estSize(), r = paintEstate(est, estTheme, w, h), c = $('#estate-canvas'), s = estateStats(est);
+  const [w, h] = estSize(), H = holdings(), r = paintEstate(H, estTheme, w, h), c = $('#estate-canvas'), s = estateStats(H);
   if (!r.ok) { $('#estate-msg').className = 'msg bad'; $('#estate-msg').textContent = r.why; return; }
-  c.width = w; c.height = h;
-  const img = new ImageData(w, h), d = img.data;
-  for (let i = 0, j = 0; i < r.px.length; i += 3, j += 4) { d[j] = r.px[i]; d[j + 1] = r.px[i + 1]; d[j + 2] = r.px[i + 2]; d[j + 3] = 255; }
-  c.getContext('2d').putImageData(img, 0, 0);
-  c.setAttribute('aria-label', 'An estate in ' + THEMES[estTheme].name + ': ' + s.cards + ' card towers, ' + s.tools + ' tool blocks, ' + s.links + ' mesh links, ' + s.tiles.total + ' open tiles');
-  $('#o-tools').textContent = est.tools;
+  putRGB(c, r.px, w, h);
+  c.setAttribute('aria-label', 'An estate in ' + THEMES[estTheme].name + ': ' + s.cards + ' card towers, ' + s.tools + ' tool blocks' + (s.items === undefined ? '' : ', ' + s.talkers + ' talkers, ' + s.routers + ' routers, ' + s.swarms + ' swarms') + ', ' + s.links + ' mesh links, ' + s.tiles.total + ' open tiles');
+  $('#o-tools').textContent = est.useItems ? 'counted from the items' : est.tools;
+  $('#est-tools').disabled = est.useItems; $('#est-items').checked = est.useItems;
   $('#estate-msg').className = 'msg ok'; $('#estate-msg').textContent = s.blocks + ' blocks · ' + s.tiles.total + ' tiles · drawn at scale ' + r.scale;
-  const box = $('#estate-stats'); box.textContent = '';
-  for (const [k, v] of [['BLOCKS', s.blocks], ['SCORER TILES', s.cards + ' cards → ' + s.tiles.scorer], ['TOOLS TILES', s.tools + ' tools → ' + s.tiles.tools], ['MESH LINKS', s.links]]) { const dv = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = String(v); dv.append(a, b); box.append(dv); }
+  stats($('#estate-stats'), [['BLOCKS', s.blocks], ['SCORER TILES', s.cards + ' cards → ' + s.tiles.scorer], ['TOOLS TILES', s.tools + (est.useItems ? ' apps, pwas, nodes' : ' tools') + ' → ' + s.tiles.tools], ...(est.useItems ? [['TALKER TILES', s.talkers + ' talkers → ' + s.tiles.talker], ['SWARM TILES', s.swarms + ' swarms → ' + s.tiles.swarm], ['ROUTER TILES', s.routers + ' routers → ' + s.tiles.router]] : []), ['MESH LINKS', s.links]]);
 }
-const randHex = (n) => hex(crypto.getRandomValues(new Uint8Array(n)));
-const pick = (a) => a[crypto.getRandomValues(new Uint8Array(1))[0] % a.length];
+for (const form of FORMS.slice(1)) $('#est-' + form).addEventListener('click', () => {
+  if (est.items.length >= 80) return;
+  for (const it of est.items) it.fresh = false;
+  est.items.push({ id: randHex(8), form, tier: pick(TIERS), fresh: true }); est.useItems = true; renderEstate();
+});
+$('#est-items').addEventListener('input', () => { est.useItems = $('#est-items').checked; renderEstate(); });
+$('#est-swarm').addEventListener('click', () => {   // two to four of the player's cards, as a consented team
+  if (est.swarms.length >= 40 || est.cards.length < 2) return;
+  const pool = est.cards.map((c) => c.id), members = [];
+  for (let n = 2 + (byte() % 3); n > 0 && pool.length; n--) members.push(pool.splice(byte() % pool.length, 1)[0]);
+  est.swarms.push({ id: randHex(8), members }); est.useItems = true; renderEstate();
+});
 $('#est-add').addEventListener('click', () => { if (est.cards.length >= 60) return; est.cards.push({ id: randHex(8), dataset: pick(SETS), department: 'ops', stage: crypto.getRandomValues(new Uint8Array(1))[0] % 100, rarity: pick(RARS), generation: 0, fresh: false }); renderEstate(); });
-$('#est-remove').addEventListener('click', () => { const gone = est.cards.pop(); if (gone) est.wires = est.wires.filter(([a, b]) => a !== gone.id && b !== gone.id); renderEstate(); });
+$('#est-remove').addEventListener('click', () => { const gone = est.cards.pop(); if (gone) { est.wires = est.wires.filter(([a, b]) => a !== gone.id && b !== gone.id); est.swarms = est.swarms.filter((sw) => !sw.members.includes(gone.id)); } renderEstate(); });
 $('#est-child').addEventListener('click', () => { for (const c of est.cards) c.fresh = false; est.cards.push({ id: randHex(8), dataset: pick(SETS), department: 'ops', stage: 0, rarity: 'common', generation: 1, fresh: true }); renderEstate(); });
 $('#est-wire').addEventListener('click', () => {
   const free = [];
@@ -632,7 +782,73 @@ $('#est-dl').addEventListener('click', () => {
   a.href = URL.createObjectURL(new Blob([p.png], { type: 'image/png' })); a.download = 'estate-' + estTheme + (est.snapshot ? '-snapshot' : '') + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   estSaid('Downloaded.');
 });
-$('#est-json').addEventListener('click', async () => { try { await navigator.clipboard.writeText(JSON.stringify(est, null, 1)); estSaid('Holdings copied.'); } catch { estSaid('Copy failed.'); } });
+$('#est-json').addEventListener('click', async () => { try { await navigator.clipboard.writeText(JSON.stringify(holdings(), null, 1)); estSaid('Holdings copied.'); } catch { estSaid('Copy failed.'); } });
+
+// ── the arena: deal a batch, play it a case at a time ─────────────────────────────────────────────────────────────────
+for (const id of THEME_IDS) $('#ar-theme').add(new Option(THEMES[id].name, id));
+$('#ar-theme').value = 'synthwave-v1';
+let duel = null, timer = null;
+function newDuel() {
+  const a = pick(SAMPLES), others = SAMPLES.filter((s) => s.id !== a.id), b = pick(others), pa = 110 + (byte() % 110), pb = 110 + (byte() % 110);   // each card's hidden hit rate for this batch, out of 256
+  const side = (s) => ({ id: s.id, rarity: s.rarity, rating: 1200 + (byte() << 2) % 800, title: s.title.slice(0, 16).trim() });
+  duel = { left: side(a), right: side(b), cases: Array.from({ length: Number($('#ar-cases').value) }, () => [byte() < pa ? 1 : 0, byte() < pb ? 1 : 0]), decided: 0 };
+  clearInterval(timer); renderDuel();
+}
+function ending(d) {   // the demo's ending: the tally decides, level is a draw (in DIGI the AUCs decide)
+  if (d.decided < d.cases.length) return null;
+  const v = $('#ar-result').value, s = duelScore(d);
+  return v !== 'auto' ? v : s.left > s.right ? 'left' : s.right > s.left ? 'right' : 'draw';
+}
+function renderDuel() {
+  const d = { ...duel, result: ending(duel) }, r = paintDuel(d, $('#ar-theme').value, 720, 480), m = $('#arena-msg'), s = duelScore(d);
+  if (!r.ok) { m.className = 'msg bad'; m.textContent = r.why + '.'; return; }
+  putRGB($('#arena-canvas'), r.px, 720, 480);
+  const end = d.result === null ? '' : d.result === 'refused' ? ' · refused' : d.result === 'draw' ? ' · a draw' : ' · ' + d[d.result].title + ' wins';
+  m.className = 'msg ok'; m.textContent = d.left.title + ' (' + d.left.rating + ') against ' + d.right.title + ' (' + d.right.rating + ') · case ' + d.decided + ' of ' + d.cases.length + end;
+  $('#arena-canvas').setAttribute('aria-label', 'A duel in ' + THEMES[$('#ar-theme').value].name + ': ' + m.textContent);
+  stats($('#arena-stats'), [['LEFT RANKED BETTER', s.left], ['RIGHT RANKED BETTER', s.right], ['TIES', s.ties], ['DECIDED', d.decided + ' of ' + d.cases.length]]);
+}
+$('#ar-play').addEventListener('click', () => {
+  clearInterval(timer); duel.decided = 0;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { duel.decided = duel.cases.length; return renderDuel(); }
+  timer = setInterval(() => { duel.decided++; renderDuel(); if (duel.decided >= duel.cases.length) clearInterval(timer); }, Math.max(25, Math.round(2400 / duel.cases.length)));
+});
+$('#ar-step').addEventListener('click', () => { clearInterval(timer); if (duel.decided < duel.cases.length) duel.decided++; renderDuel(); });
+$('#ar-new').addEventListener('click', newDuel);
+$('#ar-cases').addEventListener('input', newDuel);
+for (const id of ['#ar-theme', '#ar-result']) $(id).addEventListener('input', renderDuel);
+$('#ar-dl').addEventListener('click', () => { const d = { ...duel, result: ending(duel) }; savePNG(paintDuel(d, $('#ar-theme').value, 1200, 630).px, 1200, 630, 'duel-' + d.left.id.slice(0, 6) + '-' + d.right.id.slice(0, 6) + '.png'); saidIn('#ar-act')('Downloaded.'); });
+
+// ── raids: the eight bosses, and one raid at a time ───────────────────────────────────────────────────────────────────
+for (const id of THEME_IDS) $('#rd-theme').add(new Option(THEMES[id].name, id));
+$('#rd-theme').value = 'synthwave-v1';
+let boss = 0, loot = { id: SAMPLES[6].id, rarity: 'epic' };
+BOSSES.forEach((b, n) => {
+  const btn = document.createElement('button'), c = document.createElement('canvas'), cap = document.createElement('span');
+  btn.type = 'button'; btn.className = 'boss'; btn.setAttribute('aria-pressed', String(n === boss)); btn.setAttribute('aria-label', b.name + ': ' + b.dataset + ' ' + b.department);
+  putRGBA(c, bossSprite(b.key, 2)); c.setAttribute('role', 'img'); c.setAttribute('aria-label', b.name);
+  cap.className = 'pw pw-1'; cap.textContent = b.department.toUpperCase();
+  btn.append(c, cap);
+  btn.addEventListener('click', () => { boss = n; for (const o of document.querySelectorAll('#bosses button')) o.setAttribute('aria-pressed', String(o === btn)); renderRaid(); });
+  $('#bosses').append(btn);
+});
+function raidNow() {
+  const b = BOSSES[boss], best = $('#rd-none').checked ? null : Number($('#rd-best').value), raid = { dataset: b.dataset, department: b.department, best, attempts: Number($('#rd-tries').value) };
+  if (best !== null && best >= 600000) raid.loot = { ...loot, title: (b.department[0].toUpperCase() + b.department.slice(1) + ' Oracle').slice(0, 24) };
+  return raid;
+}
+function renderRaid() {
+  const raid = raidNow(), r = paintRaid(raid, $('#rd-theme').value, 720, 480), m = $('#raid-msg'), hp = bossHealth(raid.best);
+  $('#o-best').textContent = raid.best === null ? 'none yet' : (raid.best / 1e6).toFixed(4);
+  $('#rd-best').disabled = raid.best === null;
+  if (!r.ok) { m.className = 'msg bad'; m.textContent = r.why + '.'; return; }
+  putRGB($('#raid-canvas'), r.px, 720, 480);
+  m.className = 'msg ok'; m.textContent = BOSSES[boss].name + ' · ' + (raid.loot ? 'it falls: the loot is the first card to clear 0.6' : 'health ' + (hp / 1e6).toFixed(4) + ', its distance to the 0.6 bar');
+  $('#raid-canvas').setAttribute('aria-label', 'A raid in ' + THEMES[$('#rd-theme').value].name + ': ' + m.textContent);
+}
+for (const id of ['#rd-best', '#rd-tries', '#rd-theme', '#rd-none']) $(id).addEventListener('input', renderRaid);
+$('#rd-loot').addEventListener('click', () => { loot = { id: randHex(8), rarity: pick(RARS) }; if ($('#rd-none').checked || Number($('#rd-best').value) < 600000) { $('#rd-none').checked = false; $('#rd-best').value = '612000'; } renderRaid(); });
+$('#rd-dl').addEventListener('click', () => { const raid = raidNow(), r = paintRaid(raid, $('#rd-theme').value, 1200, 630); if (!r.ok) return saidIn('#rd-act')(r.why + '.'); savePNG(r.px, 1200, 630, 'raid-' + BOSSES[boss].key + '.png'); saidIn('#rd-act')('Downloaded.'); });
 
 // ── the UI kit: crisp pixels for the sample line, every character, every icon, a key's face ─────────────────────────
 function putRGBA(canvas, r) { canvas.width = r.w; canvas.height = r.h; const img = new ImageData(new Uint8ClampedArray(r.px), r.w, r.h); canvas.getContext('2d').putImageData(img, 0, 0); }
@@ -649,6 +865,8 @@ function iconCanvas(rows, name, k = 3) {
 for (const name of [...DOCK, ...ACTIONS]) $('#icons').append(iconCanvas(UI_ICONS[name], name));
 for (const [name, rows] of Object.entries(DATASET_ICONS)) $('#icons').append(iconCanvas(rows, name));
 $('#icons').append(iconCanvas(STAR, 'star', 6));
+for (const name of [...INVENTORY, ...GEAR_SLOTS]) $('#icons').append(iconCanvas(UI_ICONS[name], name));
+for (const [name, rows] of Object.entries(FORM_ICONS)) $('#icons').append(iconCanvas(rows, name));
 function renderKey() {
   const r = identicon($('#key-in').value.trim(), 6), m = $('#key-msg');
   if (!r.ok) { m.className = 'msg bad'; m.textContent = r.why + '.'; return; }
@@ -671,15 +889,27 @@ function heroes() {
 // ── start ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 (function start() {
   let first = SAMPLES[4], theme = 'synthwave-v1';
-  try { const h = location.hash.startsWith('#card=') ? JSON.parse(decodeURIComponent(location.hash.slice(6))) : null; if (h && checkFacts(h.f).ok && THEME_IDS.includes(h.t)) { first = h.f; theme = h.t; } } catch { /* an unreadable link is ignored */ }
+  let item = null;
+  try {
+    const h = location.hash.startsWith('#card=') ? JSON.parse(decodeURIComponent(location.hash.slice(6))) : null;
+    if (h && checkFacts(h.f).ok && !h.f.form && THEME_IDS.includes(h.t)) { first = h.f; theme = h.t; }   // a scorer card's link opens the workshop
+    const it = location.hash.startsWith('#item=') ? JSON.parse(decodeURIComponent(location.hash.slice(6))) : null;
+    if (it && it.f && it.f.form && checkFacts(it.f).ok && THEME_IDS.includes(it.t)) item = it;   // an item's link opens the item workshop
+  } catch { /* an unreadable link is ignored */ }
   $('#theme-blurb').textContent = THEMES[mode].blurb;
   heroes();
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { heroAt++; heroes(); }, 3500);
   buildGallery();
   cost();
   renderEstate();
+  newDuel(); duel.decided = 30; renderDuel();
+  renderRaid();
   $('#key-in').value = 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07'; renderKey();
+  if (!item) { renderItem(); setWork(first, theme); return; }   // the address bar keeps the link the page was opened with
   setWork(first, theme);
+  for (const k of ['form', 'tier', 'name', 'source', 'id']) I[k].value = item.f[k];
+  I.theme.value = item.t; renderItem();
+  $('#items').scrollIntoView();
 })();
 </script>
 </body>

@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { paintEstate, checkHoldings, estateStats, tilesFor, DISTRICTS, PLOT } from './estate.mjs';
+import { paintEstate, checkHoldings, estateStats, tilesFor, DISTRICTS, ITEM_DISTRICTS, PLOT } from './estate.mjs';
 import { THEMES } from './kardart.mjs';
 import { idOf } from './corpus.mjs';
 import { violations } from './source-check.mjs';
@@ -126,6 +126,92 @@ test('the pocket LCD estate is four shades, and the painter never throws', () =>
     assert.doesNotThrow(() => paintEstate(HOLD, x, 240, 160));
     assert.doesNotThrow(() => paintEstate(HOLD, 'synthwave-v1', x, 160));
     assert.equal(paintEstate(x, 'synthwave-v1', 240, 160).ok, false);
+  }
+});
+
+const ITEMS = ['app', 'pwa', 'node', 'app', 'talker', 'node', 'talker', 'pwa', 'talker', 'router', 'router'].map((form, n) => ({ id: idOf('item-' + n), form, tier: ['prototype', 'works', 'proven'][n % 3], fresh: n === 2 }));
+const SWARMS = [{ id: idOf('swarm-a'), members: [CARDS[0].id, CARDS[3].id, CARDS[6].id] }, { id: idOf('swarm-b'), members: [CARDS[1].id, CARDS[2].id] }];
+const IHOLD = { cards: CARDS, wires: HOLD.wires, items: ITEMS, swarms: SWARMS, levels: 3 };
+const ipins = { 'synthwave-v1': '9a728a0d148319a658208810e42462b3aea66914a754fb72e6e567bc0430aa10', 'blockcraft-v1': 'cf92eb776c73b8414854c8f596d1b73bb97957df5d42a11a35ee8add0befc6c3', 'lcd-v1': '183db6dc926cf253f2f2752533bbbd8deb3b3d8a1f47ba5492dafa35957ed806', 'memphis-v1': 'c2d01395064cc2c1e60fc8bfdaa981d2c4d7ab5450fe7b7a7bca1af7cb081f64', snapshot: '0c85fb1bbdaf67db62d3c65174beffd747e902535b176d5936462ef176a60d50', empty: '2c60b6a5d4e27cc7927026a9f71bc6f69a15ffcc55db8be29801edaa4ec1a8cb', many: 'a09e05ff12ebb0df67e8a3f975e8d374503ae4de4f68ba9b8a7f55b9ea035e51', full36: 'e832cb0e896a7cbb453da9e54dc2fb1c78ae1d2db536ea53ab8c0ab87eb6e1d6' };
+const many = (form, n, from = 0) => Array.from({ length: n }, (_, i) => ({ id: idOf(form + '-many-' + (from + i)), form, tier: 'works' }));
+const teams = (n) => Array.from({ length: n }, (_, i) => ({ id: idOf('team-' + i), members: [CARDS[i % 8].id, CARDS[(i + 3) % 8].id] }));
+
+test('the full plot: every district open, each 6 x 6, on an L of five squares', () => {
+  assert.deepEqual(ITEM_DISTRICTS.map((d) => [d.id, d.name, d.open]), [['scorer', 'SCORER', true], ['tools', 'TOOLS', true], ['talker', 'TALKER', true], ['swarm', 'SWARM', true], ['router', 'ROUTER', true]]);
+  assert.equal(ITEM_DISTRICTS[0], DISTRICTS[0]); assert.equal(ITEM_DISTRICTS[1], DISTRICTS[1]);
+  const tiles = new Set();
+  for (const d of ITEM_DISTRICTS) {
+    assert.equal((d.i[1] - d.i[0]) * (d.k[1] - d.k[0]), 36, d.id + ' is 6 x 6, so the rule holds to 36');
+    for (let i = d.i[0]; i < d.i[1]; i++) for (let k = d.k[0]; k < d.k[1]; k++) { assert.ok(!tiles.has(i * 100 + k)); tiles.add(i * 100 + k); }
+  }
+  assert.equal(tiles.size, 180);
+  assert.ok(Object.isFrozen(ITEM_DISTRICTS) && ITEM_DISTRICTS.every(Object.isFrozen));
+  assert.equal(same(draw({ cards: CARDS }), draw({ cards: CARDS, items: [] })), false, 'an item list, even an empty one, draws the full plot');
+  assert.ok(same(draw({ cards: CARDS, items: [] }), draw({ cards: CARDS, swarms: [] })), 'and so does a swarm list');
+  assert.ok(same(draw({ cards: CARDS, items: [] }), draw({ cards: CARDS, items: [], swarms: [] })));
+});
+
+test('items and swarms: checked, put in order, and refused with a reason when they are not', () => {
+  const c = checkHoldings(IHOLD);
+  assert.equal(c.ok, true); assert.equal(c.h.tools, 6); assert.equal(c.h.talkers, 3); assert.equal(c.h.routers, 2);
+  const F = ['app', 'pwa', 'node', 'talker', 'router'], T = ['prototype', 'works', 'proven'];
+  c.h.items.forEach((it, n) => { if (n) { const a = c.h.items[n - 1], fa = F.indexOf(a.form), fb = F.indexOf(it.form); assert.ok(fa < fb || (fa === fb && (T.indexOf(a.tier) > T.indexOf(it.tier) || (a.tier === it.tier && a.id < it.id))), 'by form, then the best proven first'); } });
+  assert.deepEqual(c.h.swarms.map((s) => s.id), SWARMS.map((s) => s.id).sort(), 'swarms by id');
+  for (const s of c.h.swarms) assert.deepEqual(s.members, [...s.members].sort(), 'members in order');
+  assert.ok(same(draw(IHOLD), draw({ ...IHOLD, swarms: [...SWARMS].reverse().map((s) => ({ ...s, members: [...s.members].reverse() })) })), 'in any order');
+  for (const t of [0, 2]) { refused(checkHoldings({ ...IHOLD, tools: t }), /^tools are counted from the items when items or swarms are given$/); refused(checkHoldings({ cards: CARDS, swarms: [], tools: t }), /^tools are counted/); }
+  for (const x of ['x', 5, null, many('app', 1001)]) refused(checkHoldings({ cards: [], items: x }), /^items must be an array of at most 1000$/);
+  assert.equal(checkHoldings({ cards: [], items: many('node', 1000) }).ok, true, '1000 items');
+  for (const x of [5, null, [], 'item']) refused(checkHoldings({ cards: [], items: [x] }), /^every item must be an object$/);
+  refused(checkHoldings({ cards: [], items: [{ ...ITEMS[0], id: 'XYZ' }] }), /^every item id must be 16 lowercase hex characters$/);
+  refused(checkHoldings({ cards: CARDS, items: [{ ...ITEMS[0], id: CARDS[3].id }] }), /^a card is held once: /);
+  refused(checkHoldings({ cards: [], items: [ITEMS[0], { ...ITEMS[1], id: ITEMS[0].id }] }), /^a card is held once: /);
+  for (const form of ['scorer', 'robot', '', null]) refused(checkHoldings({ cards: [], items: [{ ...ITEMS[0], form }] }), /^an item form must be one of app, pwa, node, talker, router$/);
+  for (const tier of ['great', 'Proven', null]) refused(checkHoldings({ cards: [], items: [{ ...ITEMS[0], tier }] }), /^an item tier must be one of prototype, works, proven$/);
+  refused(checkHoldings({ cards: [], items: [{ ...ITEMS[0], fresh: 'yes' }] }), /^fresh must be true or false$/);
+  refused(checkHoldings({ cards: CARDS, items: ITEMS, wires: [[CARDS[0].id, ITEMS[0].id]] }), /every wire must join two held cards/);
+  for (const x of ['x', 5, null, teams(101)]) refused(checkHoldings({ cards: CARDS, swarms: x }), /^swarms must be an array of at most 100$/);
+  assert.equal(checkHoldings({ cards: CARDS, swarms: teams(100) }).ok, true, '100 swarms');
+  for (const x of [5, null, [], 'team']) refused(checkHoldings({ cards: CARDS, swarms: [x] }), /^every swarm must be an object$/);
+  refused(checkHoldings({ cards: CARDS, swarms: [{ ...SWARMS[0], id: 'XYZ' }] }), /^every swarm id must be 16 lowercase hex characters$/);
+  refused(checkHoldings({ cards: CARDS, swarms: [SWARMS[0], { ...SWARMS[1], id: SWARMS[0].id }] }), /^a swarm is listed once: /);
+  const bigCards = Array.from({ length: 40 }, (_, n) => card(200 + n));
+  for (const members of [[CARDS[0].id], [], 'x', null, [CARDS[0].id, CARDS[0].id], [CARDS[0].id, idOf('stranger')], [CARDS[0].id, ITEMS[0].id], bigCards.slice(0, 37).map((x) => x.id)]) {
+    refused(checkHoldings({ cards: [...CARDS, ...bigCards], items: ITEMS, swarms: [{ id: SWARMS[0].id, members }] }), /^every swarm has from 2 to 36 members, each a card held, each once$/);
+  }
+  for (const members of [[CARDS[0].id, CARDS[1].id], bigCards.slice(0, 36).map((x) => x.id)]) assert.equal(checkHoldings({ cards: [...CARDS, ...bigCards], swarms: [{ id: SWARMS[0].id, members }] }).ok, true, members.length + ' members');
+
+  assert.deepEqual(estateStats(IHOLD), { ok: true, blocks: 21, cards: 8, items: 11, tools: 6, talkers: 3, routers: 2, swarms: 2, links: 3, levels: 3, tiles: { scorer: 24, tools: 20, talker: 14, swarm: 12, router: 12, total: 82 } });
+  assert.deepEqual(estateStats({ cards: [], items: [] }), { ok: true, blocks: 0, cards: 0, items: 0, tools: 0, talkers: 0, routers: 0, swarms: 0, links: 0, levels: null, tiles: { scorer: 8, tools: 8, talker: 8, swarm: 8, router: 8, total: 40 } });
+});
+
+test('full-plot estates re-draw byte for byte: pinned, in any order, and every item and swarm changes the picture', () => {
+  for (const t of Object.keys(THEMES).slice(0, 4)) assert.equal(sha(draw(IHOLD, t, 480, 320)), ipins[t], t);
+  assert.equal(sha(draw({ ...IHOLD, snapshot: true }, 'blockcraft-v1', 1200, 630)), ipins.snapshot);
+  assert.equal(sha(draw({ cards: [], items: [] })), ipins.empty);
+  assert.equal(sha(draw({ cards: CARDS, items: [...many('app', 20), ...many('node', 20), ...many('talker', 40), ...many('router', 40)], swarms: teams(40) }, 'synthwave-v1', 480, 320)), ipins.many);
+  assert.equal(sha(draw({ cards: CARDS, items: [...many('pwa', 36), ...many('talker', 36), ...many('router', 36)], swarms: teams(36) }, 'blockcraft-v1', 480, 320)), ipins.full36, 'exactly 36 in each: every one a block, no "+N MORE"');
+  const base = draw(IHOLD);
+  assert.ok(same(base, draw({ ...IHOLD, cards: [...CARDS].reverse(), items: [...ITEMS].reverse() })), 'the same holdings in any order');
+  const changed = (f, what) => assert.equal(same(base, draw({ ...IHOLD, items: f(ITEMS.map((it) => ({ ...it }))) })), false, what);
+  changed((xs) => { xs[0].form = 'node'; return xs; }, 'an app becomes a server');
+  changed((xs) => { xs[1].form = 'app'; return xs; }, 'a pwa is not an app');
+  changed((xs) => { xs[9].form = 'node'; return xs; }, 'a router is not a server');
+  changed((xs) => { xs[9].tier = 'works'; return xs; }, 'a tier is its trim (on a block in plain view: the first one in TOOLS stands behind the first swarm)');
+  changed((xs) => { xs[0].fresh = true; return xs; }, 'a new item is highlighted');
+  changed((xs) => xs.concat([{ id: idOf('one-more-talker'), form: 'talker', tier: 'works' }]), 'one more talker');
+  changed((xs) => xs.concat([{ id: idOf('one-more-node'), form: 'node', tier: 'works' }]), 'one more node');
+  changed((xs) => xs.concat([{ id: idOf('one-more-router'), form: 'router', tier: 'works' }]), 'one more router');
+  changed((xs) => xs.slice(1), 'one item fewer');
+  const team = (f, what) => assert.equal(same(base, draw({ ...IHOLD, swarms: f(SWARMS.map((s) => ({ ...s, members: [...s.members] }))) })), false, what);
+  team((xs) => xs.slice(1), 'one swarm fewer');
+  team((xs) => xs.concat([{ id: idOf('swarm-c'), members: [CARDS[4].id, CARDS[5].id] }]), 'one more swarm');
+  team((xs) => { xs[0].members.push(CARDS[7].id); return xs; }, 'a fourth member joins: another block, another wire');
+  team((xs) => { xs[1].members[0] = CARDS[5].id; return xs; }, 'a different member: its rarity, its wire');
+  for (const [hold, what] of [[(n) => ({ cards: [], items: many('app', n) }), 'apps'], [(n) => ({ cards: [], items: many('talker', n) }), 'talkers'], [(n) => ({ cards: [], items: many('node', n) }), 'nodes'], [(n) => ({ cards: [], items: many('router', n) }), 'routers'], [(n) => ({ cards: CARDS, swarms: teams(n) }), 'swarms']]) {
+    const at = (k) => draw(hold(k), 'blockcraft-v1', 480, 320);   // past 36 in a district: '+N MORE', and the count shows
+    assert.equal(same(at(36), at(37)), false, what + ' 36 to 37');
+    assert.equal(same(at(37), at(38)), false, what + ' 37 to 38');
   }
 });
 

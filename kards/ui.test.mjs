@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash, randomBytes } from 'node:crypto';
-import { GLYPHS, CHARSET, UI_EXTRA, UI_ICONS, DATASET_ICONS, STAR, DOCK, ACTIONS, drawable, identicon, paintText } from './ui.mjs';
-import { FONT, ICON_ROWS, STAR_ROWS } from './kardart.mjs';
+import { GLYPHS, CHARSET, UI_EXTRA, UI_ICONS, DATASET_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, FITS, FORM_ICONS, drawable, identicon, paintText } from './ui.mjs';
+import { FONT, ICON_ROWS, FORM_ICON_ROWS, STAR_ROWS, GEAR } from './kardart.mjs';
 import { violations } from './source-check.mjs';
 
 const sha = (x) => createHash('sha256').update(typeof x === 'string' ? x : Buffer.from(x)).digest('hex');
@@ -38,17 +38,25 @@ test('one source: every card glyph is the card font, cell for cell; the ellipsis
 test('the icons: the eight dock slots and nine actions, 16 x 16 cells each, every one its own picture', () => {
   assert.deepEqual(DOCK, ['estate', 'base', 'cards', 'evals', 'mint', 'mesh', 'send', 'proof']);
   assert.deepEqual(ACTIONS, ['boot', 'eval', 'train', 'breed', 'skin', 'share', 'verify', 'key', 'lock']);
-  assert.deepEqual(Object.keys(UI_ICONS).sort(), [...DOCK, ...ACTIONS].sort());
-  for (const [name, rows] of Object.entries(UI_ICONS)) {
+  assert.deepEqual(INVENTORY, ['slot', 'slot-filled', 'equip']);
+  assert.deepEqual(GEAR_SLOTS, ['ally', 'tool', 'voice']);
+  assert.deepEqual(Object.keys(UI_ICONS), [...DOCK, ...ACTIONS, ...INVENTORY, ...GEAR_SLOTS], 'the published icons first, the new ones appended');
+  for (const [name, rows] of Object.entries({ ...UI_ICONS, ...FORM_ICONS })) {
     assert.ok(Object.isFrozen(rows));
     assert.equal(rows.length, 16, name);
     for (const r of rows) assert.match(r, /^[.#]{16}$/, name);
     const ink = rows.join('').split('#').length - 1;
     assert.ok(ink >= 20 && ink <= 200, name + ' has a shape: ' + ink);
   }
-  const all = [...Object.values(UI_ICONS), ...Object.values(ICON_ROWS)].map((rows) => rows.join(''));
-  assert.equal(new Set(all).size, all.length, 'no icon repeats another, or a dataset icon');
-  assert.equal(sha(JSON.stringify(UI_ICONS)), 'f364eec6f34fef6c3995d1aafb48007b6eaafe1164915bd13ee154a1dc89f30c');
+  const all = [...Object.values(UI_ICONS), ...Object.values(ICON_ROWS), ...Object.values(FORM_ICONS)].map((rows) => rows.join(''));
+  assert.equal(new Set(all).size, all.length, 'no icon repeats another, a dataset icon or a form icon');
+  const pick = (names) => JSON.stringify(Object.fromEntries(names.map((k) => [k, UI_ICONS[k]])));
+  assert.equal(sha(pick([...DOCK, ...ACTIONS])), 'f364eec6f34fef6c3995d1aafb48007b6eaafe1164915bd13ee154a1dc89f30c', 'the published dock and action icons, unchanged');
+  assert.equal(sha(pick([...INVENTORY, ...GEAR_SLOTS])), 'f2858318ff7f3c35c747048bf9217538cdb80ace92ca767098e696afdfaf69f7', 'the inventory and gear-slot icons');
+  assert.equal(FORM_ICONS, FORM_ICON_ROWS, 'the form icons are kardart.mjs\x27s own table');
+  assert.deepEqual(FITS, { ally: ['node', 'router'], tool: ['app', 'pwa'], voice: ['talker'] });
+  for (const [slot, forms] of Object.entries(FITS)) for (const form of forms) assert.equal(GEAR[form], slot, 'one source: kardart.mjs\x27s GEAR');
+  assert.ok(Object.isFrozen(FITS) && Object.values(FITS).every(Object.isFrozen));
 });
 
 test('identicon: a key’s face, mirrored, bordered, deterministic, different for different keys', () => {

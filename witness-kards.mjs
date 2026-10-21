@@ -35,12 +35,15 @@ export function hiddenSpans(src) {
 }
 // each kernel and the test files that must kill its mutants, cheapest and sharpest first (run-tests.mjs stops at the first red)
 export const PAIRS = [
-  ['kards/kardart.mjs', ['kards/kardart.smoke.test.mjs', 'kards/kardart.test.mjs']],
+  ['kards/kardart.mjs', ['kards/kardart.smoke.test.mjs', 'kards/items.test.mjs', 'kards/kardart.test.mjs']],
   ['kards/kardpng.mjs', ['kards/kardpng.test.mjs']],
   ['kards/costcase.mjs', ['kards/costcase.test.mjs']],
   ['kards/ui.mjs', ['kards/ui.test.mjs']],
   ['kards/ttf.mjs', ['kards/ttf.test.mjs']],
   ['kards/estate.mjs', ['kards/estate.test.mjs']],
+  ['kards/arena.mjs', ['kards/arena.test.mjs']],
+  ['kards/raid.mjs', ['kards/raid.test.mjs']],
+  ['kards/gear.mjs', ['kards/gear.test.mjs']],
 ];
 // imported (by the tests) it only lends hiddenSpans and PAIRS; run directly, it is the gate
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) main();

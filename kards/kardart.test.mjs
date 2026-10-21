@@ -347,7 +347,7 @@ test('kardart.mjs is integer-only, deterministic and browser-safe: none of the b
   assert.ok(code.includes('const div = (a, b) => Math.floor(a / b);'));
   assert.equal(code.includes('Number.isInteger'), true);
   const exportsList = [...code.matchAll(/^export\s+(?:const|function)\s+(\w+)/gm)].map((m) => m[1]);
-  assert.deepEqual(exportsList, ['DATASETS', 'RARITIES', 'checkFacts', 'spriteOf', 'FONT', 'ICON_ROWS', 'STAR_ROWS', 'RAR', 'THEMES', 'PIXEL', 'creatureFront', 'paintArt']);
+  assert.deepEqual(exportsList, ['DATASETS', 'RARITIES', 'FORMS', 'TIERS', 'GEAR', 'checkFacts', 'spriteOf', 'FONT', 'ICON_ROWS', 'FORM_ICON_ROWS', 'STAR_ROWS', 'RAR', 'THEMES', 'PIXEL', 'creatureFront', 'creatureSide', 'itemFront', 'paintArt']);
 });
 
 test('the sources the UI kit builds on are exported, frozen, and are the ones the cards draw with', () => {
