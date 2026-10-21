@@ -248,6 +248,41 @@ test('a plot of only the districts a game holds: named in the holdings, drawn wi
   }
 });
 
+const KITTED = { ...DIGI, names: { swarm: 'KITTED' } }, kpins = {};
+const kwant = {
+  'synthwave-v1': '81b1cfb5bbc7b63e21c03e6829cc77fd19417c810f22619cf8f48d8da8cf7707', 'blockcraft-v1': '00affca3bc67231ce9e66c0dd82e0ac7eeb1850a4c879f42a94ac18d91e4f6a2',
+  'lcd-v1': 'd5a3c8c6da4682b5913e6f9934d6e1d4088d5a130fa0468fbfa6441e469a2712', 'memphis-v1': 'f8e1e3c85d4be7fe11836f96b82b9ad88e2520254122b8ad2c1ef5a0067a7538',
+  'blueprint-v1': '9a5dd7af98d3a1945218823ff73554b37ccab5a6a10f9fcc3df5dcfc900dd2b2',
+};
+test('a district lettered with the player\x27s own name: checked, drawn in place of its own name, and nothing else moves', () => {
+  const c = checkHoldings(KITTED);
+  assert.equal(c.ok, true); assert.deepEqual(c.h.names, { swarm: 'KITTED' });
+  assert.equal('names' in checkHoldings(DIGI).h, false, 'without names, the checked holdings are as they were');
+  assert.equal('names' in checkHoldings(HOLD).h, false);
+  assert.deepEqual(checkHoldings({ ...IHOLD, names: { router: 'ALLIES', scorer: 'MINDS', tools: 'KIT 2' } }).h.names, { scorer: 'MINDS', tools: 'KIT 2', router: 'ALLIES' }, 'in the order of the plot');
+  assert.deepEqual(checkHoldings({ cards: CARDS, names: { talker: 'VOICES' } }).h.names, { talker: 'VOICES' }, 'the first plot letters its districts too');
+  for (const t of Object.keys(THEMES)) kpins[t] = sha(draw(KITTED, t, 480, 320));
+  assert.deepEqual(kpins, kwant, 'DIGI\x27s plot with KITTED, pinned in every theme');
+  assert.equal(same(draw(KITTED), draw(DIGI)), false, 'the name is on the plot');
+  assert.ok(same(draw({ ...DIGI, names: {} }), draw(DIGI)), 'no names given: the same picture, byte for byte');
+  assert.ok(same(draw({ ...DIGI, names: { swarm: 'SWARM' } }), draw(DIGI)), 'a district lettered with its own name: the same picture');
+  assert.ok(same(draw({ ...IHOLD, names: { router: 'ROUTER' } }), draw(IHOLD)));
+  assert.equal(same(draw(KITTED), draw({ ...DIGI, names: { swarm: 'KITTEE' } })), false, 'every letter shows');
+  for (const names of [{ scorer: 'A' }, { tools: '12345678' }, { swarm: 'A B' }]) assert.equal(same(draw({ ...DIGI, names }), draw(DIGI)), false, JSON.stringify(names));
+  assert.equal(same(draw({ cards: CARDS, names: { talker: 'VOICES' } }), draw({ cards: CARDS })), false, 'a fenced district of the first plot is lettered too');
+  assert.deepEqual(estateStats(KITTED), estateStats(DIGI), 'a name changes no number');
+  for (const x of [null, 5, 'KITTED', ['KITTED']]) refused(checkHoldings({ ...DIGI, names: x }), /^names must be an object of district ids to names$/);
+  refused(checkHoldings({ ...DIGI, names: { talker: 'VOICES' } }), /^names letter the districts drawn: talker is not one of scorer, tools, swarm$/);
+  refused(checkHoldings({ ...DIGI, names: { kitted: 'KITTED' } }), /^names letter the districts drawn: kitted is not one of scorer, tools, swarm$/);
+  refused(checkHoldings({ cards: CARDS, names: { arena: 'ARENA' } }), /^names letter the districts drawn: arena is not one of scorer, tools, talker, swarm, router$/);
+  refused(checkHoldings({ ...IHOLD, names: { arena: 'ARENA' } }), /^names letter the districts drawn: arena is not one of scorer, tools, talker, swarm, router$/);
+  for (const s of ['', 'TOOLONGNM', 5, null, ['KIT']]) refused(checkHoldings({ ...DIGI, names: { swarm: s } }), /^a district name is 1 to 8 characters$/);
+  for (const s of ['kitted', 'KIT-ED', ' KIT', 'KIT ', ' ', 'KITTE\u2026', 'K\u00b7T']) refused(checkHoldings({ ...DIGI, names: { swarm: s } }), /^a district name is written in A-Z, 0-9 and spaces, and starts and ends with a letter or a digit$/);
+  refused(checkHoldings({ cards: CARDS, names: { swarm: 'kitted' } }), /^a district name is written/);
+  refused(checkHoldings({ ...DIGI, names: { get swarm() { throw new Error('toxic'); } } }), /could not be read/);
+  refused(paintEstate({ ...DIGI, names: { swarm: 'KIT ' } }, 'synthwave-v1', 240, 160), /^a district name is written/);
+});
+
 test('the estate painter keeps the kernel rules, building on the card engine and the UI kit only', () => {
   assert.deepEqual(violations(readFileSync(new URL('./estate.mjs', import.meta.url), 'utf8'), { imports: ['./kardart.mjs', './ui.mjs'] }), []);
 });

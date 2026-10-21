@@ -3,7 +3,7 @@
 //   node tools/kards-gallery.mjs            write kards/gallery/: a contact sheet of the 12 sample cards per theme, a hero card per theme,
 //                                          the sample estate per theme, the UI kit sheet (every glyph and icon), and the game around the
 //                                          cards: the four sample items, a duel and a raid per theme, a fallen boss, the eight bosses,
-//                                          the inventory icons and an estate holding items
+//                                          the inventory icons, an estate holding items, and the card backs (signed and unsigned)
 //   node tools/kards-gallery.mjs --all      also write every sample card, each theme, at the DIGI card's size (384 x 560) into kards/gallery/full/
 //   node tools/kards-gallery.mjs --check    exit 1 unless the committed files are exactly what the engine draws now (CI runs this)
 //   node tools/kards-gallery.mjs --out DIR  write somewhere else
@@ -14,6 +14,7 @@ import { paintEstate } from '../kards/estate.mjs';
 import { paintDuel } from '../kards/arena.mjs';
 import { paintRaid, bossSprite, BOSSES } from '../kards/raid.mjs';
 import { paintSlot } from '../kards/gear.mjs';
+import { paintBack } from '../kards/back.mjs';
 import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, paintText } from '../kards/ui.mjs';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -51,6 +52,7 @@ export function gallery(all = false) {
   files.set('estate-items.png', scene(paintEstate(ESTATE_ITEMS, 'blockcraft-v1', 480, 320)));
   files.set('bosses.png', png(...bossSheet()));
   files.set('kit.png', png(...kitSheet()));
+  files.set('backs.png', png(...backSheet()));
   files.set('inventory.png', png(...iconSheet([...INVENTORY.map((n) => UI_ICONS[n]), ...GEAR_SLOTS.map((n) => UI_ICONS[n]), ...Object.values(FORM_ICONS)])));
   return files;
 }
@@ -94,6 +96,13 @@ function kitSheet() {   // the sample kit at 2x, one row per theme
   const SW = 112, SH = 128, W2 = KIT.length * SW, themes = Object.keys(THEMES), px = new Uint8Array(W2 * themes.length * SH * 3);
   themes.forEach((t, row) => KIT.forEach((slot, n) => { const r = paintSlot(slot, t, SW, SH); if (!r.ok) throw new Error(r.why); for (let y = 0; y < SH; y++) px.set(r.px.subarray(y * SW * 3, (y + 1) * SW * 3), ((row * SH + y) * W2 + n * SW) * 3); }));
   return [px, W2, themes.length * SH];
+}
+// the sample backs: a maker's (the UI kit's sample key) at edition 123, and an unsigned card
+export const BACKS = [{ maker: 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07', serial: 123 }, {}];
+function backSheet() {   // the sample backs at 1x, a column per theme
+  const themes = Object.keys(THEMES), W2 = themes.length * W, px = new Uint8Array(W2 * BACKS.length * H * 3);
+  themes.forEach((t, col) => BACKS.forEach((b, row) => { const r = paintBack(b, t, W, H); if (!r.ok) throw new Error(r.why); for (let y = 0; y < H; y++) px.set(r.px.subarray(y * W * 3, (y + 1) * W * 3), ((row * H + y) * W2 + col * W) * 3); }));
+  return [px, W2, BACKS.length * H];
 }
 function bossSheet() {   // the eight bosses at 4x, four to a row
   const S = 4, side = 32 * S, W2 = 4 * side + 5 * 8, H2 = 2 * side + 3 * 8, px = new Uint8Array(W2 * H2 * 3);

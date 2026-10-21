@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PixelWhisperer Kards - the art engine for DIGI cards</title>
-<meta name="description" content="A deterministic pixel-art engine: every card's face is drawn from its own facts, a blocky voxel creature born from its id, in synthwave or blockcraft. Gallery, workshop, and the proof.">
+<meta name="description" content="A deterministic pixel-art engine: every card's face is drawn from its own facts, a blocky voxel creature born from its id, in five themes, with a back that carries its maker's mark. Gallery, workshop, and the proof.">
 <meta name="color-scheme" content="dark">
 <link rel="stylesheet" href="fonts/pixelwhisperer.css">
 <style>
@@ -33,10 +33,10 @@ p{margin:.5em 0 1em}
 .badges li{border:1px solid var(--line);background:var(--bg2);border-radius:999px;padding:3px 12px;font-size:.85rem;color:var(--muted)}
 .badges b{color:var(--ink)}
 nav.jump{position:sticky;top:0;z-index:5;background:rgba(13,6,32,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin-top:18px}
-nav.jump .wrap{display:flex;gap:4px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
-nav.jump a{color:var(--ink);text-decoration:none;padding:6px 12px;border-radius:6px;font-size:.92rem}
+nav.jump .wrap{display:flex;gap:2px;flex-wrap:wrap;padding-top:5px;padding-bottom:5px}
+nav.jump a{color:var(--ink);text-decoration:none;padding:5px 9px;border-radius:6px;font-size:.88rem;white-space:nowrap}
 nav.jump a:hover{background:var(--panel);color:var(--gold)}
-section{padding:34px 0 8px;scroll-margin-top:56px}
+section{padding:34px 0 8px;scroll-margin-top:var(--navh,56px)}
 @media(max-width:620px){nav.jump{position:static}section{scroll-margin-top:12px}.preview{position:static}}
 .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:10px 0 18px}
 .seg{display:inline-flex;flex-wrap:wrap;max-width:100%;border:1px solid var(--line);border-radius:8px;overflow:hidden}
@@ -56,7 +56,7 @@ canvas.card{display:block;width:100%;height:auto;aspect-ratio:384/560;image-rend
 .tile figcaption{font-size:.85rem;color:var(--muted);margin-top:8px}
 .tile figcaption b{color:var(--ink);display:block;font-size:.95rem}
 .work{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:26px;align-items:start}
-@media(max-width:780px){.work{grid-template-columns:1fr}.work .preview{max-width:340px;margin:0 auto}}
+@media(max-width:780px){.work{grid-template-columns:1fr}.work .preview{max-width:340px;margin:0 auto;position:static}}
 .preview{position:sticky;top:64px}
 form.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
 form.panel .full{grid-column:1/-1}
@@ -101,6 +101,7 @@ pre code{border:0;padding:0;background:none}
 .trace{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 14px;margin:10px 0}
 .trace div{background:#10052a;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
 .trace span{display:block;color:var(--muted);font-size:.78rem}
+.trace code{overflow-wrap:anywhere}
 footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
 .sr{position:absolute;left:-9999px}
 canvas.estate{aspect-ratio:auto;max-width:100%}
@@ -116,6 +117,10 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 .icons button.boss canvas{border:0;padding:0;margin:0 auto}
 #bosses{margin:6px 0 16px}
 #key-face{image-rendering:pixelated;border:1px solid var(--line)}
+#back-canvas{transition:transform .14s ease-in}
+#back-row{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px}
+.icons canvas.mini{width:192px;height:280px;padding:0;border:0;max-width:none}
+@media (prefers-reduced-motion:reduce){#back-canvas{transition:none}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
@@ -124,7 +129,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
  <div class="herotext">
   <p class="eyebrow">PixelWhisperer Kards &middot; the DIGI card's art engine</p>
   <h1>Every card has a <span>face</span> only its facts can draw.</h1>
-  <p class="lede">A DIGI card is a sealed picture that carries a living, ownable intelligence. This engine draws that picture: a blocky voxel creature born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, an engineering blueprint, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It draws the game around the cards too: item cards (apps, pwas, nodes, talkers), the estate a player grows, duels in the arena and the raid bosses. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
+  <p class="lede">A DIGI card is a sealed picture that carries an ownable intelligence, one that grows as it proves itself. This engine draws that picture: a blocky voxel creature born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, an engineering blueprint, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It draws the game around the cards too: the back of every card with its maker's mark, item cards (apps, pwas, nodes, talkers, routers), the estate a player grows, duels in the arena and the raid bosses. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
   <p class="byline">Built by <b>Kar</b>, the estate's resident builder, as a side build for PixelWhisperer. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
   <ul class="badges" aria-label="Facts about this build">
     <li><b id="n-themes">4</b> themes, append-only</li><li><b>2<sup>64</sup></b> creatures</li><li><b>integer-only</b> drawing</li><li><b>mutation-witnessed</b>, none baselined</li><li>drawn live <b>in your browser</b></li>
@@ -134,7 +139,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -176,6 +181,32 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
       </div>
     </form>
   </div>
+</section>
+
+<section id="backs" aria-labelledby="backs-h">
+  <h2 id="backs-h">Card backs: the maker's mark, face down</h2>
+  <p>Every card game has a back, and a DIGI card's says who made it. The back is drawn in the card's theme: the theme's field and frame, the DIGI emblem, and the <b>maker's mark</b>: the face of the maker's Ed25519 public key (the same identicon as in the UI kit) in a medallion, with the key written short beneath it, and the card's <b>edition number</b>. The stars, ore, clouds and confetti in the field are thrown with the maker's own dice, so all of one maker's backs match and another maker's differ: a hand of one maker's cards is known face down. A card with no maker says <b>UNSIGNED</b>. The same back always draws the same bytes.</p>
+  <p class="hint">Try it: <b>Roll a maker</b> to make up a key, or paste a real one: a maker's public key is the key a DIGI player signs their cards with (YOUR KEY in DIGI), 64 characters of 0-9 and a-f. Change the edition, pick a theme. Untick <b>Signed</b> to see an unsigned back. <b>Flip the card</b> turns the picture over: the card in the <a href="#workshop">workshop</a> above on one side, this back on the other. Below, the same maker in every theme.</p>
+  <div class="work">
+    <div class="preview">
+      <canvas class="card" id="back-canvas" width="384" height="560" role="img" aria-label="A card back"></canvas>
+      <p class="msg" id="back-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="back-form" autocomplete="off" novalidate>
+      <div class="full"><label for="b-maker">The maker's public key (64 lowercase hex characters)</label><div class="row"><input id="b-maker" maxlength="64" spellcheck="false"><button type="button" class="act alt" id="b-roll">Roll a maker</button></div></div>
+      <div><label for="b-serial">Edition number (0 to 999999)</label><input id="b-serial" type="number" min="0" max="999999" step="1" inputmode="numeric" value="123"></div>
+      <div><label for="b-theme">Theme</label><select id="b-theme"></select></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="b-signed" type="checkbox" checked style="width:auto;min-height:0"><label for="b-signed" style="margin:0">Signed: show the maker's mark (untick for an unsigned card)</label></div>
+      <div class="actions"><button type="button" class="act" id="b-flip" aria-pressed="false">Flip the card</button><button type="button" class="act alt" id="b-dl">Download PNG (384 &times; 560)</button><span class="msg" id="b-act" role="status" aria-live="polite"></span></div>
+    </form>
+  </div>
+  <h3>One maker, every theme</h3>
+  <div class="icons" id="back-row" role="region" aria-label="The back in every theme (scrolls sideways on a small screen)" tabindex="0"></div>
+<pre><code>import { paintBack, checkBack } from './kards/back.mjs';
+paintBack({ maker: publicKeyHex, serial: 123 }, 'synthwave-v1', 384, 560)   // { ok, px } | { ok: false, why }
+// maker: the maker's Ed25519 public key, 64 lowercase hex; leave it out for an unsigned card. serial: the edition, 0 to 999999, or left out.
+// The back is 192 x 280 logical pixels, scaled to the nearest pixel for any size from 64 to 1024: 384 x 560 is the DIGI card at 2 x.</code></pre>
+  <p><b>What it refuses, and what a change can break.</b> A key that is not 64 lowercase hex characters, an edition outside 0 to 999999, a theme it does not know and a size outside 64 to 1024 are each refused with a plain reason (the message under the picture above is that reason), and nothing throws. The scatter is seeded by the first 16 characters of the maker's key, and the identicon folds in all 64 (about 40 bits of pattern and colour, so two makers' marks rarely match; the key written beneath it tells them apart, and the key itself is what DIGI checks). Every theme's backs are pinned by sha256 in the tests, so no change to a published back lands silently: CI goes red until it is made on purpose.</p>
 </section>
 
 <section id="items" aria-labelledby="items-h">
@@ -227,7 +258,7 @@ kitBadge(fielded, slots, scale)                                     // the kitte
         <button type="button" class="act alt" id="est-wire">Wire two cards</button>
       </div>
       <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-items" type="checkbox" style="width:auto;min-height:0"><label for="est-items" style="margin:0">Hold items and swarms: the full plot, every district open</label></div>
-      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-digi" type="checkbox" style="width:auto;min-height:0"><label for="est-digi" style="margin:0">Draw only what DIGI holds: SCORER, TOOLS and SWARM</label></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-digi" type="checkbox" style="width:auto;min-height:0"><label for="est-digi" style="margin:0">Draw only what DIGI holds: SCORER, TOOLS and KITTED (its swarm district, lettered in DIGI's own word)</label></div>
       <div class="actions"><button type="button" class="act alt" id="est-app">Add an app</button><button type="button" class="act alt" id="est-pwa">Add a pwa</button><button type="button" class="act alt" id="est-node">Add a node</button><button type="button" class="act alt" id="est-talker">Add a talker</button><button type="button" class="act alt" id="est-router">Add a router</button><button type="button" class="act alt" id="est-swarm">Form a swarm</button></div>
       <div><label for="est-tools">Tool blocks: <output id="o-tools"></output></label><input id="est-tools" type="range" min="0" max="40" step="1" value="4"></div>
       <div><label for="est-theme">Theme</label><select id="est-theme"></select></div>
@@ -247,7 +278,8 @@ paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fre
 // px: w &times; h RGB at the size asked for, each logical pixel a scale &times; scale block (480 &times; 320 is scale 2, 1200 &times; 630 is scale 3).
 // snapshot: true adds a title band and a stats band (blocks, tiles, mesh links, and levels when given): the picture a shared link shows.
 // The full plot: items: [{ id, form: 'app' | 'pwa' | 'node' | 'talker' | 'router', tier, fresh? }] and swarms: [{ id, members: [card ids] }] in place of tools.
-// districts: ['scorer', 'tools', 'swarm'] draws only those districts, nothing fenced: what the DIGI game holds.</code></pre>
+// districts: ['scorer', 'tools', 'swarm'] draws only those districts, nothing fenced: what the DIGI game holds.
+// names: { swarm: 'KITTED' } letters a district drawn with a name of your own, 1 to 8 of A-Z, 0-9 and space; nothing else moves.</code></pre>
 </section>
 
 <section id="arena" aria-labelledby="arena-h">
@@ -332,7 +364,7 @@ const face = identicon(publicKeyHex, 4);                          // { ok, size:
 <section id="start" aria-labelledby="start-h">
   <h2 id="start-h">Start here</h2>
   <ol>
-    <li><b>Look.</b> Pick a card in the gallery. Flip the theme between Synthwave and Blockcraft.</li>
+    <li><b>Look.</b> Pick a card in the gallery. Flip the theme through all five worlds, or show them side by side.</li>
     <li><b>Tinker.</b> Open it in the workshop and change a fact: the title, the level, the rarity, a parent. Watch where each one lands on the card (the anatomy below shows the map).</li>
     <li><b>Take it.</b> Download the PNG or copy the link. Every card is a pure function of its facts, so the same link shows the same card on any device.</li>
     <li><b>Play.</b> Make an item card, hold items on your estate and watch TALKER open, play a duel in the arena a case at a time, and run a boss down to 0.6 in a raid. Every one of those pictures is drawn from its facts the same way a card is.</li>
@@ -399,6 +431,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>arena.mjs</code></td><td>the duel painter: <code>paintDuel</code>, <code>checkDuel</code> and the published tally <code>duelScore</code>; two creatures in profile (<code>creatureSide</code>), rating badges, a scoreboard of every case, WIN or REFUSED.</td></tr>
       <tr><td><code>raid.mjs</code></td><td>the raids: eight boss sprites built from rectangles and ellipses and shaded by one rule, the published <code>bossHealth</code>, <code>paintRaid</code> for a boss standing or falling with its loot.</td></tr>
       <tr><td><code>gear.mjs</code></td><td>the kit: <code>paintSlot</code> for a node slot (a card and its worth on GATE, or not joined) or a tool slot (an app item in its tier), empty or filled; <code>kitBadge</code>, the overlay that says how many node slots are fielded; <code>worthText</code>.</td></tr>
+      <tr><td><code>back.mjs</code></td><td>the card back: <code>paintBack</code> and <code>checkBack</code>; each theme's field and frame, the DIGI emblem, the maker's identicon in a medallion with the key written short, the edition number; the field's scatter thrown with the maker's dice.</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
     </tbody>
   </table></div>
@@ -486,7 +519,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
   <h2 id="ad-h">Adoption</h2>
   <div class="cols">
     <div class="box"><h3>For the DIGI card</h3>
-      <p>Vendor <code>kards/kardart.mjs</code> byte for byte at a named commit and call <code>paintArt(facts, themeId, 384, 560)</code> for the 384 &times; 560 area under the card's 16-row data band. To open a card, re-draw the face from the facts the card carries and compare it with the picture: if one byte differs, refuse it. A theme id on the card says which world to draw. The game view builds on the same kit: <code>ui.mjs</code> for the font, icons and key faces, <code>estate.mjs</code> for the home plot, <code>arena.mjs</code> for duels and <code>raid.mjs</code> for the bosses; an item card is <code>paintArt</code> with a <code>form</code>.</p></div>
+      <p>Vendor <code>kards/kardart.mjs</code> byte for byte at a named commit and call <code>paintArt(facts, themeId, 384, 560)</code> for the 384 &times; 560 area under the card's 16-row data band. To open a card, re-draw the face from the facts the card carries and compare it with the picture: if one byte differs, refuse it. A theme id on the card says which world to draw. The game view builds on the same kit: <code>ui.mjs</code> for the font, icons and key faces, <code>estate.mjs</code> for the home plot, <code>arena.mjs</code> for duels, <code>raid.mjs</code> for the bosses, <code>gear.mjs</code> for the kit and <code>back.mjs</code> for the back of every card, with its maker's mark; an item card is <code>paintArt</code> with a <code>form</code>.</p></div>
     <div class="box"><h3>To add a theme</h3>
       <p>A published theme is never edited, because old cards must still re-draw exactly. A redesign is a new id, for example <code>synthwave-v2</code>: append it to <code>THEMES</code>, run <code>node tools/kards-pins.mjs synthwave-v2</code>, paste its pins into <code>kardart.pins.mjs</code>, and let the witness prove it. The old themes' pins stay green.</p></div>
     <div class="box"><h3>For any build that wants collectible graphics</h3>
@@ -506,7 +539,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">172</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">190</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -551,9 +584,14 @@ import { paintEstate, estateStats } from './estate.mjs';
 import { paintDuel, duelScore } from './arena.mjs';
 import { paintRaid, bossHealth, bossSprite, BOSSES } from './raid.mjs';
 import { paintSlot, kitBadge, worthText } from './gear.mjs';
+import { paintBack, checkBack } from './back.mjs';
 
-const $ = (s, r = document) => r.querySelector(s);
+const $ =(s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
+{   // a jump from the menu lands each heading just under it, however many rows the menu wraps to
+  const nav = $('nav.jump'), fit = () => document.documentElement.style.setProperty('--navh', nav.offsetHeight + 8 + 'px');
+  fit(); new ResizeObserver(fit).observe(nav);
+}
 const DATASETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
 const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 const hex = (u8) => Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join('');
@@ -738,6 +776,46 @@ const itemSaid = saidIn('#i-act');
 $('#i-dl').addEventListener('click', () => { if (!lastItem) return itemSaid('Fix the item first.'); savePNG(paintArt(lastItem, I.theme.value, 384, 560).px, 384, 560, 'item-' + lastItem.form + '-' + lastItem.id.slice(0, 8) + '-' + I.theme.value + '.png'); itemSaid('Downloaded.'); });
 $('#i-json').addEventListener('click', async () => { try { await navigator.clipboard.writeText(JSON.stringify(lastItem, null, 2)); itemSaid('Facts copied.'); } catch { itemSaid('Copy failed.'); } });
 
+// ── card backs: the maker's mark, face down, and a flip to the workshop's card ────────────────────────────────────────────────
+for (const id of THEME_IDS) $('#b-theme').add(new Option(THEMES[id].name, id));
+let showFace = false;
+const readBack = () => { const s = $('#b-serial').value.trim(); return { ...($('#b-signed').checked ? { maker: $('#b-maker').value.trim() } : {}), ...(s === '' ? {} : { serial: Number(s) }) }; };
+const backSays = (b) => (b.maker ? 'made by ' + b.maker.slice(0, 4) + '…' + b.maker.slice(60) : 'unsigned') + (b.serial === null ? ', no edition number' : ', edition ' + b.serial);
+function renderBack() {
+  const b = readBack(), t = $('#b-theme').value, c = checkBack(b), m = $('#back-msg'), cv = $('#back-canvas');
+  $('#b-maker').disabled = $('#b-roll').disabled = !$('#b-signed').checked;
+  if (!c.ok) { m.className = 'msg bad'; m.textContent = 'Not a back yet: ' + c.why + '.'; return; }
+  m.className = 'msg ok';
+  if (showFace && lastGood) { paint(cv, lastGood, t); m.textContent = 'The face: ' + describe(lastGood, THEMES[t].name) + '. Flip it to see who made it.'; }
+  else { putRGB(cv, paintBack(b, t, 384, 560).px, 384, 560); m.textContent = THEMES[t].name + ' · ' + backSays(c.b); }
+  cv.setAttribute('aria-label', (showFace ? 'The face of the workshop card. ' : 'A card back: ') + m.textContent);
+  const row = $('#back-row'); row.textContent = '';
+  for (const id of THEME_IDS) {
+    const fig = document.createElement('figure'), mini = document.createElement('canvas'), cap = document.createElement('figcaption');
+    mini.className = 'mini'; putRGB(mini, paintBack(b, id, 192, 280).px, 192, 280); mini.setAttribute('role', 'img'); mini.setAttribute('aria-label', 'The back in ' + THEMES[id].name + ', ' + backSays(c.b));
+    cap.className = 'pw pw-1'; cap.textContent = THEMES[id].name.toUpperCase(); fig.append(mini, cap); row.append(fig);
+  }
+}
+for (const id of ['#b-maker', '#b-serial', '#b-theme', '#b-signed']) $(id).addEventListener('input', renderBack);
+const faceFollows = () => { if (showFace) renderBack(); };   // the face shown is the workshop's card as it is now
+for (const el of Object.values(F)) el.addEventListener('input', faceFollows);
+$('#roll').addEventListener('click', faceFollows);
+$('#b-roll').addEventListener('click', () => { $('#b-maker').value = randHex(32); renderBack(); });
+$('#b-flip').addEventListener('click', () => {
+  showFace = !showFace; $('#b-flip').setAttribute('aria-pressed', String(showFace));
+  const cv = $('#back-canvas');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return renderBack();
+  cv.style.transform = 'scaleX(0)';
+  setTimeout(() => { renderBack(); cv.style.transform = ''; }, 140);
+});
+$('#b-dl').addEventListener('click', () => {
+  const b = readBack(), t = $('#b-theme').value, said = saidIn('#b-act');
+  if (showFace && lastGood) { savePNG(paintArt(lastGood, t, 384, 560).px, 384, 560, 'kard-' + lastGood.id.slice(0, 8) + '-' + t + '.png'); return said('Downloaded the face.'); }
+  const r = paintBack(b, t, 384, 560);
+  if (!r.ok) return said('Fix the back first.');
+  savePNG(r.px, 384, 560, 'back-' + (b.maker ? b.maker.slice(0, 8) : 'unsigned') + '-' + t + '.png'); said('Downloaded.');
+});
+
 // ── the estate builder ──────────────────────────────────────────────────────────────────────────────────────────────
 const RARS = ['common', 'uncommon', 'rare', 'epic', 'legendary'], SETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
 const est = { cards: SAMPLES.slice(0, 8).map((s, n) => ({ id: s.id, dataset: s.dataset, department: s.department, stage: s.stage, rarity: s.rarity, generation: s.generation, fresh: n === 1 })), wires: [[SAMPLES[0].id, SAMPLES[2].id], [SAMPLES[2].id, SAMPLES[4].id]], tools: 4, items: [], swarms: [], useItems: false, digi: false, snapshot: false };
@@ -745,7 +823,7 @@ let estTheme = 'blockcraft-v1';
 for (const id of THEME_IDS) $('#est-theme').add(new Option(THEMES[id].name, id));
 $('#est-theme').value = estTheme;
 const estSize = () => (est.snapshot ? [1200, 630] : [720, 480]);
-const holdings = () => (est.useItems ? { cards: est.cards, wires: est.wires, items: est.digi ? est.items.filter((it) => ['app', 'pwa', 'node'].includes(it.form)) : est.items, swarms: est.swarms, snapshot: est.snapshot, ...(est.digi ? { districts: ['scorer', 'tools', 'swarm'] } : {}) } : { cards: est.cards, wires: est.wires, tools: est.tools, snapshot: est.snapshot });
+const holdings = () => (est.useItems ? { cards: est.cards, wires: est.wires, items: est.digi ? est.items.filter((it) => ['app', 'pwa', 'node'].includes(it.form)) : est.items, swarms: est.swarms, snapshot: est.snapshot, ...(est.digi ? { districts: ['scorer', 'tools', 'swarm'], names: { swarm: 'KITTED' } } : {}) } : { cards: est.cards, wires: est.wires, tools: est.tools, snapshot: est.snapshot });
 function renderEstate() {
   const [w, h] = estSize(), H = holdings(), r = paintEstate(H, estTheme, w, h), c = $('#estate-canvas'), s = estateStats(H);
   if (!r.ok) { $('#estate-msg').className = 'msg bad'; $('#estate-msg').textContent = r.why; return; }
@@ -910,6 +988,7 @@ function heroes() {
   newDuel(); duel.decided = 30; renderDuel();
   renderRaid();
   $('#key-in').value = 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07'; renderKey();
+  $('#b-maker').value = $('#key-in').value; renderBack();   // the same key as the UI kit's: its face is the mark on the back
   if (!item) { renderItem(); setWork(first, theme); return; }   // the address bar keeps the link the page was opened with
   setWork(first, theme);
   for (const k of ['form', 'tier', 'name', 'source', 'id']) I[k].value = item.f[k];
