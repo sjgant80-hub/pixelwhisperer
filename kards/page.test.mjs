@@ -36,6 +36,15 @@ test('the page: its imports exist, and it loads nothing from anywhere else', () 
   assert.equal(/\bfetch\(|XMLHttpRequest|sendBeacon|WebSocket/.test(html), false, 'it talks to nobody');
 });
 
+test('every code sample on the page imports names its module really exports (a dead sample is a dead control)', async () => {
+  const samples = [...html.matchAll(/import \{([^}]+)\} from '\.\/kards\/([\w.-]+)'/g)];
+  assert.ok(samples.length >= 3, 'the samples are found');
+  for (const [, names, file] of samples) {
+    const mod = await import('./' + file);
+    for (const n of names.split(',').map((s) => s.trim())) assert.ok(Object.prototype.hasOwnProperty.call(mod, n), file + ' exports ' + n);
+  }
+});
+
 test('the page says what it must: what it is, start here, how it works, blueprint, adoption, proof, limits', () => {
   for (const id of ['gallery', 'workshop', 'start', 'how', 'blueprint', 'decide', 'adoption', 'proof', 'limits', 'estate', 'ui', 'estate-canvas', 'font-sample', 'icons', 'key-face', 'cost-form', 'cost-out', 'cost-msg', 'c-cards', 'c-percard', 'c-hours', 'c-rate']) assert.ok(ids.has(id), 'section #' + id);
   for (const word of ['paintArt', 'append-only', 'integer', 'witness', 'synthwave-v1', 'THEME_IDS', 'Thomas Frumkin', 'Kar', 'CEO', 'CFO', 'COO', 'CTO and CISO', 'The cost case', 'Risks, answered straight', 'The case for the board', 'Security, data protection and compliance', 'Support and ownership', 'Deployment and roll-out']) assert.ok(html.includes(word), word);

@@ -177,6 +177,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 <section id="estate" aria-labelledby="estate-h">
   <h2 id="estate-h">The estate: grow your plot</h2>
   <p>Every card a player holds is a tower on an isometric blockcraft plot, its trim in its rarity and its own creature on the sign. Tools are blocks, consented mesh links are cyan wires, and the districts still to come are fenced grey. The plot opens by a published rule: a district holding n blocks has <code>tilesFor(n) = min(36, 8 + 2n)</code> open tiles, so a new player starts with 16. The same holdings always draw the same picture, so a shared snapshot can be replayed and checked.</p>
+  <p class="hint">Try it: <b>Add a card</b> raises a new tower; <b>Breed a new child</b> adds a generation-1 card, standing in for one bred from two you hold, and marks it fresh, so its sign sparkles until the next child; <b>Wire two cards</b> joins two of your cards with a consented mesh link, a cyan wire; the slider sets how many tool blocks you hold; tick the snapshot to see the 1200 &times; 630 picture a shared link shows.</p>
   <div class="work">
     <div>
       <canvas class="card estate" id="estate-canvas" width="720" height="480" role="img" aria-label="An estate"></canvas>
@@ -202,7 +203,9 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
   </div>
 <pre><code>import { paintEstate, estateStats, tilesFor } from './kards/estate.mjs';
 paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fresh? }], wires?: [[idA, idB]],
-              tools?: n, levels?: n, snapshot?: true }, 'blockcraft-v1', 1200, 630)   // { ok, px, scale } | { ok: false, why }</code></pre>
+              tools?: n, levels?: n, snapshot?: true }, 'blockcraft-v1', 1200, 630)   // { ok, px, scale } | { ok: false, why }
+// px: w &times; h RGB at the size asked for, each logical pixel a scale &times; scale block (480 &times; 320 is scale 2, 1200 &times; 630 is scale 3).
+// snapshot: true adds a title band and a stats band (blocks, tiles, mesh links, and levels when given): the picture a shared link shows.</code></pre>
 </section>
 
 <section id="ui" aria-labelledby="ui-h">
@@ -223,6 +226,16 @@ paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fre
     <button type="button" class="act" id="key-roll">Roll a key</button>
   </div>
   <div class="idrow"><canvas id="key-face" width="60" height="60" role="img" aria-label="The key's identicon"></canvas><p class="msg" id="key-msg" role="status" aria-live="polite"></p></div>
+  <h3>Use it in a screen</h3>
+<pre><code>&lt;link rel="stylesheet" href="kards/fonts/pixelwhisperer.css"&gt;
+&lt;span class="pw pw-2"&gt;LV 12 &middot; GATE 0.81&lt;/span&gt;                  &lt;!-- real, selectable text: two CSS pixels to a glyph pixel --&gt;
+
+import { paintText, UI_ICONS, DOCK, identicon } from './kards/ui.mjs';
+const t = paintText('MY DIGI ESTATE', 3, '#ffd23c', '#4a1480');   // { ok, w, h, px: RGBA } | { ok: false, why }
+ctx.putImageData(new ImageData(new Uint8ClampedArray(t.px.buffer), t.w, t.h), 0, 0);
+DOCK.map((name) =&gt; UI_ICONS[name]);                              // each icon: 16 rows of 16 cells, '#' is ink
+const face = identicon(publicKeyHex, 4);                          // { ok, size: 10, cells, colors: { bg, fg, accent, border }, px: RGB }</code></pre>
+  <p><b>What a change can break.</b> Nothing you have vendored. The glyph table, every icon, the identicon and the estate pictures are pinned by sha256 in the tests, so no change lands silently: CI goes red until a change is made on purpose and its pin moved in the same commit. Copy <code>kardart.mjs</code>, <code>ui.mjs</code>, <code>estate.mjs</code> and <code>fonts/</code> at a named commit and your screens draw exactly those bytes until you choose to move. The repository is offered under the MIT licence, and the font file carries the same notice.</p>
 </section>
 
 <section id="start" aria-labelledby="start-h">
