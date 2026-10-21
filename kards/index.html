@@ -44,7 +44,9 @@ section{padding:34px 0 8px;scroll-margin-top:56px}
 .seg button[aria-pressed=true]{background:var(--magenta);color:#1a0030;font-weight:700}
 .hint{color:var(--muted);font-size:.9rem}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
-.grid.both{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.grid.all{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.grid.all .tile .pair{flex-wrap:wrap}
+.grid.all .tile button.open{flex:0 0 calc(50% - 4px)}
 .tile{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
 .tile .pair{display:flex;gap:8px}
 .tile button.open{display:block;flex:1;min-width:0;background:none;border:0;padding:0;cursor:pointer;border-radius:6px}
@@ -108,13 +110,13 @@ footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;colo
  <div class="herotext">
   <p class="eyebrow">PixelWhisperer Kards &middot; the DIGI card's art engine</p>
   <h1>Every card has a <span>face</span> only its facts can draw.</h1>
-  <p class="lede">A DIGI card is a sealed picture that carries a living, ownable intelligence. This engine draws that picture: a blocky voxel creature born from the card's own id, in a neon synthwave world or a blockcraft island, with the title, level, rarity, dataset, lineage and id printed in a pixel font. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
+  <p class="lede">A DIGI card is a sealed picture that carries a living, ownable intelligence. This engine draws that picture: a blocky voxel creature born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
   <p class="byline">Built by <b>Kar</b>, the estate's resident builder, as a side build for PixelWhisperer. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
   <ul class="badges" aria-label="Facts about this build">
-    <li><b>2</b> themes, append-only</li><li><b>2<sup>64</sup></b> creatures</li><li><b>integer-only</b> drawing</li><li><b>mutation-witnessed</b>, none baselined</li><li>drawn live <b>in your browser</b></li>
+    <li><b id="n-themes">4</b> themes, append-only</li><li><b>2<sup>64</sup></b> creatures</li><li><b>integer-only</b> drawing</li><li><b>mutation-witnessed</b>, none baselined</li><li>drawn live <b>in your browser</b></li>
   </ul>
  </div>
- <div class="herocards" aria-label="The same card in both themes"><canvas class="card" id="hero-a" width="384" height="560" role="img" aria-label="A legendary card in synthwave"></canvas><canvas class="card" id="hero-b" width="384" height="560" role="img" aria-label="The same legendary card in blockcraft"></canvas></div>
+ <div class="herocards" aria-label="The same card, changing theme every few seconds"><canvas class="card" id="hero-a" width="384" height="560" role="img" aria-label="A legendary card in synthwave"></canvas><canvas class="card" id="hero-b" width="384" height="560" role="img" aria-label="The same legendary card in blockcraft"></canvas></div>
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
@@ -127,11 +129,7 @@ footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;colo
   <h2 id="gallery-h">The gallery</h2>
   <p>Twelve sample cards across every dataset and rarity. Every pixel below was just drawn in this tab by <code>kardart.mjs</code>, the same file the DIGI card uses. Switch the theme and the whole gallery is re-skinned: same facts, same creatures, a new world. Click a card to open it in the workshop.</p>
   <div class="controls">
-    <div class="seg" role="group" aria-label="Theme">
-      <button type="button" data-theme="synthwave-v1" aria-pressed="true">Synthwave</button>
-      <button type="button" data-theme="blockcraft-v1" aria-pressed="false">Blockcraft</button>
-      <button type="button" data-theme="both" aria-pressed="false">Side by side</button>
-    </div>
+    <div class="seg" role="group" aria-label="Theme" id="theme-seg"></div>
     <span class="hint" id="theme-blurb" aria-live="polite"></span>
   </div>
   <div class="grid" id="grid"></div>
@@ -203,7 +201,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <li><b>Whiten the id</b><small>The 16 hex digits become 64 bits and pass through a 4-round Feistel network, so ids that differ by one digit look nothing alike. It is a bijection: no two ids share a genome.</small></li>
     <li><b>Read the genome</b><small>Every one of the 64 bits picks something: head, torso, legs, arms, crown, eyes, mouth, back, pattern, two colours and a 34-bit speckle.</small></li>
     <li><b>Build the creature</b><small>A symmetric voxel model, 9 &times; 14 &times; 7. Always one connected piece, always with eyes.</small></li>
-    <li><b>Draw the world</b><small>The theme paints the art window: synthwave in a neon front view, blockcraft in isometric blocks. All integer geometry.</small></li>
+    <li><b>Draw the world</b><small>The theme paints the art window: synthwave in a neon front view, blockcraft in isometric blocks, pocket LCD in four dithered shades, Memphis in flat pop colour. All integer geometry.</small></li>
     <li><b>Print the chrome</b><small>Title, LV bar, dataset icon, department, rarity, lineage and id in a 5 &times; 9 pixel font, then the rarity frame.</small></li>
     <li><b>Scale to the size asked</b><small>The face is a 192 &times; 280 pixel canvas. At the DIGI card's 384 &times; 560 each pixel is exactly 2 &times; 2. Other sizes pick the nearest pixel.</small></li>
     <li><b>Hand back RGB bytes</b><small><code>{ ok: true, px }</code>. The PNG writer is separate and also deterministic.</small></li>
@@ -226,7 +224,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>modelOf</code> / <code>spriteOf</code></td><td>the genome to a 9 &times; 14 &times; 7 voxel creature, mirrored, with speckle.</td></tr>
       <tr><td>font and icons</td><td>a 5 &times; 9 pixel font (66 glyphs) and seven 16 &times; 16 dataset icons, kept as readable art in the source.</td></tr>
       <tr><td><code>chrome</code> / <code>frame</code></td><td>everything that is the same in every theme: plate, LV bar, rarity frame and stars, lineage, id barcode.</td></tr>
-      <tr><td><code>THEMES</code></td><td>the registry: <code>synthwave-v1</code>, <code>blockcraft-v1</code>. Frozen, versioned, append-only.</td></tr>
+      <tr><td><code>THEMES</code></td><td>the registry: <span id="theme-list"></span>. Frozen, versioned, append-only.</td></tr>
       <tr><td><code>paintArt</code></td><td>the one call: facts, theme id, width, height to RGB bytes, or a refusal.</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
     </tbody>
@@ -244,7 +242,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <div class="box"><h3>CFO</h3><p>The marginal cost of one more card's art is zero: it is drawn on the viewer's device. No per-image fee, no per-seat licence, no cloud bill for art. The case below is arithmetic on your own numbers, not ours.</p></div>
     <div class="box"><h3>COO</h3><p>One module and one call. There is nothing to host, schedule or scale: no server, no queue, no storage, no dependencies. If a device can show a page, it can draw a card.</p></div>
     <div class="box"><h3>CTO and CISO</h3><p>Pure integer code with no network access and no imports, in one file you pin by SHA-256. Deterministic: the same facts give the same bytes in any browser, so a reader can verify a card's picture by re-drawing it. Hostile input is refused, never thrown. Proven by tests, hash pins and a mutation witness in which every mutant is killed.</p></div>
-    <div class="box"><h3>Product and design</h3><p>Two finished themes today. A new theme is a new id (for example <code>synthwave-v2</code>) and never breaks an old card. The gallery and workshop above show every fact on the card before you commit to anything.</p></div>
+    <div class="box"><h3>Product and design</h3><p>Every theme in the switcher above is finished and pinned. A new theme is a new id (for example <code>synthwave-v2</code>) and never breaks an old card. The gallery and workshop above show every fact on the card before you commit to anything.</p></div>
     <div class="box"><h3>Community and marketing</h3><p>Cards that look different from each other, rarity you can read from across a room, a link that shows the same card on any phone, and a download button. All twelve sample cards, in both themes, are on this page.</p></div>
   </div>
 
@@ -335,7 +333,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">187</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">231</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -351,7 +349,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <li>Sizes other than 384 &times; 560 (or any exact multiple of 192 &times; 280) pick the nearest pixel: legal and deterministic, but squashed or stretched, and the small print is unreadable below about 192 pixels wide.</li>
     <li>The pixel font covers the characters a title and department may hold; nothing else can be printed, so nothing else is accepted.</li>
     <li>A theme, once published, is frozen. That is the point, and also the cost: a mistake in a published theme is fixed by a new theme, never by an edit.</li>
-    <li>"Blockcraft" is a style name for blocky voxel art. It is not affiliated with, or derived from, any game.</li>
+    <li>"Blockcraft" is a style name for blocky voxel art, "Pocket LCD" for a four-shade handheld look and "Memphis" for the 1980s design movement. None is affiliated with, or derived from, any game or product.</li>
     <li>I own functional correctness. The last inch of taste in the art is the owner's to judge.</li>
   </ul>
 </section>
@@ -399,11 +397,16 @@ const describe = (f, themeName) => f.title + ', ' + ('aeiou'.includes(f.rarity[0
 
 // ── the gallery ─────────────────────────────────────────────────────────────────────────────────────────────────────
 let mode = 'synthwave-v1';
-const grid = $('#grid');
+const grid = $('#grid'), seg = $('#theme-seg');
+for (const [id, label] of [...THEME_IDS.map((id) => [id, THEMES[id].name]), ['all', 'All themes']]) {
+  const b = document.createElement('button'); b.type = 'button'; b.dataset.theme = id; b.textContent = label; b.setAttribute('aria-pressed', String(id === mode)); seg.append(b);
+}
+$('#n-themes').textContent = THEME_IDS.length;
+for (const [k, id] of THEME_IDS.entries()) { const c = document.createElement('code'); c.textContent = id; $('#theme-list').append(k ? ', ' : '', c); }
 function buildGallery() {
   grid.textContent = '';
-  grid.classList.toggle('both', mode === 'both');
-  const themes = mode === 'both' ? THEME_IDS : [mode];
+  grid.classList.toggle('all', mode === 'all');
+  const themes = mode === 'all' ? THEME_IDS : [mode];
   SAMPLES.forEach((f, k) => {
     const fig = document.createElement('figure'); fig.className = 'tile';
     const pair = document.createElement('div'); pair.className = 'pair';
@@ -412,20 +415,20 @@ function buildGallery() {
       b.setAttribute('aria-label', 'Open ' + f.title + ' (' + THEMES[t].name + ') in the workshop');
       const c = document.createElement('canvas'); c.className = 'card'; c.width = 384; c.height = 560; c.setAttribute('role', 'img'); c.setAttribute('aria-label', describe(f, THEMES[t].name));
       b.append(c); pair.append(b);
-      b.addEventListener('click', () => { setWork(f, t === 'both' ? null : t); $('#workshop').scrollIntoView({ behavior: 'smooth' }); });
+      b.addEventListener('click', () => { setWork(f, t); $('#workshop').scrollIntoView({ behavior: 'smooth' }); });
       paint(c, f, t);
     }
     const cap = document.createElement('figcaption'), name = document.createElement('b');
     name.textContent = f.title; cap.append(name, f.rarity + ' ' + f.dataset + ' · LV ' + f.stage + ' · gen ' + f.generation);
     fig.append(pair, cap); grid.append(fig);
   });
-  $('#theme-blurb').textContent = mode === 'both' ? 'Both themes, side by side: the same twelve creatures in two worlds.' : THEMES[mode].blurb;
+  $('#theme-blurb').textContent = mode === 'all' ? 'Every theme, side by side: the same twelve creatures in ' + THEME_IDS.length + ' worlds.' : THEMES[mode].blurb;
 }
 for (const b of document.querySelectorAll('.seg button')) b.addEventListener('click', () => {
   mode = b.dataset.theme;
   for (const o of document.querySelectorAll('.seg button')) o.setAttribute('aria-pressed', String(o === b));
   buildGallery();
-  if (mode !== 'both') { workTheme = mode; renderWork(); }
+  if (mode !== 'all') { workTheme = mode; renderWork(); }
 });
 
 // ── the workshop ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -515,12 +518,21 @@ function cost() {
 }
 for (const id of ['cards', 'percard', 'hours', 'rate']) $('#c-' + id).addEventListener('input', cost);
 
+// ── the hero: one card, re-skinned live, two themes at a time ─────────────────────────────────────────────────────────────
+let heroAt = 0;
+function heroes() {
+  for (const [k, id] of [['a', THEME_IDS[heroAt % THEME_IDS.length]], ['b', THEME_IDS[(heroAt + 1) % THEME_IDS.length]]]) {
+    const c = $('#hero-' + k); paint(c, SAMPLES[4], id); c.setAttribute('aria-label', 'A legendary card in ' + THEMES[id].name);
+  }
+}
+
 // ── start ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 (function start() {
   let first = SAMPLES[4], theme = 'synthwave-v1';
   try { const h = location.hash.startsWith('#card=') ? JSON.parse(decodeURIComponent(location.hash.slice(6))) : null; if (h && checkFacts(h.f).ok && THEME_IDS.includes(h.t)) { first = h.f; theme = h.t; } } catch { /* an unreadable link is ignored */ }
   $('#theme-blurb').textContent = THEMES[mode].blurb;
-  paint($('#hero-a'), SAMPLES[4], 'synthwave-v1'); paint($('#hero-b'), SAMPLES[4], 'blockcraft-v1');
+  heroes();
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { heroAt++; heroes(); }, 3500);
   buildGallery();
   cost();
   setWork(first, theme);

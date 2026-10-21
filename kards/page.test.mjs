@@ -37,7 +37,7 @@ test('the page: its imports exist, and it loads nothing from anywhere else', () 
 
 test('the page says what it must: what it is, start here, how it works, blueprint, adoption, proof, limits', () => {
   for (const id of ['gallery', 'workshop', 'start', 'how', 'blueprint', 'decide', 'adoption', 'proof', 'limits', 'cost-form', 'cost-out', 'cost-msg', 'c-cards', 'c-percard', 'c-hours', 'c-rate']) assert.ok(ids.has(id), 'section #' + id);
-  for (const word of ['paintArt', 'append-only', 'integer', 'witness', 'synthwave-v1', 'blockcraft-v1', 'Thomas Frumkin', 'Kar', 'CEO', 'CFO', 'COO', 'CTO and CISO', 'The cost case', 'Risks, answered straight', 'The case for the board', 'Security, data protection and compliance', 'Support and ownership', 'Deployment and roll-out']) assert.ok(html.includes(word), word);
+  for (const word of ['paintArt', 'append-only', 'integer', 'witness', 'synthwave-v1', 'THEME_IDS', 'Thomas Frumkin', 'Kar', 'CEO', 'CFO', 'COO', 'CTO and CISO', 'The cost case', 'Risks, answered straight', 'The case for the board', 'Security, data protection and compliance', 'Support and ownership', 'Deployment and roll-out']) assert.ok(html.includes(word), word);
   assert.equal(html.toLowerCase().includes('mine' + 'craft'), false, 'the trademark is not used');
 });
 

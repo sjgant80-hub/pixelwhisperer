@@ -17,7 +17,7 @@ const THEME_IDS = Object.keys(THEMES);
 const refused = (r, why) => { assert.equal(r.ok, false); assert.equal(typeof r.why, 'string'); assert.ok(r.why.length > 5); if (why) assert.match(r.why, why); };
 
 test('the registry: published themes are frozen, versioned, named, and never call themselves by a trademark', () => {
-  assert.deepEqual(THEME_IDS.slice(0, 2), ['synthwave-v1', 'blockcraft-v1']);   // append-only: new themes join at the end
+  assert.deepEqual(THEME_IDS.slice(0, 4), ['synthwave-v1', 'blockcraft-v1', 'lcd-v1', 'memphis-v1']);   // append-only: new themes join at the end
   assert.ok(Object.isFrozen(THEMES));
   for (const [id, t] of Object.entries(THEMES)) {
     assert.equal(t.id, id);
@@ -28,6 +28,8 @@ test('the registry: published themes are frozen, versioned, named, and never cal
   }
   assert.equal(THEMES['blockcraft-v1'].name, 'Blockcraft');
   assert.equal(THEMES['synthwave-v1'].name, 'Synthwave');
+  assert.equal(THEMES['lcd-v1'].name, 'Pocket LCD');
+  assert.equal(THEMES['memphis-v1'].name, 'Memphis Pop');
   assert.equal(SRC.toLowerCase().includes('mine' + 'craft'), false);
 });
 
@@ -65,23 +67,48 @@ test('sizes: 384 x 560 is an exact 2x of the 192 x 280 canvas; every size from 6
   for (const [w, h] of [[63, 280], [192, 63], [1025, 280], [192, 1025], [192.5, 280], [192, 280.5], ['192', 280], [192, '280'], [NaN, 280], [192, Infinity], [null, 280], [192, undefined], [-192, 280], [0, 0], [192n, 280], [[192], 280]]) refused(paintArt(GOOD, 'synthwave-v1', w, h), /width and height/);
 });
 
-test('the card has the facts of the card: the frame is the rarity palette (grey, green, blue, purple, gold)', () => {
-  const HI = [0xc8ccd6, 0x86ff92, 0x80c4ff, 0xdba2ff, 0xffe680], MID = [0x8a8f9e, 0x36c44c, 0x3a7ee8, 0x9c4ee2, 0xf2b422];
-  RARITIES.forEach((rarity, i) => {
-    for (const theme of THEME_IDS) {
-      const px = draw({ ...GOOD, rarity }, theme, 192, 280), at = (x, y) => (px[(y * 192 + x) * 3] << 16) | (px[(y * 192 + x) * 3 + 1] << 8) | px[(y * 192 + x) * 3 + 2];
-      assert.equal(at(2, 140), HI[i]);
-      assert.equal(at(1, 140), MID[i]);
-      assert.equal(at(189, 140), HI[i]);
-      assert.equal(at(190, 140), MID[i]);
-    }
-  });
+const PAL = {   // the frame's two outer tones per rarity, by theme: common, uncommon, rare, epic, legendary (grey, green, blue, purple, gold)
+  shared: { hi: [0xc8ccd6, 0x86ff92, 0x80c4ff, 0xdba2ff, 0xffe680], mid: [0x8a8f9e, 0x36c44c, 0x3a7ee8, 0x9c4ee2, 0xf2b422] },
+  'lcd-v1': { hi: [0xd8dccf, 0xc8e078, 0xb8d4ff, 0xe0c8ff, 0xffe890], mid: [0x9aa095, 0x8bac0f, 0x5f8fe8, 0xa06ad8, 0xd09a20] },
+  'memphis-v1': { hi: [0x646b79, 0x16a34a, 0x2563eb, 0x9333ea, 0xd97706], mid: [0x9aa3b2, 0x4ade80, 0x60a5fa, 0xc084fc, 0xfbbf24] },
+};
+test('the card has the facts of the card: the frame is the rarity palette (grey, green, blue, purple, gold) in every theme', () => {
   const r = (c) => c >> 16, g = (c) => (c >> 8) & 255, b = (c) => c & 255;
-  assert.ok(Math.abs(r(HI[0]) - g(HI[0])) < 16 && Math.abs(g(HI[0]) - b(HI[0])) < 16);   // grey
-  assert.ok(g(HI[1]) > r(HI[1]) && g(HI[1]) > b(HI[1]));                                   // green
-  assert.ok(b(HI[2]) > r(HI[2]) && b(HI[2]) > g(HI[2]));                                   // blue
-  assert.ok(r(HI[3]) > g(HI[3]) && b(HI[3]) > g(HI[3]));                                   // purple
-  assert.ok(r(HI[4]) > g(HI[4]) && g(HI[4]) > b(HI[4]));                                   // gold
+  for (const theme of THEME_IDS) {
+    const { hi: HI, mid: MID } = PAL[theme] || PAL.shared;
+    RARITIES.forEach((rarity, i) => {
+      const px = draw({ ...GOOD, rarity }, theme, 192, 280), at = (x, y) => (px[(y * 192 + x) * 3] << 16) | (px[(y * 192 + x) * 3 + 1] << 8) | px[(y * 192 + x) * 3 + 2];
+      assert.equal(at(2, 140), HI[i], theme + ' ' + rarity);
+      assert.equal(at(1, 140), MID[i], theme + ' ' + rarity);
+      assert.equal(at(189, 140), HI[i], theme + ' ' + rarity);
+      assert.equal(at(190, 140), MID[i], theme + ' ' + rarity);
+    });
+    assert.ok(Math.abs(r(HI[0]) - g(HI[0])) < 16 && Math.abs(g(HI[0]) - b(HI[0])) < 16, theme + ' grey');
+    assert.ok(g(HI[1]) > r(HI[1]) && g(HI[1]) > b(HI[1]), theme + ' green');
+    assert.ok(b(HI[2]) > r(HI[2]) && b(HI[2]) > g(HI[2]), theme + ' blue');
+    assert.ok(r(HI[3]) > g(HI[3]) && b(HI[3]) > g(HI[3]), theme + ' purple');
+    assert.ok(r(HI[4]) > g(HI[4]) && g(HI[4]) > b(HI[4]), theme + ' gold');
+  }
+});
+
+test('lcd-v1 is a true four-shade screen: every pixel of every card is one of the four shades of its rarity', () => {
+  const RAMP = [[0x0f1210, 0x4a5048, 0x9aa095, 0xd8dccf], [0x0f380f, 0x306230, 0x8bac0f, 0xc8e078], [0x08143a, 0x1f3f8f, 0x5f8fe8, 0xb8d4ff], [0x1c0a38, 0x522a8a, 0xa06ad8, 0xe0c8ff], [0x2a1a02, 0x7a4e08, 0xd09a20, 0xffe890]];
+  for (const f of corpus(36)) {
+    const px = draw(f, 'lcd-v1', 192, 280), seen = new Set();
+    for (let i = 0; i < px.length; i += 3) seen.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]);
+    const ramp = RAMP[RARITIES.indexOf(f.rarity)];
+    for (const c of seen) assert.ok(ramp.includes(c), f.title + ' uses a colour outside its ramp: ' + c.toString(16));
+    assert.ok(seen.size >= 3, 'a card uses at least three of its four shades: ' + seen.size);
+  }
+});
+
+test('every theme re-skins the same facts into a different picture, and each keeps its own signature', () => {
+  const hashes = THEME_IDS.map((t) => sha256(draw(GOOD, t)));
+  assert.equal(new Set(hashes).size, THEME_IDS.length);
+  const px = draw(GOOD, 'memphis-v1', 192, 280);
+  let ink = 0;
+  for (let i = 0; i < px.length; i += 3) if (px[i] === 0x11 && px[i + 1] === 0x11 && px[i + 2] === 0x11) ink++;
+  assert.ok(ink > 2000, 'memphis draws its heavy black outlines and checker: ' + ink);
 });
 
 // the smallest box holding every logical pixel (at 192 x 280) that two cards do not share
