@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixelWhisperer Kards - the art engine for DIGI cards</title>
+<meta name="description" content="A deterministic pixel-art engine: every card's face is drawn from its own facts, a blocky voxel creature born from its id, in synthwave or blockcraft. Gallery, workshop, and the proof.">
+<meta name="color-scheme" content="dark">
+<style>
+:root{--bg:#0d0620;--bg2:#160a36;--panel:#1a0b3d;--line:#3d1c72;--ink:#f4edff;--muted:#bba9e8;--magenta:#ff2bd6;--cyan:#2be8ff;--gold:#ffd23c;--ok:#7dff8a;--bad:#ff7a8a;--radius:10px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -200px,#3a0d6e 0%,var(--bg) 60%) fixed,var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--cyan)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+header.top{padding:28px 0 8px}
+.eyebrow{color:var(--cyan);letter-spacing:.14em;text-transform:uppercase;font-size:.78rem;margin:0}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:.2em 0 .3em;text-shadow:0 0 18px rgba(255,43,214,.55)}
+h1 span{color:var(--magenta)}
+h2{font-size:1.5rem;margin:0 0 .4em;color:var(--gold)}
+h3{font-size:1.05rem;margin:1.2em 0 .3em;color:var(--cyan)}
+p{margin:.5em 0 1em}
+.lede{font-size:1.15rem;max-width:62ch;color:#ece3ff}
+.byline{color:var(--muted);font-size:.9rem}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;padding:0;list-style:none}
+.badges li{border:1px solid var(--line);background:var(--bg2);border-radius:999px;padding:3px 12px;font-size:.85rem;color:var(--muted)}
+.badges b{color:var(--ink)}
+nav.jump{position:sticky;top:0;z-index:5;background:rgba(13,6,32,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin-top:18px}
+nav.jump .wrap{display:flex;gap:4px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+nav.jump a{color:var(--ink);text-decoration:none;padding:6px 12px;border-radius:6px;font-size:.92rem}
+nav.jump a:hover{background:var(--panel);color:var(--gold)}
+section{padding:34px 0 8px;scroll-margin-top:56px}
+@media(max-width:620px){nav.jump{position:static}section{scroll-margin-top:12px}.preview{position:static}}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:10px 0 18px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--bg2);color:var(--ink);border:0;padding:9px 16px;font:inherit;cursor:pointer;min-height:44px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--magenta);color:#1a0030;font-weight:700}
+.hint{color:var(--muted);font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+.grid.both{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))}
+.tile{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
+.tile .pair{display:flex;gap:8px}
+.tile button.open{display:block;flex:1;min-width:0;background:none;border:0;padding:0;cursor:pointer;border-radius:6px}
+.tile button.open:hover canvas{box-shadow:0 0 0 3px var(--magenta)}
+canvas.card{display:block;width:100%;height:auto;aspect-ratio:384/560;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;border-radius:4px}
+.tile figcaption{font-size:.85rem;color:var(--muted);margin-top:8px}
+.tile figcaption b{color:var(--ink);display:block;font-size:.95rem}
+.work{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:26px;align-items:start}
+@media(max-width:780px){.work{grid-template-columns:1fr}.work .preview{max-width:340px;margin:0 auto}}
+.preview{position:sticky;top:64px}
+form.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px}
+form.panel .full{grid-column:1/-1}
+label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:3px}
+input,select{width:100%;background:#0f0526;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:9px 10px;font:inherit;min-height:44px}
+input[type=range]{padding:0;min-height:44px;accent-color:var(--magenta)}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.row>button{flex:0 0 auto}
+button.act{background:var(--cyan);color:#06222a;border:0;border-radius:6px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;min-height:44px}
+button.act.alt{background:var(--bg2);color:var(--ink);border:1px solid var(--line)}
+button.act:hover{filter:brightness(1.12)}
+.msg{min-height:1.5em;font-size:.92rem;margin:0}
+.msg.bad{color:var(--bad)}
+.msg.ok{color:var(--ok)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;grid-column:1/-1}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{color:var(--gold);font-weight:600}
+code,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em}
+code{background:#10052a;border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+pre{background:#10052a;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;margin:.6em 0 1em}
+pre code{border:0;padding:0;background:none}
+.flow{list-style:none;padding:0;margin:14px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;counter-reset:s}
+.flow li{counter-increment:s;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 12px 12px 14px;position:relative}
+.flow li::before{content:counter(s);position:absolute;top:-10px;left:12px;background:var(--magenta);color:#1a0030;font-weight:800;border-radius:999px;width:24px;height:24px;display:grid;place-items:center;font-size:.85rem}
+.flow b{display:block;color:var(--cyan);margin-bottom:2px}
+.flow small{color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.box h3{margin-top:0}
+.anat{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:24px;align-items:start}
+@media(max-width:780px){.anat{grid-template-columns:1fr}.anat figure{max-width:300px;margin:0 auto}}
+.anat figure{margin:0 16px;position:relative}
+.pin.l{left:-16px}.pin.r{right:-16px}
+.pin{position:absolute;transform:translateY(-50%);width:22px;height:22px;border-radius:999px;background:var(--gold);color:#201000;font-weight:800;font-size:.78rem;display:grid;place-items:center;border:2px solid #201000;pointer-events:none}
+.anat ol{margin:0;padding-left:1.2em}
+.anat li{margin-bottom:.55em}
+.verify li{list-style:none}
+.verify .ok{color:var(--ok)}
+.verify .bad{color:var(--bad)}
+.trace{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 14px;margin:10px 0}
+.trace div{background:#10052a;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+.trace span{display:block;color:var(--muted);font-size:.78rem}
+footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <p class="eyebrow">PixelWhisperer Kards &middot; the DIGI card's art engine</p>
+  <h1>Every card has a <span>face</span> only its facts can draw.</h1>
+  <p class="lede">A DIGI card is a sealed picture that carries a living, ownable intelligence. This engine draws that picture: a blocky voxel creature born from the card's own id, in a neon synthwave world or a blockcraft island, with the title, level, rarity, dataset, lineage and id printed in a pixel font. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
+  <p class="byline">Built by <b>Kar</b>, the estate's resident builder, as a side build for PixelWhisperer. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
+  <ul class="badges" aria-label="Facts about this build">
+    <li><b>2</b> themes, append-only</li><li><b>2<sup>64</sup></b> creatures</li><li><b>integer-only</b> drawing</li><li><b>mutation-witnessed</b>, none baselined</li><li>drawn live <b>in your browser</b></li>
+  </ul>
+</div></header>
+
+<nav class="jump" aria-label="On this page"><div class="wrap">
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a>
+</div></nav>
+
+<main class="wrap">
+
+<section id="gallery" aria-labelledby="gallery-h">
+  <h2 id="gallery-h">The gallery</h2>
+  <p>Twelve sample cards across every dataset and rarity. Every pixel below was just drawn in this tab by <code>kardart.mjs</code>, the same file the DIGI card uses. Switch the theme and the whole gallery is re-skinned: same facts, same creatures, a new world. Click a card to open it in the workshop.</p>
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" data-theme="synthwave-v1" aria-pressed="true">Synthwave</button>
+      <button type="button" data-theme="blockcraft-v1" aria-pressed="false">Blockcraft</button>
+      <button type="button" data-theme="both" aria-pressed="false">Side by side</button>
+    </div>
+    <span class="hint" id="theme-blurb" aria-live="polite"></span>
+  </div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section id="workshop" aria-labelledby="work-h">
+  <h2 id="work-h">The workshop: make your own</h2>
+  <p>Change any fact and the card is re-drawn from scratch. Roll a new id for a new creature. Nothing here is stored or sent anywhere; the link button puts the card in the address bar so you can share it.</p>
+  <div class="work">
+    <div class="preview">
+      <canvas class="card" id="work-canvas" width="384" height="560" role="img" aria-label="The card you are making"></canvas>
+      <p class="msg" id="work-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="work-form" autocomplete="off" novalidate>
+      <div class="full"><label for="f-id">Card id (16 lowercase hex characters)</label>
+        <div class="row"><input id="f-id" maxlength="16" spellcheck="false" inputmode="text"><button type="button" class="act" id="roll">Roll a new id</button></div></div>
+      <div class="full"><label for="f-title">Title (up to 24 characters: letters, digits, space &amp; ' . -)</label><input id="f-title" maxlength="24" spellcheck="false"></div>
+      <div><label for="f-dataset">Dataset</label><select id="f-dataset"></select></div>
+      <div><label for="f-rarity">Rarity</label><select id="f-rarity"></select></div>
+      <div class="full"><label for="f-department">Department (up to 16 characters: a-z 0-9 -)</label><input id="f-department" maxlength="16" spellcheck="false"></div>
+      <div><label for="f-stage">Level earned (stage): <output id="o-stage"></output></label><input id="f-stage" type="range" min="0" max="99" step="1"></div>
+      <div><label for="f-generation">Generation (0-99)</label><input id="f-generation" type="number" min="0" max="99" step="1" inputmode="numeric"></div>
+      <div><label for="f-p1">Parent 1 id (optional)</label><input id="f-p1" maxlength="16" spellcheck="false"></div>
+      <div><label for="f-p2">Parent 2 id (optional)</label><input id="f-p2" maxlength="16" spellcheck="false"></div>
+      <div class="actions">
+        <button type="button" class="act" id="dl">Download PNG (384 &times; 560)</button>
+        <button type="button" class="act alt" id="share">Copy a link to this card</button>
+        <button type="button" class="act alt" id="copyjson">Copy the facts as JSON</button>
+        <span class="msg" id="act-msg" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section id="start" aria-labelledby="start-h">
+  <h2 id="start-h">Start here</h2>
+  <ol>
+    <li><b>Look.</b> Pick a card in the gallery. Flip the theme between Synthwave and Blockcraft.</li>
+    <li><b>Tinker.</b> Open it in the workshop and change a fact: the title, the level, the rarity, a parent. Watch where each one lands on the card (the anatomy below shows the map).</li>
+    <li><b>Take it.</b> Download the PNG or copy the link. Every card is a pure function of its facts, so the same link shows the same card on any device.</li>
+    <li><b>Build with it.</b> One import and one call draws a card's face, for any size from 64 to 1024 pixels:</li>
+  </ol>
+<pre><code>import { paintArt, checkFacts, THEMES } from './kards/kardart.mjs';
+
+const facts = { id: '3f9a1c7e5b208d46', title: 'Churn Hunter', dataset: 'telco', department: 'retention',
+                stage: 34, rarity: 'rare', generation: 2, parents: [] };
+const art = paintArt(facts, 'synthwave-v1', 384, 560);   // { ok: true, px: Uint8Array(384*560*3) } RGB rows, top to bottom
+if (!art.ok) console.log(art.why);                       // bad input is a refusal with a reason, never an exception</code></pre>
+  <h3>Anatomy of a card</h3>
+  <div class="anat">
+    <figure><canvas class="card" id="anat-canvas" width="384" height="560" role="img" aria-label="A sample card with its parts numbered"></canvas></figure>
+    <ol id="anat-legend">
+      <li><b>Title</b> in the pixel font, centred on the plate (at most 24 characters).</li>
+      <li><b>The creature</b>, generated from the id: symmetric, characterful, one of 2<sup>64</sup>. The scene around it is the theme.</li>
+      <li><b>LV</b> and its 100-pixel bar: the levels earned by receipts (0-99), one pixel per level.</li>
+      <li><b>Dataset icon and name</b> (telco, shop, bank, adult, hospital, credit, custom) and the <b>department</b> below it.</li>
+      <li><b>Rarity</b>: the frame, the palette (grey, green, blue, purple, gold), the spelled name and the stars. Epic and legendary cards also get a night sky or more stars.</li>
+      <li><b>Lineage</b>: GEN and a tally (long bars are tens, short ticks are ones), then each parent's identicon, or GENESIS for a first-born.</li>
+      <li><b>The id</b> as #xxxxxxxx&hellip; and a barcode of all 64 bits.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="how" aria-labelledby="how-h">
+  <h2 id="how-h">How it works</h2>
+  <p>Nothing about a face is random and nothing about it is stored. The card's facts go in; the same bytes come out, every time, everywhere.</p>
+  <ol class="flow">
+    <li><b>Check the facts</b><small><code>checkFacts</code> accepts exactly what a DIGI card can hold and refuses everything else, with a reason.</small></li>
+    <li><b>Whiten the id</b><small>The 16 hex digits become 64 bits and pass through a 4-round Feistel network, so ids that differ by one digit look nothing alike. It is a bijection: no two ids share a genome.</small></li>
+    <li><b>Read the genome</b><small>Every one of the 64 bits picks something: head, torso, legs, arms, crown, eyes, mouth, back, pattern, two colours and a 34-bit speckle.</small></li>
+    <li><b>Build the creature</b><small>A symmetric voxel model, 9 &times; 14 &times; 7. Always one connected piece, always with eyes.</small></li>
+    <li><b>Draw the world</b><small>The theme paints the art window: synthwave in a neon front view, blockcraft in isometric blocks. All integer geometry.</small></li>
+    <li><b>Print the chrome</b><small>Title, LV bar, dataset icon, department, rarity, lineage and id in a 5 &times; 9 pixel font, then the rarity frame.</small></li>
+    <li><b>Scale to the size asked</b><small>The face is a 192 &times; 280 pixel canvas. At the DIGI card's 384 &times; 560 each pixel is exactly 2 &times; 2. Other sizes pick the nearest pixel.</small></li>
+    <li><b>Hand back RGB bytes</b><small><code>{ ok: true, px }</code>. The PNG writer is separate and also deterministic.</small></li>
+  </ol>
+  <h3>A real run, traced live</h3>
+  <p class="hint">This is the card in the workshop above, traced as it is drawn right now.</p>
+  <div class="trace" id="trace" aria-live="polite"></div>
+  <h3>Why the arithmetic is integer-only</h3>
+  <p>A card reader re-draws the face from the card's facts and compares the bytes with the picture; one differing pixel refuses a genuine card. Floating-point functions such as <code>sin</code> or <code>pow</code> are allowed to differ in the last bit between JavaScript engines, so the engine uses none of them: no trigonometry, no square roots, no random numbers, no clock. Curves come from integer tables and integer tests (a circle is <code>dx*dx + dy*dy &lt;= r*r</code>), and the one division is a floor of two small whole numbers, which is exact everywhere. A test reads the source and fails the build if any banned call appears.</p>
+</section>
+
+<section id="blueprint" aria-labelledby="bp-h">
+  <h2 id="bp-h">The blueprint</h2>
+  <p>One pure ES module, no imports, no browser or Node APIs. The organs, in the order a card flows through them:</p>
+  <table>
+    <thead><tr><th scope="col">Organ</th><th scope="col">What it owns</th></tr></thead>
+    <tbody>
+      <tr><td><code>checkFacts</code></td><td>the contract: id (16 hex), title (&le; 24, <code>A-Za-z0-9 &amp;'.-</code>), dataset, department (&le; 16, <code>a-z0-9-</code>), stage 0-99, rarity, generation 0-99, up to 2 parents. Total: never throws.</td></tr>
+      <tr><td><code>whiten</code> / <code>reader</code></td><td>id to 64 bits, bit by bit. Integer hash only (<code>Math.imul</code>, shifts).</td></tr>
+      <tr><td><code>modelOf</code> / <code>spriteOf</code></td><td>the genome to a 9 &times; 14 &times; 7 voxel creature, mirrored, with speckle.</td></tr>
+      <tr><td>font and icons</td><td>a 5 &times; 9 pixel font (66 glyphs) and seven 16 &times; 16 dataset icons, kept as readable art in the source.</td></tr>
+      <tr><td><code>chrome</code> / <code>frame</code></td><td>everything that is the same in every theme: plate, LV bar, rarity frame and stars, lineage, id barcode.</td></tr>
+      <tr><td><code>THEMES</code></td><td>the registry: <code>synthwave-v1</code>, <code>blockcraft-v1</code>. Frozen, versioned, append-only.</td></tr>
+      <tr><td><code>paintArt</code></td><td>the one call: facts, theme id, width, height to RGB bytes, or a refusal.</td></tr>
+      <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
+    </tbody>
+  </table>
+  <p>Proof sits beside it: <code>kardart.test.mjs</code>, a pinned-hash smoke test, a static check of the source, and <code>witness-kards.mjs</code>, a mutation gate whose every mutant must be killed.</p>
+</section>
+
+<section id="adoption" aria-labelledby="ad-h">
+  <h2 id="ad-h">Adoption</h2>
+  <div class="cols">
+    <div class="box"><h3>For the DIGI card</h3>
+      <p>Vendor <code>kards/kardart.mjs</code> byte for byte at a named commit and call <code>paintArt(facts, themeId, 384, 560)</code> for the 384 &times; 560 area under the card's 16-row data band. To open a card, re-draw the face from the facts the card carries and compare it with the picture: if one byte differs, refuse it. A theme id on the card says which world to draw.</p></div>
+    <div class="box"><h3>To add a theme</h3>
+      <p>A published theme is never edited, because old cards must still re-draw exactly. A redesign is a new id, for example <code>synthwave-v2</code>: append it to <code>THEMES</code>, run <code>node tools/kards-pins.mjs synthwave-v2</code>, paste its pins into <code>kardart.pins.mjs</code>, and let the witness prove it. The old themes' pins stay green.</p></div>
+    <div class="box"><h3>For any build that wants collectible graphics</h3>
+      <p>Give each thing an id and a handful of facts, call <code>paintArt</code>, and you have a face that is unique, rarity-coded and re-skinnable by changing one string. A new season is a new theme id, not a migration.</p></div>
+  </div>
+  <h3>Why it spreads</h3>
+  <p>Every card is one of 2<sup>64</sup> creatures, with its rarity visible at a glance, its parents on its face and a link that shows exactly the same card on any phone. Re-skinning is one click, so a new theme can make every existing card new again without invalidating a single one.</p>
+</section>
+
+<section id="proof" aria-labelledby="proof-h">
+  <h2 id="proof-h">The proof</h2>
+  <table>
+    <thead><tr><th scope="col">Claim</th><th scope="col">How it is proven</th></tr></thead>
+    <tbody>
+      <tr><td>Same facts and theme, same bytes</td><td>sha256 of hero cards (384 &times; 560), a 36-card corpus and odd sizes pinned in <code>kardart.pins.mjs</code>, re-checked on every push.</td></tr>
+      <tr><td>Garbage is refused, never thrown</td><td>every field, boundary and hostile value (null, BigInt, circular, toxic getters, proxies) returns <code>{ ok: false, why }</code>.</td></tr>
+      <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
+      <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
+      <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the kernel and the tests must kill every mutant, with nothing baselined.</td></tr>
+    </tbody>
+  </table>
+  <h3>Check it in your own browser</h3>
+  <p>The pins were made by Node. This button re-draws the ten hero cards in <em>your</em> JavaScript engine and compares each card's SHA-256 with the pin.</p>
+  <p><button type="button" class="act" id="verify">Re-draw and verify the hero cards</button></p>
+  <ul class="verify" id="verify-out" aria-live="polite"></ul>
+</section>
+
+<section id="limits" aria-labelledby="lim-h">
+  <h2 id="lim-h">Limits, said straight</h2>
+  <ul>
+    <li>A face proves a picture matches its facts. It does not prove who made the card or who owns it; the card's seal does that.</li>
+    <li>Sizes other than 384 &times; 560 (or any exact multiple of 192 &times; 280) pick the nearest pixel: legal and deterministic, but squashed or stretched, and the small print is unreadable below about 192 pixels wide.</li>
+    <li>The pixel font covers the characters a title and department may hold; nothing else can be printed, so nothing else is accepted.</li>
+    <li>A theme, once published, is frozen. That is the point, and also the cost: a mistake in a published theme is fixed by a new theme, never by an edit.</li>
+    <li>"Blockcraft" is a style name for blocky voxel art. It is not affiliated with, or derived from, any game.</li>
+    <li>I own functional correctness. The last inch of taste in the art is the owner's to judge.</li>
+  </ul>
+</section>
+
+</main>
+<footer><div class="wrap">
+  <p>PixelWhisperer Kards &middot; <a href="https://github.com/sjgant80-hub/pixelwhisperer">source on GitHub</a> &middot; <a href="https://github.com/sjgant80-hub/pixelwhisperer/actions">the CI runs</a> &middot; <a href="../">PixelWhisperer</a></p>
+  <p>Built by Kar. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
+</div></footer>
+
+<script type="module">
+import { THEMES, paintArt, spriteOf, checkFacts } from './kardart.mjs';
+import { pngOf } from './kardpng.mjs';
+import { SAMPLES } from './samples.mjs';
+import { PINS } from './kardart.pins.mjs';
+
+const $ = (s, r = document) => r.querySelector(s);
+const THEME_IDS = Object.keys(THEMES);
+const DATASETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
+const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+const hex = (u8) => Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join('');
+const sha = async (u8) => hex(new Uint8Array(await crypto.subtle.digest('SHA-256', u8)));
+
+function paint(canvas, facts, theme) {
+  const r = paintArt(facts, theme, 384, 560);
+  if (!r.ok) return r;
+  const img = new ImageData(384, 560), d = img.data;
+  for (let i = 0, j = 0; i < r.px.length; i += 3, j += 4) { d[j] = r.px[i]; d[j + 1] = r.px[i + 1]; d[j + 2] = r.px[i + 2]; d[j + 3] = 255; }
+  canvas.getContext('2d').putImageData(img, 0, 0);
+  return r;
+}
+const describe = (f, themeName) => f.title + ', ' + ('aeiou'.includes(f.rarity[0]) ? 'an ' : 'a ') + f.rarity + ' ' + f.dataset + ' card, level ' + f.stage + ', generation ' + f.generation + (f.parents.length ? ', ' + f.parents.length + ' parent' + (f.parents.length > 1 ? 's' : '') : ', a first-born') + (themeName ? ' (' + themeName + ')' : '');
+
+// ── the gallery ─────────────────────────────────────────────────────────────────────────────────────────────────────
+let mode = 'synthwave-v1';
+const grid = $('#grid');
+function buildGallery() {
+  grid.textContent = '';
+  grid.classList.toggle('both', mode === 'both');
+  const themes = mode === 'both' ? THEME_IDS : [mode];
+  SAMPLES.forEach((f, k) => {
+    const fig = document.createElement('figure'); fig.className = 'tile';
+    const pair = document.createElement('div'); pair.className = 'pair';
+    for (const t of themes) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'open';
+      b.setAttribute('aria-label', 'Open ' + f.title + ' (' + THEMES[t].name + ') in the workshop');
+      const c = document.createElement('canvas'); c.className = 'card'; c.width = 384; c.height = 560; c.setAttribute('role', 'img'); c.setAttribute('aria-label', describe(f, THEMES[t].name));
+      b.append(c); pair.append(b);
+      b.addEventListener('click', () => { setWork(f, t === 'both' ? null : t); $('#workshop').scrollIntoView({ behavior: 'smooth' }); });
+      paint(c, f, t);
+    }
+    const cap = document.createElement('figcaption'), name = document.createElement('b');
+    name.textContent = f.title; cap.append(name, f.rarity + ' ' + f.dataset + ' · LV ' + f.stage + ' · gen ' + f.generation);
+    fig.append(pair, cap); grid.append(fig);
+  });
+  $('#theme-blurb').textContent = mode === 'both' ? 'Both themes, side by side: the same twelve creatures in two worlds.' : THEMES[mode].blurb;
+}
+for (const b of document.querySelectorAll('.seg button')) b.addEventListener('click', () => {
+  mode = b.dataset.theme;
+  for (const o of document.querySelectorAll('.seg button')) o.setAttribute('aria-pressed', String(o === b));
+  buildGallery();
+  if (mode !== 'both') { workTheme = mode; renderWork(); }
+});
+
+// ── the workshop ────────────────────────────────────────────────────────────────────────────────────────────────────
+const F = { id: $('#f-id'), title: $('#f-title'), dataset: $('#f-dataset'), rarity: $('#f-rarity'), department: $('#f-department'), stage: $('#f-stage'), generation: $('#f-generation'), p1: $('#f-p1'), p2: $('#f-p2') };
+for (const d of DATASETS) F.dataset.add(new Option(d, d));
+for (const r of RARITIES) F.rarity.add(new Option(r, r));
+let workTheme = 'synthwave-v1', lastGood = null;
+function setWork(f, theme) {
+  F.id.value = f.id; F.title.value = f.title; F.dataset.value = f.dataset; F.rarity.value = f.rarity; F.department.value = f.department;
+  F.stage.value = f.stage; F.generation.value = f.generation; F.p1.value = f.parents[0] || ''; F.p2.value = f.parents[1] || '';
+  if (theme) workTheme = theme;
+  renderWork();
+}
+const readWork = () => ({ id: F.id.value, title: F.title.value, dataset: F.dataset.value, department: F.department.value, stage: Number(F.stage.value), rarity: F.rarity.value, generation: F.generation.value === '' ? NaN : Number(F.generation.value), parents: [F.p1.value, F.p2.value].filter((p) => p !== '') });
+const msg = $('#work-msg');
+let tick = 0;
+async function renderWork() {
+  $('#o-stage').textContent = F.stage.value;
+  const f = readWork(), c = checkFacts(f);
+  if (!c.ok) { msg.className = 'msg bad'; msg.textContent = 'Not a card yet: ' + c.why + '.'; return; }
+  const mine = ++tick, r = paint($('#work-canvas'), f, workTheme);
+  lastGood = f;
+  msg.className = 'msg ok'; msg.textContent = THEMES[workTheme].name + ' · ' + describe(f);
+  $('#work-canvas').setAttribute('aria-label', describe(f, THEMES[workTheme].name));
+  history.replaceState(null, '', '#card=' + encodeURIComponent(JSON.stringify({ t: workTheme, f })));
+  const digest = await sha(r.px);
+  if (mine === tick) trace(f, digest);
+}
+for (const el of Object.values(F)) el.addEventListener('input', renderWork);
+$('#roll').addEventListener('click', () => { const b = crypto.getRandomValues(new Uint8Array(8)); F.id.value = hex(b); renderWork(); });
+const note = $('#act-msg');
+const said = (t) => { note.textContent = t; setTimeout(() => { if (note.textContent === t) note.textContent = ''; }, 3000); };
+$('#dl').addEventListener('click', () => {
+  if (!lastGood) return said('Fix the card first.');
+  const r = paintArt(lastGood, workTheme, 384, 560), p = pngOf(r.px, 384, 560), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([p.png], { type: 'image/png' })); a.download = 'kard-' + lastGood.id.slice(0, 8) + '-' + workTheme + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  said('Downloaded.');
+});
+const copy = async (text, ok) => { try { await navigator.clipboard.writeText(text); said(ok); } catch { said('Copy failed: select it from the address bar.'); } };
+$('#share').addEventListener('click', () => copy(location.href, 'Link copied.'));
+$('#copyjson').addEventListener('click', () => copy(JSON.stringify(lastGood, null, 2), 'Facts copied.'));
+
+// ── the live trace ──────────────────────────────────────────────────────────────────────────────────────────────────
+const NAMES = {
+  legs: ['chunky', 'long and thin', 'wide stance', 'slab', 'trunk', 'tiny feet', 'splayed', 'pogo'], arms: ['none', 'down', 'out', 'raised'],
+  crown: ['none', 'ears', 'horns', 'antenna', 'cap', 'side ears', 'mohawk', 'twin antennae'], eyes: ['beady', 'googly', 'glowing', 'cat', 'wide-set', 'visor', 'angry', 'sleepy'],
+  mouth: ['none', 'small', 'wide', 'snout'], back: ['none', 'tail', 'wings', 'mane'], pattern: ['plain', 'belly', 'stripes', 'spots'],
+};
+function trace(f, digest) {
+  const s = spriteOf(f.id), g = s.g, voxels = s.v.reduce((n, c) => n + (c ? 1 : 0), 0), box = $('#trace');
+  const cells = [
+    ['id', f.id], ['whitened (hi, lo)', s.hi.toString(16).padStart(8, '0') + ' ' + s.lo.toString(16).padStart(8, '0')], ['body colour', g.hueA + ' of 16'], ['accent colour', g.hueB + ' of 8'],
+    ['head shape', g.head + ' of 8'], ['torso shape', g.torso + ' of 8'], ['legs', NAMES.legs[g.legs]], ['arms', NAMES.arms[g.arms]], ['crown', NAMES.crown[g.crown]], ['eyes', NAMES.eyes[g.eyes]],
+    ['mouth', NAMES.mouth[g.mouth]], ['back', NAMES.back[g.back]], ['pattern', NAMES.pattern[g.pattern]], ['speckle', g.speck.join('')], ['voxels', String(voxels)], ['theme', workTheme],
+    ['sha256 of the 384x560 bytes', digest.slice(0, 24) + '…'],
+  ];
+  box.textContent = '';
+  for (const [k, v] of cells) { const d = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = v; d.append(a, b); box.append(d); }
+}
+
+// ── the anatomy figure: a sample card with numbered marks where each fact lives ──────────────────────────────────────
+{
+  const c = $('#anat-canvas'); paint(c, SAMPLES[0], 'synthwave-v1');
+  const fig = c.parentElement, at = [['r', 14], ['l', 88], ['r', 190], ['l', 213], ['r', 212], ['l', 245], ['r', 268]];   // which gutter, and the row on the 192 x 280 canvas
+  at.forEach(([side, y], i) => { const p = document.createElement('span'); p.className = 'pin ' + side; p.setAttribute('aria-hidden', 'true'); p.textContent = String(i + 1); p.style.top = (y / 280 * 100) + '%'; fig.append(p); });
+}
+
+// ── prove it in this browser ────────────────────────────────────────────────────────────────────────────────────────
+$('#verify').addEventListener('click', async () => {
+  const out = $('#verify-out'); out.textContent = '';
+  for (const [theme, pins] of Object.entries(PINS)) for (const [id, want] of pins.hero) {
+    const f = SAMPLES.find((s) => s.id === id), r = paintArt(f, theme, 384, 560), got = r.ok ? await sha(r.px) : 'refused', li = document.createElement('li');
+    li.className = got === want ? 'ok' : 'bad'; li.textContent = (got === want ? '✓ ' : '✗ ') + theme + ' · ' + f.title + ' · ' + got.slice(0, 16) + (got === want ? ' matches the pin' : ' DOES NOT match ' + want.slice(0, 16));
+    out.append(li);
+  }
+});
+
+// ── start ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+(function start() {
+  let first = SAMPLES[4], theme = 'synthwave-v1';
+  try { const h = location.hash.startsWith('#card=') ? JSON.parse(decodeURIComponent(location.hash.slice(6))) : null; if (h && checkFacts(h.f).ok && THEME_IDS.includes(h.t)) { first = h.f; theme = h.t; } } catch { /* an unreadable link is ignored */ }
+  $('#theme-blurb').textContent = THEMES[mode].blurb;
+  buildGallery();
+  setWork(first, theme);
+})();
+</script>
+</body>
+</html>

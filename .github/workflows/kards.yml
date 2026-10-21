@@ -1,0 +1,26 @@
+name: kards-gate
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: tests of the art engine, the PNG writer and the proof tools (every file on its own)
+        run: node --test kards/*.test.mjs
+      - name: the witness harness is the estate's, byte for byte (dex-frontier .witness/witness.mjs)
+        run: echo "1e746a48fcb2f02f563e6450e7bf95bdb0b8f177d40b6f90af9aa4e5c9433113  .witness/witness.mjs" | sha256sum -c -
+      - name: mutation witness - every mutant of kardart.mjs and kardpng.mjs killed, none baselined
+        run: node witness-kards.mjs | tee witness.txt
+      - name: the gallery images are exactly what the engine draws
+        run: node tools/kards-gallery.mjs --check
+      - name: the published pins are what the engine draws (a red pin means a published theme was edited)
+        run: node --test kards/kardart.smoke.test.mjs
+      - name: the verdict
+        if: always()
+        run: |
+          echo "### kards witness" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -n 6 witness.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "the gate did not reach the witness" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

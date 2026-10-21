@@ -1,0 +1,7 @@
+{
+  "what": "the estate's mutation + fuzz harness, vendored byte for byte for witness-kards.mjs",
+  "source": "sjgant80-hub/dex-frontier .witness/witness.mjs",
+  "commit": "c3491b1f63ba2ea991da733f7d98829d3fadc06a",
+  "sha256": "1e746a48fcb2f02f563e6450e7bf95bdb0b8f177d40b6f90af9aa4e5c9433113",
+  "note": "CI re-checks the hash; do not edit witness.mjs here. Fix it upstream and re-vendor."
+}
