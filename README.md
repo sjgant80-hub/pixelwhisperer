@@ -137,6 +137,6 @@ node --test kernel.test.mjs
 
 CI re-proves it with a pinned mutation gate on every push.
 
-MIT. Built on the Konomi architecture, created by Thomas Frumkin. Crystallized via the
+MIT ([LICENSE](LICENSE)). Built on the Konomi architecture, created by Thomas Frumkin. Crystallized via the
 [end-of-software](https://github.com/sjgant80-hub/end-of-software) laws; the author's
 world runs on [si-didy](https://github.com/sjgant80-hub/fall-remember)'s organs.

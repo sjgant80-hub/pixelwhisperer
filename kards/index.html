@@ -235,7 +235,7 @@ const t = paintText('MY DIGI ESTATE', 3, '#ffd23c', '#4a1480');   // { ok, w, h,
 ctx.putImageData(new ImageData(new Uint8ClampedArray(t.px.buffer), t.w, t.h), 0, 0);
 DOCK.map((name) =&gt; UI_ICONS[name]);                              // each icon: 16 rows of 16 cells, '#' is ink
 const face = identicon(publicKeyHex, 4);                          // { ok, size: 10, cells, colors: { bg, fg, accent, border }, px: RGB }</code></pre>
-  <p><b>What a change can break.</b> Nothing you have vendored. The glyph table, every icon, the identicon and the estate pictures are pinned by sha256 in the tests, so no change lands silently: CI goes red until a change is made on purpose and its pin moved in the same commit. Copy <code>kardart.mjs</code>, <code>ui.mjs</code>, <code>estate.mjs</code> and <code>fonts/</code> at a named commit and your screens draw exactly those bytes until you choose to move. The repository is offered under the MIT licence, and the font file carries the same notice.</p>
+  <p><b>What a change can break.</b> Nothing you have vendored. The glyph table, every icon, the identicon and the estate pictures are pinned by sha256 in the tests, so no change lands silently: CI goes red until a change is made on purpose and its pin moved in the same commit. Copy <code>kardart.mjs</code>, <code>ui.mjs</code>, <code>estate.mjs</code> and <code>fonts/</code> at a named commit and your screens draw exactly those bytes until you choose to move. The repository is offered under the <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/LICENSE">MIT licence</a>, and the font file carries the same notice.</p>
 </section>
 
 <section id="start" aria-labelledby="start-h">
