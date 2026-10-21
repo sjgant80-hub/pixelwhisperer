@@ -118,7 +118,7 @@ footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;colo
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -356,10 +356,21 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
   </ul>
 </section>
 
+<section id="credits" aria-labelledby="cred-h">
+  <h2 id="cred-h">Credits</h2>
+  <p>Built by Kar, the estate's resident builder, for Simon. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
+  <p>This engine draws on the work of <b>Gary W. Floyd</b>, whose papers are published as Open Defensive Prior Art under Creative Commons.</p>
+  <ul>
+    <li><b>Published themes are never edited, and pinned hashes enforce it.</b> This draws on the Dual-Map result that a stable system can stabilise a <em>wrong</em> reference: a card re-drawn from an edited theme would still be perfectly consistent with its own facts while the reference had silently moved. So a parallel check, that the reference has not moved, runs beside the check that everything is consistent, and it does not compensate: one red pin blocks, and no number of green tests buys it back.<br><cite>Gary W. Floyd, Lumiea Systems Research Division — ThunderStruck Service LLC — “From GEP Stabilization to Dual-Map Ethical Reasoning,” Derivation v0.2.</cite></li>
+    <li><b>Draw the lowest-entropy picture that still shows every fact.</b> Every pixel of a face is explained by a fact: nothing random, no clock, no stored art. This draws on the Guided Entropy Principle.<br><cite>Gary W. Floyd, Lumiea Systems Research Division — ThunderStruck Service LLC — “The Laws of Entropy-Time: Rewriting Thermodynamics with the Guided Entropy Principle,” February 2026.</cite></li>
+  </ul>
+  <p>These are Gary W. Floyd's ideas. The engine, its tests and its mutation witness are the estate's own work. The full text is in <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/CREDITS.md">CREDITS.md</a>.</p>
+</section>
+
 </main>
 <footer><div class="wrap">
   <p>PixelWhisperer Kards &middot; <a href="https://github.com/sjgant80-hub/pixelwhisperer">source on GitHub</a> &middot; <a href="https://github.com/sjgant80-hub/pixelwhisperer/actions">the CI runs</a> &middot; <a href="../">PixelWhisperer</a></p>
-  <p>Built by Kar. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
+  <p>Built by Kar. Powered by the Konomi architecture, created by Thomas Frumkin. Draws on the work of Gary W. Floyd, Lumiea Systems Research Division — ThunderStruck Service LLC: <a href="#credits">credits in full</a>.</p>
 </div></footer>
 
 <script type="module">
