@@ -57,6 +57,7 @@ export function gallery(all = false) {
   files.set('backs.png', png(...backSheet()));
   files.set('fusion.png', png(...fusionSheet()));
   files.set('lineage.png', png(...lineageSheet()));
+  files.set('map.png', scene2(paintEstate(MAP, 'blockcraft-v1', 480, 400), 480, 400));
   files.set('inventory.png', png(...iconSheet([...INVENTORY.map((n) => UI_ICONS[n]), ...GEAR_SLOTS.map((n) => UI_ICONS[n]), ...Object.values(FORM_ICONS)])));
   return files;
 }
@@ -110,6 +111,9 @@ function backSheet() {   // the sample backs at 1x, a column per theme
 }
 // the sample fusions: two of the sample cards, running at the third try, kept on the fourth, and refused after twelve
 const PA = { id: SAMPLES[0].id, rarity: SAMPLES[0].rarity, gate: 874000, title: SAMPLES[0].title.slice(0, 16).trim() }, PB = { id: SAMPLES[2].id, rarity: SAMPLES[2].rarity, gate: 861500, title: SAMPLES[2].title.slice(0, 16).trim() };
+// the DIGI World map: the sample estate as DIGI draws it (SCORER, TOOLS, KITTED) with the five landmarks along the shore
+export const MAP = { ...ESTATE_ITEMS, items: ESTATE_ITEMS.items.filter((it) => ['app', 'pwa', 'node'].includes(it.form)), districts: ['scorer', 'tools', 'swarm'], names: { swarm: 'KITTED' }, landmarks: ['arena', 'raids', 'fusion', 'mint', 'proof'] };
+const scene2 = (r, w, h) => { if (!r.ok) throw new Error(r.why); const p = pngOf(r.px, w, h); if (!p.ok) throw new Error(p.why); return p.png; };
 export const FUSIONS = [
   { a: PA, b: PB, tried: 4, decided: 3, fused: { id: SAMPLES[5].id, rarity: 'legendary', gate: 878300, title: 'Fused Seer' } },
   { a: PA, b: PB, tried: 4, fused: { id: SAMPLES[5].id, rarity: 'legendary', gate: 878300, title: 'Fused Seer' } },

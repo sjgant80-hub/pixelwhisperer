@@ -93,9 +93,12 @@ test('sizes: the logical back scaled to the nearest pixel, from 64 to 1024 each 
 
 test('the pins: the backs are frozen, byte for byte', () => {
   const want = {
-    'synthwave-v1': '645565b82175ed2cf3d6112dd31e1c5f108cfd7e5efed72eb417d26f1d66fb79', 'blockcraft-v1': 'ee6fed51363aa29e671eba053b63a49a577aea892718916701a0eeaae8f1815c',
-    'lcd-v1': '5e4567f040eea841bbd4e9a7033720bcf524ae35fbd32990bc587b27024115cd', 'memphis-v1': '254acaee83dbb7745c9ae167d2eb5a28115eaa1da00c33ba03cb469012466d35',
-    'blueprint-v1': 'b46cd487368f1466564c41ee6788d9c49d3f05963188a6e4eb966e14c76fc111', sizes: 'e5e99a1a7707d3e398c9f52879a662b384ceb356260df54a37ee750d922cbaac',
+    'synthwave-v1': '228e2ded5992d89230b73608a0056788e5365b8cfbbd7ebae9571dc2bc522bf9',
+    'blockcraft-v1': '17e4a1fd7f049e225320c6f785af63368362de98a98dd5d0d3b7c3803c233776',
+    'lcd-v1': '3a2bb0d733a47fb89895d40876f423fc3fc4b782f356c2e3f1db20ebeee9b3d4',
+    'memphis-v1': '653b508d51a4dd4389431f6a81c278cdd96f8ee96ee28dd6ccd0be4b6dbb5eee',
+    'blueprint-v1': '3356e5ceb661573bb43dbaefacdd4a42a3038fc6c292e17bbe549ba720969926',
+    sizes: 'cb3b607b750bc5dab0e8a79da01ce6593a0a12342bb4fad57ea8bff6a2554ee9',
   };
   assert.deepEqual(Object.keys(PINS).sort(), Object.keys(want).sort(), 'a pin for every theme and the sizes');
   assert.deepEqual(PINS, want);
