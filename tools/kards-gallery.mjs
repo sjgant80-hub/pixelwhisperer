@@ -3,7 +3,8 @@
 //   node tools/kards-gallery.mjs            write kards/gallery/: a contact sheet of the 12 sample cards per theme, a hero card per theme,
 //                                          the sample estate per theme, the UI kit sheet (every glyph and icon), and the game around the
 //                                          cards: the four sample items, a duel and a raid per theme, a fallen boss, the eight bosses,
-//                                          the inventory icons, an estate holding items, and the card backs (signed and unsigned)
+//                                          the inventory icons, an estate holding items, the card backs (signed and unsigned), and the
+//                                          Fusion Lab (fusing, kept, refused per theme) with a fused card's family tree
 //   node tools/kards-gallery.mjs --all      also write every sample card, each theme, at the DIGI card's size (384 x 560) into kards/gallery/full/
 //   node tools/kards-gallery.mjs --check    exit 1 unless the committed files are exactly what the engine draws now (CI runs this)
 //   node tools/kards-gallery.mjs --out DIR  write somewhere else
@@ -15,6 +16,7 @@ import { paintDuel } from '../kards/arena.mjs';
 import { paintRaid, bossSprite, BOSSES } from '../kards/raid.mjs';
 import { paintSlot } from '../kards/gear.mjs';
 import { paintBack } from '../kards/back.mjs';
+import { paintFusion, paintLineage } from '../kards/fusion.mjs';
 import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, paintText } from '../kards/ui.mjs';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -53,6 +55,8 @@ export function gallery(all = false) {
   files.set('bosses.png', png(...bossSheet()));
   files.set('kit.png', png(...kitSheet()));
   files.set('backs.png', png(...backSheet()));
+  files.set('fusion.png', png(...fusionSheet()));
+  files.set('lineage.png', png(...lineageSheet()));
   files.set('inventory.png', png(...iconSheet([...INVENTORY.map((n) => UI_ICONS[n]), ...GEAR_SLOTS.map((n) => UI_ICONS[n]), ...Object.values(FORM_ICONS)])));
   return files;
 }
@@ -103,6 +107,28 @@ function backSheet() {   // the sample backs at 1x, a column per theme
   const themes = Object.keys(THEMES), W2 = themes.length * W, px = new Uint8Array(W2 * BACKS.length * H * 3);
   themes.forEach((t, col) => BACKS.forEach((b, row) => { const r = paintBack(b, t, W, H); if (!r.ok) throw new Error(r.why); for (let y = 0; y < H; y++) px.set(r.px.subarray(y * W * 3, (y + 1) * W * 3), ((row * H + y) * W2 + col * W) * 3); }));
   return [px, W2, BACKS.length * H];
+}
+// the sample fusions: two of the sample cards, running at the third try, kept on the fourth, and refused after twelve
+const PA = { id: SAMPLES[0].id, rarity: SAMPLES[0].rarity, gate: 874000, title: SAMPLES[0].title.slice(0, 16).trim() }, PB = { id: SAMPLES[2].id, rarity: SAMPLES[2].rarity, gate: 861500, title: SAMPLES[2].title.slice(0, 16).trim() };
+export const FUSIONS = [
+  { a: PA, b: PB, tried: 4, decided: 3, fused: { id: SAMPLES[5].id, rarity: 'legendary', gate: 878300, title: 'Fused Seer' } },
+  { a: PA, b: PB, tried: 4, fused: { id: SAMPLES[5].id, rarity: 'legendary', gate: 878300, title: 'Fused Seer' } },
+  { a: PA, b: PB, tried: 12, best: 873900 },
+];
+// the sample family tree: the fused card over its two parents and theirs, four generations, one great-grandparent not held here
+const leaf = (n) => ({ id: SAMPLES[n].id, rarity: SAMPLES[n].rarity }), unheld = (n) => ({ id: SAMPLES[n].id });   // unheld: a card this device does not hold
+export const LINEAGE = { id: SAMPLES[5].id, rarity: 'legendary', parents: [{ ...leaf(0), parents: [{ ...leaf(1), parents: [leaf(7), leaf(8)] }, leaf(3)] }, { ...leaf(2), parents: [leaf(4), { ...leaf(6), parents: [leaf(9), unheld(10)] }] }] };
+function fusionSheet() {   // the sample fusions at 1x, a row per theme
+  const themes = Object.keys(THEMES), FW2 = 240, FH = 160, W2 = FUSIONS.length * FW2, px = new Uint8Array(W2 * themes.length * FH * 3);
+  themes.forEach((t, row) => FUSIONS.forEach((f, col) => { const r = paintFusion(f, t, FW2, FH); if (!r.ok) throw new Error(r.why); for (let y = 0; y < FH; y++) px.set(r.px.subarray(y * FW2 * 3, (y + 1) * FW2 * 3), ((row * FH + y) * W2 + col * FW2) * 3); }));
+  return [px, W2, themes.length * FH];
+}
+function lineageSheet() {   // the sample tree at 2x in synthwave, and at 1x in blueprint and blockcraft beside it
+  const W2 = 720, H2 = 320, px = new Uint8Array(W2 * H2 * 3), put = (r, w, h, x0, y0) => { for (let y = 0; y < h; y++) px.set(r.px.subarray(y * w * 3, (y + 1) * w * 3), ((y0 + y) * W2 + x0) * 3); };
+  const big = paintLineage(LINEAGE, 'synthwave-v1', 480, 320), bp = paintLineage(LINEAGE, 'blueprint-v1', 240, 160), bc = paintLineage(LINEAGE, 'blockcraft-v1', 240, 160);
+  for (const r of [big, bp, bc]) if (!r.ok) throw new Error(r.why);
+  put(big, 480, 320, 0, 0); put(bp, 240, 160, 480, 0); put(bc, 240, 160, 480, 160);
+  return [px, W2, H2];
 }
 function bossSheet() {   // the eight bosses at 4x, four to a row
   const S = 4, side = 32 * S, W2 = 4 * side + 5 * 8, H2 = 2 * side + 3 * 8, px = new Uint8Array(W2 * H2 * 3);

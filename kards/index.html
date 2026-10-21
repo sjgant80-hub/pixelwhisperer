@@ -129,7 +129,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
  <div class="herotext">
   <p class="eyebrow">PixelWhisperer Kards &middot; the DIGI card's art engine</p>
   <h1>Every card has a <span>face</span> only its facts can draw.</h1>
-  <p class="lede">A DIGI card is a sealed picture that carries an ownable intelligence, one that grows as it proves itself. This engine draws that picture: a blocky voxel creature born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, an engineering blueprint, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It draws the game around the cards too: the back of every card with its maker's mark, item cards (apps, pwas, nodes, talkers, routers), the estate a player grows, duels in the arena and the raid bosses. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
+  <p class="lede">A DIGI card is a sealed picture that carries an ownable intelligence, one that grows as it proves itself. This engine draws that picture: a blocky voxel creature born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, an engineering blueprint, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It draws the game around the cards too: the back of every card with its maker's mark, item cards (apps, pwas, nodes, talkers, routers), the estate a player grows, duels in the arena, the Fusion Lab with its family trees, and the raid bosses. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
   <p class="byline">Built by <b>Kar</b>, the estate's resident builder, as a side build for PixelWhisperer. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
   <ul class="badges" aria-label="Facts about this build">
     <li><b id="n-themes">4</b> themes, append-only</li><li><b>2<sup>64</sup></b> creatures</li><li><b>integer-only</b> drawing</li><li><b>mutation-witnessed</b>, none baselined</li><li>drawn live <b>in your browser</b></li>
@@ -139,7 +139,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -308,6 +308,47 @@ paintDuel({ left: { id, rarity, rating, title }, right: { id, rarity, rating, ti
 // duelScore(duel): { left, right, ties, decided, cases }, counting only the decided cases</code></pre>
 </section>
 
+<section id="fusion" aria-labelledby="fusion-h">
+  <h2 id="fusion-h">The Fusion Lab: two cards, fused into one</h2>
+  <p>Fusing two of your cards is how DIGI teaches <b>model merging and selection</b>. The lab tries children of the two, up to <b>twelve</b>, and scores each one's <b>GATE</b>: how well it ranks cases that neither parent learned from (an AUC: 0.5 is a coin toss, 1.0 is perfect). The first child that beats <b>both</b> parents is kept as <b>a fused card</b>. If none does, the fusion is <b>refused</b>, and nothing new is made. The picture works the verdict out from the numbers it is given, so it can never show a kept card that did not beat both.</p>
+  <p class="hint">Try it: <b>Fuse</b> runs the tries one at a time, <b>One try</b> steps, <b>New pair</b> deals two other cards. Each slot under the chamber is one try, against the dotted gold line: the better parent's GATE. DIGI keeps the score of the child it keeps, so a try that did not beat both is a grey stub (never a made-up bar), and the kept one is the gold bar at its own GATE. A refusal can show its best child as a dim line, at or under the gold one. While it runs the chamber shows the two fusing; at the end it holds the fused card under a gold KEPT, or a red ribbon says REFUSED. Below it is the family tree: a fused card over its parents and theirs.</p>
+  <div class="work">
+    <div>
+      <canvas class="card estate" id="fusion-canvas" width="720" height="480" role="img" aria-label="The Fusion Lab"></canvas>
+      <p class="msg" id="fusion-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="fusion-form" autocomplete="off" novalidate>
+      <div class="actions"><button type="button" class="act" id="fu-play">Fuse</button><button type="button" class="act alt" id="fu-step">One try</button><button type="button" class="act alt" id="fu-new">New pair</button></div>
+      <div><label for="fu-end">How this demo pair ends</label><select id="fu-end"><option value="auto">Either way, at random</option><option value="kept">A try beats both: kept</option><option value="refused">No try beats both: refused</option></select></div>
+      <div><label for="fu-theme">Theme</label><select id="fu-theme"></select></div>
+      <div class="actions"><button type="button" class="act alt" id="fu-dl">Download PNG (1200 &times; 630)</button><span class="msg" id="fu-act" role="status" aria-live="polite"></span></div>
+      <div class="trace full" id="fusion-stats" aria-live="polite"></div>
+    </form>
+  </div>
+  <h3>The family tree</h3>
+  <canvas class="card estate" id="lineage-canvas" width="480" height="320" role="img" aria-label="A family tree"></canvas>
+  <p class="msg" id="lineage-msg" role="status" aria-live="polite"></p>
+  <p class="hint">In this demo the tries' scores are dealt in your browser. In DIGI they are the real children's GATE on the owner's own cases, and anyone holding the same cases can re-run the claim.</p>
+<pre><code>import { paintFusion, fusionVerdict, paintLineage, MAX_TRIES } from './kards/fusion.mjs';
+paintFusion({ a: { id, rarity, gate: 874000, title? }, b: { id, rarity, gate: 861500 }, tried: 4,
+              fused: { id, rarity, gate: 878300, title? }, decided?: 4 }, 'synthwave-v1', 720, 480)   // { ok, px, scale } | { ok: false, why }
+// GATE in whole millionths. tried: how many children were tried, 1 to MAX_TRIES (12). fused: the card kept, the last child tried;
+// its GATE must beat both parents'. Refused: no fused, and best?: the best child's GATE (at most the line) or null for no live child.
+// decided: how many tries are shown so far.
+fusionVerdict(fusion)   // { ok, kept: true | false | null (still being shown), beat, gate, tried, tries }
+paintLineage({ id, rarity, parents: [{ id, rarity, parents? }, { id }] }, 'synthwave-v1', 480, 320)   // four generations; { id } alone: not held here, drawn as ?</code></pre>
+  <p><b>What it refuses.</b> It refuses, with a plain reason:</p>
+  <ul>
+    <li>a card fused with itself;</li>
+    <li>a GATE outside 0 to 1,000,000 millionths;</li>
+    <li>more than twelve tries;</li>
+    <li>a fused card whose GATE does not beat both parents', or that is one of them;</li>
+    <li>a best for a kept fusion, or a refusal's best above the line to beat;</li>
+    <li>a family tree deeper than four generations, a card with one parent or three, or parents for a card this device does not hold (it is drawn as ?, never invented).</li>
+  </ul>
+  <p>Nothing throws, and every picture is pinned by sha256 in the tests.</p>
+</section>
+
 <section id="raids" aria-labelledby="raids-h">
   <h2 id="raids-h">Raids: the departments no card has cleared</h2>
   <p>Each boss is a department where no card has yet reached a GATE of 0.6 on cases it never saw: five in the hospital (admissions, clinical, pharmacy, history, discharge), bank credit, adult employer and credit billing. A boss's health is its distance to the bar, the published rule <code>bossHealth(best) = max(0, 600000 - best)</code> in millionths of GATE: the bar is full at chance (0.5) and empty at 0.6. When a card clears it the boss breaks apart, and the loot is that first card of its department. Click a boss below, then move the best score. <b>GATE</b> is a card's score on cases it never saw while it learned (an AUC: 0.5 is chance, 1.0 perfect); 0.6 is the bar a department must clear. Once a card reaches it, the boss falls for good and that card is the department's loot: the loot's <code>title</code> is that card's name.</p>
@@ -432,6 +473,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>raid.mjs</code></td><td>the raids: eight boss sprites built from rectangles and ellipses and shaded by one rule, the published <code>bossHealth</code>, <code>paintRaid</code> for a boss standing or falling with its loot.</td></tr>
       <tr><td><code>gear.mjs</code></td><td>the kit: <code>paintSlot</code> for a node slot (a card and its worth on GATE, or not joined) or a tool slot (an app item in its tier), empty or filled; <code>kitBadge</code>, the overlay that says how many node slots are fielded; <code>worthText</code>.</td></tr>
       <tr><td><code>back.mjs</code></td><td>the card back: <code>paintBack</code> and <code>checkBack</code>; each theme's field and frame, the DIGI emblem, the maker's identicon in a medallion with the key written short, the edition number; the field's scatter thrown with the maker's dice.</td></tr>
+      <tr><td><code>fusion.mjs</code></td><td>the Fusion Lab: <code>paintFusion</code>, <code>checkFusion</code> and the published verdict <code>fusionVerdict</code> (kept only when a try beats both parents); the parents on their pedestals, the chamber, every try against the line to beat; <code>paintLineage</code>, a fused card's family tree in blocks.</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
     </tbody>
   </table></div>
@@ -519,7 +561,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
   <h2 id="ad-h">Adoption</h2>
   <div class="cols">
     <div class="box"><h3>For the DIGI card</h3>
-      <p>Vendor <code>kards/kardart.mjs</code> byte for byte at a named commit and call <code>paintArt(facts, themeId, 384, 560)</code> for the 384 &times; 560 area under the card's 16-row data band. To open a card, re-draw the face from the facts the card carries and compare it with the picture: if one byte differs, refuse it. A theme id on the card says which world to draw. The game view builds on the same kit: <code>ui.mjs</code> for the font, icons and key faces, <code>estate.mjs</code> for the home plot, <code>arena.mjs</code> for duels, <code>raid.mjs</code> for the bosses, <code>gear.mjs</code> for the kit and <code>back.mjs</code> for the back of every card, with its maker's mark; an item card is <code>paintArt</code> with a <code>form</code>.</p></div>
+      <p>Vendor <code>kards/kardart.mjs</code> byte for byte at a named commit and call <code>paintArt(facts, themeId, 384, 560)</code> for the 384 &times; 560 area under the card's 16-row data band. To open a card, re-draw the face from the facts the card carries and compare it with the picture: if one byte differs, refuse it. A theme id on the card says which world to draw. The game view builds on the same kit: <code>ui.mjs</code> for the font, icons and key faces, <code>estate.mjs</code> for the home plot, <code>arena.mjs</code> for duels, <code>raid.mjs</code> for the bosses, <code>gear.mjs</code> for the kit, <code>back.mjs</code> for the back of every card, with its maker's mark, and <code>fusion.mjs</code> for the Fusion Lab; an item card is <code>paintArt</code> with a <code>form</code>.</p></div>
     <div class="box"><h3>To add a theme</h3>
       <p>A published theme is never edited, because old cards must still re-draw exactly. A redesign is a new id, for example <code>synthwave-v2</code>: append it to <code>THEMES</code>, run <code>node tools/kards-pins.mjs synthwave-v2</code>, paste its pins into <code>kardart.pins.mjs</code>, and let the witness prove it. The old themes' pins stay green.</p></div>
     <div class="box"><h3>For any build that wants collectible graphics</h3>
@@ -539,7 +581,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">190</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">190</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -579,12 +621,13 @@ import { pngOf } from './kardpng.mjs';
 import { SAMPLES } from './samples.mjs';
 import { PINS } from './kardart.pins.mjs';
 import { costCase, verdict } from './costcase.mjs';
-import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, identicon, paintText } from './ui.mjs';
+import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, WORLD_ICONS, identicon, paintText } from './ui.mjs';
 import { paintEstate, estateStats } from './estate.mjs';
 import { paintDuel, duelScore } from './arena.mjs';
 import { paintRaid, bossHealth, bossSprite, BOSSES } from './raid.mjs';
 import { paintSlot, kitBadge, worthText } from './gear.mjs';
 import { paintBack, checkBack } from './back.mjs';
+import { paintFusion, fusionVerdict, paintLineage, MAX_TRIES } from './fusion.mjs';
 
 const $ =(s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
@@ -902,6 +945,46 @@ $('#ar-cases').addEventListener('input', newDuel);
 for (const id of ['#ar-theme', '#ar-result']) $(id).addEventListener('input', renderDuel);
 $('#ar-dl').addEventListener('click', () => { const d = { ...duel, result: ending(duel) }; savePNG(paintDuel(d, $('#ar-theme').value, 1200, 630).px, 1200, 630, 'duel-' + d.left.id.slice(0, 6) + '-' + d.right.id.slice(0, 6) + '.png'); saidIn('#ar-act')('Downloaded.'); });
 
+// ── the Fusion Lab: two cards, up to twelve tries, kept only when a try beats both parents ─────────────────────────────────
+for (const id of THEME_IDS) $('#fu-theme').add(new Option(THEMES[id].name, id));
+let fusion = null, fuTimer = null, fuTree = null;
+const g4 = (n) => (Math.floor(n / 100) / 10000).toFixed(4);   // millionths to four places, cut as the picture prints them
+function newFusion() {
+  const [p, q, ...rest] = [...SAMPLES].sort(() => byte() - 128).slice(0, 8), ga = 820000 + byte() * 250, gb = 820000 + byte() * 250, beat = Math.max(ga, gb);
+  const kept = $('#fu-end').value === 'kept' || ($('#fu-end').value === 'auto' && byte() % 2 === 0), tried = kept ? 2 + (byte() % 7) : MAX_TRIES;
+  const side = (s, gate) => ({ id: s.id, rarity: s.rarity, gate, title: s.title.slice(0, 16).trim() });
+  const fusedTitle = (p.title.split(' ')[0] + ' ' + q.title.split(' ').slice(-1)[0]).slice(0, 16).trim();
+  fusion = { a: side(p, ga), b: side(q, gb), tried, decided: 0, ...(kept ? { fused: { id: randHex(8), rarity: RARS[Math.min(4, Math.max(RARS.indexOf(p.rarity), RARS.indexOf(q.rarity)) + 1)], gate: beat + 400 + byte() * 30, title: fusedTitle } } : { best: byte() % 5 === 0 ? null : beat - 200 - byte() * 40 }) };
+  const leaf = (x) => ({ id: x.id, rarity: x.rarity });   // the parents' own parents, for the tree
+  fuTree = { a: { ...leaf(p), parents: [{ ...leaf(rest[0]), parents: [leaf(rest[4]), { id: rest[5].id }] }, leaf(rest[1])] }, b: { ...leaf(q), parents: [leaf(rest[2]), leaf(rest[3])] } };
+  clearInterval(fuTimer); renderFusion();
+}
+function renderFusion() {
+  const t = $('#fu-theme').value, r = paintFusion(fusion, t, 720, 480), v = fusionVerdict(fusion), m = $('#fusion-msg');
+  if (!r.ok) { m.className = 'msg bad'; m.textContent = r.why + '.'; return; }
+  putRGB($('#fusion-canvas'), r.px, 720, 480);
+  m.className = 'msg ok';
+  m.textContent = fusion.a.title + ' and ' + fusion.b.title + ' · ' + (v.kept === null ? (v.tried ? 'fusing: try ' + v.tried + ' of ' + v.tries : 'ready: press Fuse') : v.kept ? 'KEPT: try ' + v.tries + ' beat both parents, a fused card' : 'REFUSED: none of the ' + v.tries + ' tries beat both parents');
+  $('#fusion-canvas').setAttribute('aria-label', 'The Fusion Lab in ' + THEMES[t].name + ': ' + m.textContent);
+  const end = v.kept ? g4(v.gate) + ', the fused card' : v.kept === false ? (fusion.best === null ? 'no live child' : g4(fusion.best) + ', not enough') : 'not yet';
+  stats($('#fusion-stats'), [['LINE TO BEAT (THE BETTER PARENT)', g4(v.beat)], ['BEST AT THE END', end], ['TRIES SHOWN', v.tried + ' of ' + v.tries], ['VERDICT', v.kept === null ? 'not yet' : v.kept ? 'kept' : 'refused']]);
+  const tree = v.kept ? { id: fusion.fused.id, rarity: fusion.fused.rarity, parents: [fuTree.a, fuTree.b] } : fuTree.a, lt = paintLineage(tree, t, 480, 320), lm = $('#lineage-msg');
+  if (!lt.ok) { lm.className = 'msg bad'; lm.textContent = lt.why + '.'; return; }
+  putRGB($('#lineage-canvas'), lt.px, 480, 320);
+  lm.className = 'msg ok'; lm.textContent = v.kept ? 'The fused card, in its gold ring, over its parents and theirs.' : (v.kept === false ? 'Refused, so no fused card was made. Here is the first parent instead: ' : 'No fused card yet. Here is the first parent: ') + fusion.a.title + ', over its parents and theirs (a ? is a card this device does not hold).';
+  $('#lineage-canvas').setAttribute('aria-label', 'A family tree in ' + THEMES[t].name + '. ' + lm.textContent);
+}
+$('#fu-play').addEventListener('click', () => {
+  clearInterval(fuTimer); fusion.decided = 0;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { fusion.decided = fusion.tried; return renderFusion(); }
+  fuTimer = setInterval(() => { fusion.decided++; renderFusion(); if (fusion.decided >= fusion.tried) clearInterval(fuTimer); }, 450);
+});
+$('#fu-step').addEventListener('click', () => { clearInterval(fuTimer); if (fusion.decided < fusion.tried) fusion.decided++; renderFusion(); });
+$('#fu-new').addEventListener('click', newFusion);
+$('#fu-end').addEventListener('input', newFusion);
+$('#fu-theme').addEventListener('input', renderFusion);
+$('#fu-dl').addEventListener('click', () => { savePNG(paintFusion(fusion, $('#fu-theme').value, 1200, 630).px, 1200, 630, 'fusion-' + fusion.a.id.slice(0, 6) + '-' + fusion.b.id.slice(0, 6) + '.png'); saidIn('#fu-act')('Downloaded.'); });
+
 // ── raids: the eight bosses, and one raid at a time ───────────────────────────────────────────────────────────────────
 for (const id of THEME_IDS) $('#rd-theme').add(new Option(THEMES[id].name, id));
 $('#rd-theme').value = 'synthwave-v1';
@@ -948,7 +1031,7 @@ function iconCanvas(rows, name, k = 3) {
 for (const name of [...DOCK, ...ACTIONS]) $('#icons').append(iconCanvas(UI_ICONS[name], name));
 for (const [name, rows] of Object.entries(DATASET_ICONS)) $('#icons').append(iconCanvas(rows, name));
 $('#icons').append(iconCanvas(STAR, 'star', 6));
-for (const name of [...INVENTORY, ...GEAR_SLOTS]) $('#icons').append(iconCanvas(UI_ICONS[name], name));
+for (const name of [...INVENTORY, ...GEAR_SLOTS, ...WORLD_ICONS]) $('#icons').append(iconCanvas(UI_ICONS[name], name));
 for (const [name, rows] of Object.entries(FORM_ICONS)) $('#icons').append(iconCanvas(rows, name));
 function renderKey() {
   const r = identicon($('#key-in').value.trim(), 6), m = $('#key-msg');
@@ -986,6 +1069,7 @@ function heroes() {
   cost();
   renderEstate();
   newDuel(); duel.decided = 30; renderDuel();
+  newFusion(); fusion.decided = fusion.tried; renderFusion();
   renderRaid();
   $('#key-in').value = 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07'; renderKey();
   $('#b-maker').value = $('#key-in').value; renderBack();   // the same key as the UI kit's: its face is the mark on the back
