@@ -36,7 +36,8 @@ Also exported: `checkFacts(facts)` (the same validation on its own: `{ ok, f } |
 
 ```
 node --test kards/*.test.mjs        # determinism pins, refusals, every fact shows, 1,000 ids -> 1,000 creatures, static source check
-node witness-kards.mjs              # the mutation witness over kardart.mjs, kardpng.mjs and costcase.mjs: every mutant killed, none baselined
+node witness-kards.mjs              # the mutation witness over kardart, kardpng, ui, ttf, estate and costcase: every mutant killed, none baselined
+node tools/kards-font.mjs           # write the UI font (kards/fonts/); --check for CI
 node tools/kards-gallery.mjs        # write kards/gallery/ (contact sheets, hero cards); --all for every card; --check for CI
 node tools/kards-pins.mjs <themeId> # print the pins for a NEW theme
 ```
@@ -46,6 +47,19 @@ CI (`.github/workflows/kards.yml`) runs all of it on every push. Preview PNGs co
 ### Adding a theme
 
 Append a new entry to `THEMES` with a new versioned id, run `node tools/kards-pins.mjs <id>`, paste the output into `kards/kardart.pins.mjs`, and let the witness prove it. Never edit a published theme to make a red pin green.
+
+### The UI kit and the estate (for the DIGI game UI)
+
+The game UI is built from the same blocks as the cards, from one source: `kards/kardart.mjs` exports its `FONT`, `ICON_ROWS`, `STAR_ROWS`, `RAR`, `DATASETS`, `RARITIES`, the `PIXEL` drawing kit and `creatureFront(id)`, and everything below builds on those (the four themes' pins are unchanged).
+
+| | |
+| --- | --- |
+| ![the estate in blockcraft](kards/gallery/estate-blockcraft-v1.png) | ![the UI kit: every glyph and icon](kards/gallery/ui-kit.png) |
+
+- **`kards/ui.mjs`**: `GLYPHS` (char -> 9 rows of 5 cells: the card font plus `: / < > = + % ( ) , ' ’ " ! ? · × ≤ ≥ → ← ✓ ✗ … _ | [ ]` and a real space; 95 glyphs, no currency signs), `CHARSET`, `drawable(s)`, `paintText(text, scale = 2, color = '#ffffff', shadow = null) -> { ok, w, h, px RGBA }`, `UI_ICONS` (dock: estate, base, cards, evals, mint, mesh, send, proof; actions: boot, eval, train, breed, skin, share, verify, key, lock; 16 x 16 rows of `#`), `DOCK`, `ACTIONS`, `DATASET_ICONS`, `STAR`, and `identicon(pubHex, scale = 1) -> { ok, size: 10, cells, colors: { bg, fg, accent, border }, px RGB }` for a 64-hex Ed25519 key.
+- **`kards/fonts/PixelWhisperer.ttf`** (+ `pixelwhisperer.css`), written by `node tools/kards-font.mjs` through `kards/ttf.mjs` and checked byte for byte in CI. At `font-size: 9px x k` each glyph pixel is exactly k CSS pixels (ascent 7, descent 2, advance 6). The geometry is exact; a platform rasterizer may still soften edges (Windows smooths vertical edges by about a third of a pixel, and a display whose device pixels are not whole CSS pixels blends them), so draw pixel-perfect headings with `paintText`.
+- **`kards/estate.mjs`**: `paintEstate(holdings, themeId, w, h) -> { ok, px RGB, scale } | { ok: false, why }` with `holdings = { cards: [{ id, dataset, stage, rarity, generation, department?, fresh? }], wires?: [[idA, idB]], tools?: n, levels?: n, snapshot?: bool }`, plus `checkHoldings`, `estateStats` and the published formula `tilesFor(n) = min(36, 8 + 2n)` (open tiles in a district holding n blocks; a new player has 16). The same holdings, in any order, draw the same bytes.
+- **Vendoring the kit:** copy `kards/kardart.mjs`, `kards/ui.mjs`, `kards/estate.mjs` and `kards/fonts/` byte for byte, side by side, at a named commit (`ui.mjs` imports `./kardart.mjs`; `estate.mjs` imports both). `kards/kardpng.mjs` (PNG writer) and `kards/ttf.mjs` (the font builder) are optional.
 
 ### Credits
 

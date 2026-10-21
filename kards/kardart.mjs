@@ -27,8 +27,8 @@ const div = (a, b) => Math.floor(a / b);
 const span = (a, b, s = 1) => Array.from({ length: div(b - a + s - 1, s) }, (_, i) => a + i * s);   // a, a+s, ... below b: loops over it carry no comparison to be off by one
 
 // -- the facts -------------------------------------------------------------------------------------------------------
-const DATASETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
-const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+export const DATASETS = Object.freeze(['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom']);
+export const RARITIES = Object.freeze(['common', 'uncommon', 'rare', 'epic', 'legendary']);
 const HEXD = '0123456789abcdef';
 const TITLE_CH = " &'.-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const DEPT_CH = '-0123456789abcdefghijklmnopqrstuvwxyz';
@@ -145,18 +145,19 @@ function build(id) {
 export function spriteOf(id) { return isId(id) ? build(id) : no('id must be 16 lowercase hex characters'); }
 
 // -- the canvas: 192 x 280 logical pixels (a card is drawn at 2x), with padding so nothing needs clipping -----------
-const LW = 192, LH = 280, PAD = 32, CW = LW + 2 * PAD;
+const LW = 192, LH = 280, PAD = 32;
 const WX = 8, WY = 24, WW = 176, WH = 152;       // the art window
-const newCanvas = () => ({ d: new Uint32Array(CW * (LH + 2 * PAD)) });
-const rect = (cv, x, y, w, h, c) => { for (let r = 0; r < h; r++) { const o = (y + r + PAD) * CW + x + PAD; cv.d.fill(c, o, o + w); } };
-const dot = (cv, x, y, c) => { cv.d[(y + PAD) * CW + x + PAD] = c; };
-const at = (cv, x, y) => cv.d[(y + PAD) * CW + x + PAD];
+const newCanvas = (w = LW, h = LH) => ({ cw: w + 2 * PAD, d: new Uint32Array((w + 2 * PAD) * (h + 2 * PAD)) });   // padded: nothing is clipped, nothing wraps
+const rect = (cv, x, y, w, h, c) => { for (let r = 0; r < h; r++) { const o = (y + r + PAD) * cv.cw + x + PAD; cv.d.fill(c, o, o + w); } };
+const dot = (cv, x, y, c) => { cv.d[(y + PAD) * cv.cw + x + PAD] = c; };
+const at = (cv, x, y) => cv.d[(y + PAD) * cv.cw + x + PAD];
 const ring = (cv, i, c) => { rect(cv, i, i, LW - 2 * i, 1, c); rect(cv, i, LH - 1 - i, LW - 2 * i, 1, c); rect(cv, i, i, 1, LH - 2 * i, c); rect(cv, LW - 1 - i, i, 1, LH - 2 * i, c); };
 const bevel = (cv, x, y, w, h, light, dark) => { rect(cv, x, y, w, 1, light); rect(cv, x, y, 1, h, light); rect(cv, x, y + h - 1, w, 1, dark); rect(cv, x + w - 1, y, 1, h, dark); };
 
 // -- pixel font 5 x 9 (caps and digits sit on rows 0-6, descenders fall to rows 7-8) and 16 x 16 icons ------------------
 const bitmap = (rows, y0 = 0) => { const out = []; rows.forEach((s, y) => Array.from(s).forEach((ch, x) => { if (ch === '#') out.push([x, y + y0]); })); return out; };
-const FONT = [
+/** The card font, 5 x 9: each entry is 'char startRow rows/joined/by/slashes' ('#' on, '.' off). Exported so the UI kit draws from the same source. */
+export const FONT = Object.freeze([
   'A 0 .###./#...#/#...#/#####/#...#/#...#/#...#', 'B 0 ####./#...#/#...#/####./#...#/#...#/####.', 'C 0 .###./#...#/#..../#..../#..../#...#/.###.',
   'D 0 ####./#...#/#...#/#...#/#...#/#...#/####.', 'E 0 #####/#..../#..../####./#..../#..../#####', 'F 0 #####/#..../#..../####./#..../#..../#....',
   'G 0 .###./#...#/#..../#.###/#...#/#...#/.###.', 'H 0 #...#/#...#/#...#/#####/#...#/#...#/#...#', 'I 0 .###./..#../..#../..#../..#../..#../.###.',
@@ -180,20 +181,24 @@ const FONT = [
   'v 2 #...#/#...#/#...#/.#.#./..#..', 'w 2 #...#/#...#/#.#.#/#.#.#/.#.#.', 'x 2 #...#/.#.#./..#../.#.#./#...#',
   'y 2 #...#/#...#/#...#/.####/....#/#...#/.###.', 'z 2 #####/...#./..#../.#.../#####',
   '& 0 .##../#..#./#.#../.#.../#.#.#/#..#./.##.#', "' 0 ..#../..#../.#...", '. 6 ..#..', '- 3 .###.', '# 0 .#.#./.#.#./#####/.#.#./#####/.#.#./.#.#.', '~ 6 #.#.#',
-];
+]);
 const GLY = {};
 for (const e of FONT) GLY[e[0]] = bitmap(e.slice(4).split('/'), e.charCodeAt(2) - 48);
 
-const ICONS = {
-  telco: bitmap(['................', '..##........##..', '.#..#..##..#..#.', '.#.#..####..#.#.', '.#.#..####..#.#.', '.#..#..##..#..#.', '..##...##...##..', '.......##.......', '......####......', '......#..#......', '.....##..##.....', '.....#....#.....', '....##....##....', '....#......#....', '...##########...', '................']),
-  shop: bitmap(['................', '.....######.....', '....#......#....', '....#......#....', '..############..', '..############..', '..##.######.##..', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '................']),
-  bank: bitmap(['................', '.......##.......', '......####......', '.....######.....', '....########....', '...##########...', '..############..', '................', '...##...##...##.', '...##...##...##.', '...##...##...##.', '...##...##...##.', '...##...##...##.', '..############..', '.##############.', '................']),
-  adult: bitmap(['................', '.....######.....', '....########....', '....########....', '....########....', '....########....', '.....######.....', '................', '...##########...', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '................']),
-  hospital: bitmap(['................', '..############..', '.##############.', '.#####....#####.', '.#####....#####.', '.#####....#####.', '.##..........##.', '.##..........##.', '.##..........##.', '.##..........##.', '.#####....#####.', '.#####....#####.', '.#####....#####.', '.##############.', '..############..', '................']),
-  credit: bitmap(['................', '................', '.##############.', '################', '################', '................', '................', '################', '################', '##....##########', '##....##########', '################', '################', '.##############.', '................', '................']),
-  custom: bitmap(['................', '................', '...##########...', '..############..', '.##.#..##..#.##.', '################', '.##############.', '..############..', '...##########...', '....########....', '.....######.....', '......####......', '.......##.......', '................', '................', '................']),
-};
-const STAR = bitmap(['...##...', '...##...', '########', '.######.', '..####..', '..####..', '.##..##.', '.#....#.']);
+/** The seven 16 x 16 dataset icons, as rows of '#' cells. Exported for the UI kit. */
+export const ICON_ROWS = Object.freeze({
+  telco: Object.freeze(['................', '..##........##..', '.#..#..##..#..#.', '.#.#..####..#.#.', '.#.#..####..#.#.', '.#..#..##..#..#.', '..##...##...##..', '.......##.......', '......####......', '......#..#......', '.....##..##.....', '.....#....#.....', '....##....##....', '....#......#....', '...##########...', '................']),
+  shop: Object.freeze(['................', '.....######.....', '....#......#....', '....#......#....', '..############..', '..############..', '..##.######.##..', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '................']),
+  bank: Object.freeze(['................', '.......##.......', '......####......', '.....######.....', '....########....', '...##########...', '..############..', '................', '...##...##...##.', '...##...##...##.', '...##...##...##.', '...##...##...##.', '...##...##...##.', '..############..', '.##############.', '................']),
+  adult: Object.freeze(['................', '.....######.....', '....########....', '....########....', '....########....', '....########....', '.....######.....', '................', '...##########...', '..############..', '..############..', '..############..', '..############..', '..############..', '..############..', '................']),
+  hospital: Object.freeze(['................', '..############..', '.##############.', '.#####....#####.', '.#####....#####.', '.#####....#####.', '.##..........##.', '.##..........##.', '.##..........##.', '.##..........##.', '.#####....#####.', '.#####....#####.', '.#####....#####.', '.##############.', '..############..', '................']),
+  credit: Object.freeze(['................', '................', '.##############.', '################', '################', '................', '................', '################', '################', '##....##########', '##....##########', '################', '################', '.##############.', '................', '................']),
+  custom: Object.freeze(['................', '................', '...##########...', '..############..', '.##.#..##..#.##.', '################', '.##############.', '..############..', '...##########...', '....########....', '.....######.....', '......####......', '.......##.......', '................', '................', '................']),
+});
+const ICONS = Object.fromEntries(Object.entries(ICON_ROWS).map(([k, rows]) => [k, bitmap(rows)]));
+/** The 8 x 8 rarity star. */
+export const STAR_ROWS = Object.freeze(['...##...', '...##...', '########', '.######.', '..####..', '..####..', '.##..##.', '.#....#.']);
+const STAR = bitmap(STAR_ROWS);
 
 const blit = (cv, list, x, y, c) => { for (const [px, py] of list) dot(cv, x + px, y + py, c); };
 function text(cv, s, x, y, c, k = 1) {
@@ -203,13 +208,14 @@ const tw = (s, k = 1) => s.length * 6 * k - k;       // pixel width of a string
 const label = (cv, s, x, y, c, sh, k = 1) => { text(cv, s, x + k, y + k, sh, k); text(cv, s, x, y, c, k); };
 
 // -- rarity palettes and the shared card chrome ----------------------------------------------------------------------
-const RAR = [
+/** The rarity palettes: common grey, uncommon green, rare blue, epic purple, legendary gold; hi, mid and lo tones and the legendary spark. */
+export const RAR = Object.freeze([
   { label: 'COMMON', hi: 0xc8ccd6, mid: 0x8a8f9e, lo: 0x4a4e5c, spark: 0xfff6c0 },
   { label: 'UNCOMMON', hi: 0x86ff92, mid: 0x36c44c, lo: 0x147030, spark: 0xfff6c0 },
   { label: 'RARE', hi: 0x80c4ff, mid: 0x3a7ee8, lo: 0x163f98, spark: 0xfff6c0 },
   { label: 'EPIC', hi: 0xdba2ff, mid: 0x9c4ee2, lo: 0x4e1c8e, spark: 0xfff6c0 },
   { label: 'LEGENDARY', hi: 0xffe680, mid: 0xf2b422, lo: 0x8e5a0a, spark: 0xfff6c0 },
-];
+].map((r) => Object.freeze(r)));
 const DCOL = [0x40e8ff, 0xffa040, 0x86ff92, 0xff6ad0, 0xff5a5a, 0x6aa8ff, 0xffffff];   // dataset colours
 
 function frame(cv, p, t) {
@@ -450,6 +456,22 @@ export const THEMES = Object.freeze({
   'memphis-v1': Object.freeze({ id: 'memphis-v1', name: 'Memphis Pop', blurb: 'Eighties pop: flat colour, confetti, a checker floor, a heavy outline and a hard shadow.', look: memphisLook, scene: memphisScene }),
 });
 
+/** The drawing kit, shared with the estate painter so both draw with one set of primitives: a padded integer canvas, rects,
+ *  dots, the isometric cube, bitmaps, colour arithmetic and the deterministic dice. */
+export const PIXEL = Object.freeze({ newCanvas, rect, dot, at, cube, blit, bitmap, mul, mix, rng, span, div, hash3, PAD });
+
+/** A creature from the front at one pixel per voxel, in the blockcraft palette, for signs, chips and portraits.
+ *  -> { ok: true, w: 9, h: 14, px: Uint8Array(9*14*4) RGBA, alpha 0 where there is no voxel } | { ok: false, why }. */
+export function creatureFront(id) {
+  if (!isId(id)) return no('id must be 16 lowercase hex characters');
+  const sp = build(id), cc = classColors(BLOCK_BODY, BLOCK_ACC, UI_B.ink, sp.g), big = frontSprite(sp, (c, z) => mul(cc[c], 256 - (MZ - 1 - z) * 14)), px = new Uint8Array(MX * MY * 4);
+  for (const y of span(0, MY)) for (const x of span(0, MX)) {
+    const q = big[(y * 8 + 4) * SW + x * 8 + 4], o = (y * MX + x) * 4;
+    if (q & FLAG) { px[o] = (q >> 16) & 255; px[o + 1] = (q >> 8) & 255; px[o + 2] = q & 255; px[o + 3] = 255; }
+  }
+  return { ok: true, w: MX, h: MY, px };
+}
+
 // -- the painter ----------------------------------------------------------------------------------------------------
 /**
  * Draw a card's face. facts: { id, title, dataset, department, stage, rarity, generation, parents } as the DIGI card
@@ -467,7 +489,7 @@ export function paintArt(facts, themeId, w, h) {
     frame(cv, look.p, f.ri);
     const px = new Uint8Array(w * h * 3), cols = span(0, w).map((x) => div(x * LW, w));   // nearest pixel: at 384 x 560 every logical pixel is exactly 2 x 2
     span(0, h).forEach((y) => {
-      const row = (div(y * LH, h) + PAD) * CW + PAD;
+      const row = (div(y * LH, h) + PAD) * cv.cw + PAD;
       cols.forEach((cx, x) => { const q = cv.d[row + cx], o = (y * w + x) * 3; px[o] = q >> 16; px[o + 1] = (q >> 8) & 255; px[o + 2] = q & 255; });
     });
     return { ok: true, px };

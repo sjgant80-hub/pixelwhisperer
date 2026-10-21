@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { THEMES, paintArt, spriteOf, checkFacts } from './kardart.mjs';
+import { THEMES, paintArt, spriteOf, checkFacts, FONT, ICON_ROWS, STAR_ROWS, RAR, DATASETS as KDATASETS, RARITIES as KRARITIES, PIXEL, creatureFront } from './kardart.mjs';
 import { SAMPLES } from './samples.mjs';
 import { corpus, idOf, sha256, DATASETS, RARITIES, TITLE_CHARS, DEPT_CHARS } from './corpus.mjs';
 import { pinsFor, spritePin } from '../tools/kards-pins.mjs';
@@ -347,5 +347,43 @@ test('kardart.mjs is integer-only, deterministic and browser-safe: none of the b
   assert.ok(code.includes('const div = (a, b) => Math.floor(a / b);'));
   assert.equal(code.includes('Number.isInteger'), true);
   const exportsList = [...code.matchAll(/^export\s+(?:const|function)\s+(\w+)/gm)].map((m) => m[1]);
-  assert.deepEqual(exportsList, ['checkFacts', 'spriteOf', 'THEMES', 'paintArt']);
+  assert.deepEqual(exportsList, ['DATASETS', 'RARITIES', 'checkFacts', 'spriteOf', 'FONT', 'ICON_ROWS', 'STAR_ROWS', 'RAR', 'THEMES', 'PIXEL', 'creatureFront', 'paintArt']);
+});
+
+test('the sources the UI kit builds on are exported, frozen, and are the ones the cards draw with', () => {
+  for (const x of [FONT, ICON_ROWS, STAR_ROWS, RAR, KDATASETS, KRARITIES, PIXEL]) assert.ok(Object.isFrozen(x));
+  assert.deepEqual([...KDATASETS], DATASETS); assert.deepEqual([...KRARITIES], RARITIES);
+  assert.equal(FONT.length, 68);   // A-Z a-z 0-9 & . - # and the apostrophe, plus ~ (the ellipsis the id is printed with)
+  for (const e of FONT) { assert.equal(e[1], ' '); assert.equal(e[3], ' '); const rows = e.slice(4).split('/'); assert.ok(rows.length >= 1 && rows.length <= 9); for (const r of rows) assert.match(r, /^[.#]{5}$/); assert.ok(Number(e[2]) + rows.length <= 9); }
+  assert.deepEqual(Object.keys(ICON_ROWS), DATASETS);
+  for (const rows of Object.values(ICON_ROWS)) { assert.ok(Object.isFrozen(rows)); assert.equal(rows.length, 16); for (const r of rows) assert.match(r, /^[.#]{16}$/); }
+  assert.equal(STAR_ROWS.length, 8); for (const r of STAR_ROWS) assert.match(r, /^[.#]{8}$/);
+  assert.deepEqual(RAR.map((r) => [r.label, r.hi, r.mid, r.lo, r.spark]), [['COMMON', 0xc8ccd6, 0x8a8f9e, 0x4a4e5c, 0xfff6c0], ['UNCOMMON', 0x86ff92, 0x36c44c, 0x147030, 0xfff6c0], ['RARE', 0x80c4ff, 0x3a7ee8, 0x163f98, 0xfff6c0], ['EPIC', 0xdba2ff, 0x9c4ee2, 0x4e1c8e, 0xfff6c0], ['LEGENDARY', 0xffe680, 0xf2b422, 0x8e5a0a, 0xfff6c0]]);
+  assert.deepEqual(Object.keys(PIXEL), ['newCanvas', 'rect', 'dot', 'at', 'cube', 'blit', 'bitmap', 'mul', 'mix', 'rng', 'span', 'div', 'hash3', 'PAD']);
+  const cv = PIXEL.newCanvas(10, 6);   // a canvas of another size: its own width, padded on every side
+  assert.equal(cv.cw, 10 + 2 * PIXEL.PAD); assert.equal(cv.d.length, (10 + 2 * PIXEL.PAD) * (6 + 2 * PIXEL.PAD));
+  PIXEL.rect(cv, 0, 0, 10, 6, 0x123456); PIXEL.dot(cv, 9, 5, 0xabcdef);
+  assert.equal(PIXEL.at(cv, 0, 0), 0x123456); assert.equal(PIXEL.at(cv, 9, 5), 0xabcdef); assert.equal(PIXEL.at(cv, 10, 0), 0); assert.equal(PIXEL.at(cv, 0, 6), 0);
+  assert.deepEqual(PIXEL.span(2, 9, 3), [2, 5, 8]); assert.equal(PIXEL.div(7, 2), 3); assert.equal(PIXEL.mul(0x808080, 512), 0xffffff); assert.equal(PIXEL.mix(0, 0xffffff, 128), 0x7f7f7f);
+});
+
+test('creatureFront: the creature an id makes, one pixel per voxel, transparent where there is none', () => {
+  refused(creatureFront('nope'), /id must be/); refused(creatureFront(null), /id must be/);
+  const keys = new Set();
+  for (let n = 0; n < 300; n++) {
+    const id = idOf('front-' + n), f = creatureFront(id), s = spriteOf(id);
+    assert.equal(f.ok, true); assert.equal(f.w, 9); assert.equal(f.h, 14); assert.equal(f.px.length, 9 * 14 * 4);
+    for (let y = 0; y < 14; y++) for (let x = 0; x < 9; x++) {
+      let any = 0; for (let z = 0; z < 7; z++) any |= s.v[((13 - y) * 7 + z) * 9 + x];
+      assert.equal(f.px[(y * 9 + x) * 4 + 3], any ? 255 : 0, 'alpha follows the voxels');
+      if (!any) assert.equal(f.px[(y * 9 + x) * 4] + f.px[(y * 9 + x) * 4 + 1] + f.px[(y * 9 + x) * 4 + 2], 0);
+      assert.equal(f.px[(y * 9 + x) * 4 + 3], f.px[(y * 9 + (8 - x)) * 4 + 3], 'mirror symmetric');
+    }
+    keys.add(Buffer.from(f.px).toString('hex'));
+  }
+  assert.equal(keys.size, 300);
+  const fifty = Buffer.concat(Array.from({ length: 50 }, (_, n) => Buffer.from(creatureFront(idOf('front-' + n)).px)));
+  assert.equal(sha256(fifty), 'e542d6037dcaff196a9a8e2cf1b19e352624f70f081e395972b83dd22b6cef27', 'the colours and depth shading are published: the estate signs draw them');
+  assert.ok(Buffer.from(creatureFront(GOOD.id).px).equals(Buffer.from(creatureFront(GOOD.id).px)));
+  assert.equal(sha256(creatureFront(GOOD.id).px), sha256(creatureFront(GOOD.id).px));
 });

@@ -38,6 +38,9 @@ export const PAIRS = [
   ['kards/kardart.mjs', ['kards/kardart.smoke.test.mjs', 'kards/kardart.test.mjs']],
   ['kards/kardpng.mjs', ['kards/kardpng.test.mjs']],
   ['kards/costcase.mjs', ['kards/costcase.test.mjs']],
+  ['kards/ui.mjs', ['kards/ui.test.mjs']],
+  ['kards/ttf.mjs', ['kards/ttf.test.mjs']],
+  ['kards/estate.mjs', ['kards/estate.test.mjs']],
 ];
 // imported (by the tests) it only lends hiddenSpans and PAIRS; run directly, it is the gate
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) main();

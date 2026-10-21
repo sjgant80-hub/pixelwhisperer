@@ -11,10 +11,12 @@ jobs:
         run: node --test kards/*.test.mjs
       - name: the witness harness is the estate's, byte for byte (dex-frontier .witness/witness.mjs)
         run: echo "1e746a48fcb2f02f563e6450e7bf95bdb0b8f177d40b6f90af9aa4e5c9433113  .witness/witness.mjs" | sha256sum -c -
-      - name: mutation witness - every mutant of kardart.mjs, kardpng.mjs and costcase.mjs killed, none baselined
+      - name: mutation witness - every mutant of every kernel (art, png, cost case, UI kit, font, estate) killed, none baselined
         run: node witness-kards.mjs | tee witness.txt
       - name: the gallery images are exactly what the engine draws
         run: node tools/kards-gallery.mjs --check
+      - name: the UI font file is exactly what the glyph table makes (byte for byte)
+        run: node tools/kards-font.mjs --check
       - name: the published pins are what the engine draws (a red pin means a published theme was edited)
         run: node --test kards/kardart.smoke.test.mjs
       - name: the verdict

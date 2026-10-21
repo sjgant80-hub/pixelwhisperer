@@ -6,6 +6,7 @@
 <title>PixelWhisperer Kards - the art engine for DIGI cards</title>
 <meta name="description" content="A deterministic pixel-art engine: every card's face is drawn from its own facts, a blocky voxel creature born from its id, in synthwave or blockcraft. Gallery, workshop, and the proof.">
 <meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="fonts/pixelwhisperer.css">
 <style>
 :root{--bg:#0d0620;--bg2:#160a36;--panel:#1a0b3d;--line:#3d1c72;--ink:#f4edff;--muted:#bba9e8;--magenta:#ff2bd6;--cyan:#2be8ff;--gold:#ffd23c;--ok:#7dff8a;--bad:#ff7a8a;--radius:10px}
 *{box-sizing:border-box}
@@ -102,6 +103,15 @@ pre code{border:0;padding:0;background:none}
 .trace span{display:block;color:var(--muted);font-size:.78rem}
 footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
 .sr{position:absolute;left:-9999px}
+canvas.estate{aspect-ratio:auto;max-width:100%}
+#font-pixels{max-width:100%;image-rendering:pixelated}
+.charset{background:#10052a;border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-wrap:anywhere;word-break:break-all}
+.icons{display:flex;flex-wrap:wrap;gap:14px}
+.icons figure{margin:0;text-align:center}
+.icons canvas{display:block;image-rendering:pixelated;background:#10052a;border:1px solid var(--line);padding:6px;border-radius:6px}
+.icons figcaption{color:var(--muted);margin-top:4px}
+.idrow{display:flex;gap:14px;align-items:center;margin-top:10px}
+#key-face{image-rendering:pixelated;border:1px solid var(--line)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
@@ -120,7 +130,7 @@ footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;colo
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#estate">Estate</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -162,6 +172,57 @@ footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;colo
       </div>
     </form>
   </div>
+</section>
+
+<section id="estate" aria-labelledby="estate-h">
+  <h2 id="estate-h">The estate: grow your plot</h2>
+  <p>Every card a player holds is a tower on an isometric blockcraft plot, its trim in its rarity and its own creature on the sign. Tools are blocks, consented mesh links are cyan wires, and the districts still to come are fenced grey. The plot opens by a published rule: a district holding n blocks has <code>tilesFor(n) = min(36, 8 + 2n)</code> open tiles, so a new player starts with 16. The same holdings always draw the same picture, so a shared snapshot can be replayed and checked.</p>
+  <div class="work">
+    <div>
+      <canvas class="card estate" id="estate-canvas" width="720" height="480" role="img" aria-label="An estate"></canvas>
+      <p class="msg" id="estate-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="estate-form" autocomplete="off" novalidate>
+      <div class="actions">
+        <button type="button" class="act" id="est-add">Add a card</button>
+        <button type="button" class="act alt" id="est-remove">Remove a card</button>
+        <button type="button" class="act alt" id="est-child">Breed a new child</button>
+        <button type="button" class="act alt" id="est-wire">Wire two cards</button>
+      </div>
+      <div><label for="est-tools">Tool blocks: <output id="o-tools"></output></label><input id="est-tools" type="range" min="0" max="40" step="1" value="4"></div>
+      <div><label for="est-theme">Theme</label><select id="est-theme"></select></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-snap" type="checkbox" style="width:auto;min-height:0"><label for="est-snap" style="margin:0">The shared snapshot (title and stats bands, 1200 &times; 630)</label></div>
+      <div class="actions">
+        <button type="button" class="act" id="est-dl">Download PNG</button>
+        <button type="button" class="act alt" id="est-json">Copy the holdings as JSON</button>
+        <span class="msg" id="est-act" role="status" aria-live="polite"></span>
+      </div>
+      <div class="trace full" id="estate-stats" aria-live="polite"></div>
+    </form>
+  </div>
+<pre><code>import { paintEstate, estateStats, tilesFor } from './kards/estate.mjs';
+paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fresh? }], wires?: [[idA, idB]],
+              tools?: n, levels?: n, snapshot?: true }, 'blockcraft-v1', 1200, 630)   // { ok, px, scale } | { ok: false, why }</code></pre>
+</section>
+
+<section id="ui" aria-labelledby="ui-h">
+  <h2 id="ui-h">The UI kit: the font, the icons, the key face</h2>
+  <p>A DIGI screen is built from the same blocks as the cards. The card font becomes a real font, so labels stay selectable, accessible text; the dock and action icons are drawn in the same 16 &times; 16 cells as the dataset icons; and a key gets a face of its own.</p>
+  <h3>The font: <code>PixelWhisperer.ttf</code></h3>
+  <p class="pw pw-2" id="font-sample">LV 99 &middot; GATE 0.874 &#x2713; KEPT &#x2192; BEAT BOTH &#x2264; 2 (FRESH) 100% [OK] &quot;RERUN IT!&quot;</p>
+  <p class="hint">Above: real text in the font at 18px (two CSS pixels to a glyph pixel). Below: the same glyphs drawn as pixels by <code>paintText</code>.</p>
+  <canvas id="font-pixels" role="img" aria-label="The same line drawn as pixels"></canvas>
+  <p>At <code>font-size: 9px &times; k</code> each glyph pixel is exactly k CSS pixels, the line is one em and every character advances six pixels. A browser's rasterizer may still soften edges: Windows smooths vertical edges by about a third of a pixel, and a screen whose device pixels are not whole CSS pixels blends them. Where a heading must be pixel-perfect, draw it with <code>paintText</code>. <a href="fonts/PixelWhisperer.ttf">Download the font</a> &middot; <a href="fonts/pixelwhisperer.css">its CSS</a>.</p>
+  <div class="charset pw pw-2" id="charset" aria-label="Every character the font draws"></div>
+  <h3>Icons</h3>
+  <div class="icons" id="icons"></div>
+  <h3>A key's face: <code>identicon(pubHex)</code></h3>
+  <label for="key-in">An Ed25519 public key (64 lowercase hex characters)</label>
+  <div class="row" style="max-width:720px">
+    <input id="key-in" maxlength="64" spellcheck="false">
+    <button type="button" class="act" id="key-roll">Roll a key</button>
+  </div>
+  <div class="idrow"><canvas id="key-face" width="60" height="60" role="img" aria-label="The key's identicon"></canvas><p class="msg" id="key-msg" role="status" aria-live="polite"></p></div>
 </section>
 
 <section id="start" aria-labelledby="start-h">
@@ -226,6 +287,9 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>chrome</code> / <code>frame</code></td><td>everything that is the same in every theme: plate, LV bar, rarity frame and stars, lineage, id barcode.</td></tr>
       <tr><td><code>THEMES</code></td><td>the registry: <span id="theme-list"></span>. Frozen, versioned, append-only.</td></tr>
       <tr><td><code>paintArt</code></td><td>the one call: facts, theme id, width, height to RGB bytes, or a refusal.</td></tr>
+      <tr><td><code>ui.mjs</code></td><td>the UI kit: the card font plus the glyphs a label needs (95 in all, a real space, no currency), the dock and action icons, <code>identicon(pubHex)</code> and <code>paintText</code>, all built on kardart.mjs's own tables.</td></tr>
+      <tr><td><code>ttf.mjs</code></td><td>a deterministic TrueType writer: the glyph table as <code>fonts/PixelWhisperer.ttf</code>, square-pixel contours, byte for byte on every rebuild.</td></tr>
+      <tr><td><code>estate.mjs</code></td><td>the estate painter: <code>paintEstate</code>, <code>tilesFor</code>, <code>estateStats</code>, drawing a player's holdings as an isometric plot with the card engine's own cube.</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
     </tbody>
   </table></div>
@@ -333,7 +397,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 creatures</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct creatures; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">231</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">233</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">43</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">91</b> in the estate painter and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -377,6 +441,8 @@ import { pngOf } from './kardpng.mjs';
 import { SAMPLES } from './samples.mjs';
 import { PINS } from './kardart.pins.mjs';
 import { costCase, verdict } from './costcase.mjs';
+import { CHARSET, UI_ICONS, DATASET_ICONS, STAR, DOCK, ACTIONS, identicon, paintText } from './ui.mjs';
+import { paintEstate, estateStats } from './estate.mjs';
 
 const $ = (s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
@@ -518,6 +584,74 @@ function cost() {
 }
 for (const id of ['cards', 'percard', 'hours', 'rate']) $('#c-' + id).addEventListener('input', cost);
 
+// ── the estate builder ──────────────────────────────────────────────────────────────────────────────────────────────
+const RARS = ['common', 'uncommon', 'rare', 'epic', 'legendary'], SETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
+const est = { cards: SAMPLES.slice(0, 8).map((s, n) => ({ id: s.id, dataset: s.dataset, department: s.department, stage: s.stage, rarity: s.rarity, generation: s.generation, fresh: n === 1 })), wires: [[SAMPLES[0].id, SAMPLES[2].id], [SAMPLES[2].id, SAMPLES[4].id]], tools: 4, snapshot: false };
+let estTheme = 'blockcraft-v1';
+for (const id of THEME_IDS) $('#est-theme').add(new Option(THEMES[id].name, id));
+$('#est-theme').value = estTheme;
+const estSize = () => (est.snapshot ? [1200, 630] : [720, 480]);
+function renderEstate() {
+  const [w, h] = estSize(), r = paintEstate(est, estTheme, w, h), c = $('#estate-canvas'), s = estateStats(est);
+  if (!r.ok) { $('#estate-msg').className = 'msg bad'; $('#estate-msg').textContent = r.why; return; }
+  c.width = w; c.height = h;
+  const img = new ImageData(w, h), d = img.data;
+  for (let i = 0, j = 0; i < r.px.length; i += 3, j += 4) { d[j] = r.px[i]; d[j + 1] = r.px[i + 1]; d[j + 2] = r.px[i + 2]; d[j + 3] = 255; }
+  c.getContext('2d').putImageData(img, 0, 0);
+  c.setAttribute('aria-label', 'An estate in ' + THEMES[estTheme].name + ': ' + s.cards + ' card towers, ' + s.tools + ' tool blocks, ' + s.links + ' mesh links, ' + s.tiles.total + ' open tiles');
+  $('#o-tools').textContent = est.tools;
+  $('#estate-msg').className = 'msg ok'; $('#estate-msg').textContent = s.blocks + ' blocks · ' + s.tiles.total + ' tiles · drawn at scale ' + r.scale;
+  const box = $('#estate-stats'); box.textContent = '';
+  for (const [k, v] of [['BLOCKS', s.blocks], ['SCORER TILES', s.cards + ' cards → ' + s.tiles.scorer], ['TOOLS TILES', s.tools + ' tools → ' + s.tiles.tools], ['MESH LINKS', s.links]]) { const dv = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = String(v); dv.append(a, b); box.append(dv); }
+}
+const randHex = (n) => hex(crypto.getRandomValues(new Uint8Array(n)));
+const pick = (a) => a[crypto.getRandomValues(new Uint8Array(1))[0] % a.length];
+$('#est-add').addEventListener('click', () => { if (est.cards.length >= 60) return; est.cards.push({ id: randHex(8), dataset: pick(SETS), department: 'ops', stage: crypto.getRandomValues(new Uint8Array(1))[0] % 100, rarity: pick(RARS), generation: 0, fresh: false }); renderEstate(); });
+$('#est-remove').addEventListener('click', () => { const gone = est.cards.pop(); if (gone) est.wires = est.wires.filter(([a, b]) => a !== gone.id && b !== gone.id); renderEstate(); });
+$('#est-child').addEventListener('click', () => { for (const c of est.cards) c.fresh = false; est.cards.push({ id: randHex(8), dataset: pick(SETS), department: 'ops', stage: 0, rarity: 'common', generation: 1, fresh: true }); renderEstate(); });
+$('#est-wire').addEventListener('click', () => {
+  const free = [];
+  est.cards.forEach((a, i) => est.cards.forEach((b, j) => { if (i < j && !est.wires.some(([x, y]) => (x === a.id && y === b.id) || (x === b.id && y === a.id))) free.push([a.id, b.id]); }));
+  if (free.length) est.wires.push(pick(free));
+  renderEstate();
+});
+$('#est-tools').addEventListener('input', () => { est.tools = Number($('#est-tools').value); renderEstate(); });
+$('#est-theme').addEventListener('input', () => { estTheme = $('#est-theme').value; renderEstate(); });
+$('#est-snap').addEventListener('input', () => { est.snapshot = $('#est-snap').checked; renderEstate(); });
+const estSaid = (t) => { $('#est-act').textContent = t; setTimeout(() => { if ($('#est-act').textContent === t) $('#est-act').textContent = ''; }, 3000); };
+$('#est-dl').addEventListener('click', () => {
+  const [w, h] = estSize(), r = paintEstate(est, estTheme, w, h), p = pngOf(r.px, w, h), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([p.png], { type: 'image/png' })); a.download = 'estate-' + estTheme + (est.snapshot ? '-snapshot' : '') + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  estSaid('Downloaded.');
+});
+$('#est-json').addEventListener('click', async () => { try { await navigator.clipboard.writeText(JSON.stringify(est, null, 1)); estSaid('Holdings copied.'); } catch { estSaid('Copy failed.'); } });
+
+// ── the UI kit: crisp pixels for the sample line, every character, every icon, a key's face ─────────────────────────
+function putRGBA(canvas, r) { canvas.width = r.w; canvas.height = r.h; const img = new ImageData(new Uint8ClampedArray(r.px), r.w, r.h); canvas.getContext('2d').putImageData(img, 0, 0); }
+{ const r = paintText($('#font-sample').textContent, 2, '#ffffff', '#4a1480'); if (r.ok) putRGBA($('#font-pixels'), r); }
+$('#charset').textContent = CHARSET;
+function iconCanvas(rows, name, k = 3) {
+  const fig = document.createElement('figure'), c = document.createElement('canvas'), n = rows.length, x = c.getContext('2d');
+  c.width = n * k; c.height = n * k; c.setAttribute('role', 'img'); c.setAttribute('aria-label', name + ' icon');
+  x.fillStyle = '#ffffff';
+  rows.forEach((row, y) => Array.from(row).forEach((cell, q) => { if (cell === '#') x.fillRect(q * k, y * k, k, k); }));
+  const cap = document.createElement('figcaption'); cap.className = 'pw pw-1'; cap.textContent = name.toUpperCase();
+  fig.append(c, cap); return fig;
+}
+for (const name of [...DOCK, ...ACTIONS]) $('#icons').append(iconCanvas(UI_ICONS[name], name));
+for (const [name, rows] of Object.entries(DATASET_ICONS)) $('#icons').append(iconCanvas(rows, name));
+$('#icons').append(iconCanvas(STAR, 'star', 6));
+function renderKey() {
+  const r = identicon($('#key-in').value.trim(), 6), m = $('#key-msg');
+  if (!r.ok) { m.className = 'msg bad'; m.textContent = r.why + '.'; return; }
+  const c = $('#key-face'), img = new ImageData(60, 60), d = img.data;
+  for (let i = 0, j = 0; i < r.px.length; i += 3, j += 4) { d[j] = r.px[i]; d[j + 1] = r.px[i + 1]; d[j + 2] = r.px[i + 2]; d[j + 3] = 255; }
+  c.getContext('2d').putImageData(img, 0, 0);
+  m.className = 'msg ok'; m.textContent = 'colour ' + r.colors.fg + ' · accent ' + r.colors.accent + ' · on ' + r.colors.bg;
+}
+$('#key-in').addEventListener('input', renderKey);
+$('#key-roll').addEventListener('click', () => { $('#key-in').value = randHex(32); renderKey(); });
+
 // ── the hero: one card, re-skinned live, two themes at a time ─────────────────────────────────────────────────────────────
 let heroAt = 0;
 function heroes() {
@@ -535,6 +669,8 @@ function heroes() {
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { heroAt++; heroes(); }, 3500);
   buildGallery();
   cost();
+  renderEstate();
+  $('#key-in').value = 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07'; renderKey();
   setWork(first, theme);
 })();
 </script>
