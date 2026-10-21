@@ -58,17 +58,15 @@ test('every table scrolls on its own on a small screen, and every source link po
   for (const m of html.matchAll(/blob\/main\/([^"]+)"/g)) assert.ok(readFileSync(new URL('../' + m[1], import.meta.url)).length > 0, m[1] + ' exists');
 });
 
-test('the credits are on the page, in the README and in CREDITS.md, in the full form the estate requires', () => {
-  const C1 = 'Gary W. Floyd, Lumiea Systems Research Division — ThunderStruck Service LLC — “From GEP Stabilization to Dual-Map Ethical Reasoning,” Derivation v0.2.';
-  const C2 = 'Gary W. Floyd, Lumiea Systems Research Division — ThunderStruck Service LLC — “The Laws of Entropy-Time: Rewriting Thermodynamics with the Guided Entropy Principle,” February 2026.';
+test('the credits are on the page, in the README and in CREDITS.md: built by Kar, powered by Konomi, and the art is the estate\x27s own', () => {
   const KONOMI = 'Powered by the Konomi architecture, created by Thomas Frumkin';
-  for (const [name, text] of [['kards/index.html', html], ['README.md', readFileSync(new URL('../README.md', import.meta.url), 'utf8')], ['kards/CREDITS.md', readFileSync(new URL('./CREDITS.md', import.meta.url), 'utf8')]]) {
-    for (const c of [C1, C2, KONOMI]) assert.ok(text.includes(c), name + ' carries: ' + c.slice(0, 60));
-    assert.ok(text.includes('Open Defensive Prior Art under Creative Commons'), name + ' says how the papers are published');
-    assert.equal(/ThunderStruck Services/.test(text), false, name + ': the company is ThunderStruck Service LLC, singular');
-    assert.equal(/Gary Floyd/.test(text), false, name + ': never just "Gary Floyd"');
-    assert.equal([...text.matchAll(/Gary W\. Floyd(?!, Lumiea Systems Research Division — ThunderStruck Service LLC)/g)].filter((m) => !/^Gary W\. Floyd(\x27s ideas|, whose papers|\*\*| in)/.test(text.slice(m.index, m.index + 30)) && !/Gary W\. Floyd<\/b>|Gary W\. Floyd\*\*|Gary W\. Floyd's|Gary W\. Floyd, whose|Gary W\. Floyd in/.test(text.slice(m.index, m.index + 30))).length, 0, name + ': every mention of Gary W. Floyd that cites his work carries his company and paper');
+  const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
+  for (const [name, text] of [['kards/index.html', html], ['README.md', read('../README.md')], ['kards/CREDITS.md', read('./CREDITS.md')]]) {
+    assert.ok(text.includes(KONOMI), name + ' carries the Konomi line');
+    assert.ok(/Built by \**Kar/.test(text), name + ' says who built it');
   }
+  // the art is not drawn from anyone else's papers (Simon, 2026-10-21), so no surface, kernel header included, attributes it to them
+  for (const p of ['./index.html', '../README.md', './CREDITS.md', './kardart.mjs', './ui.mjs', './estate.mjs', './ttf.mjs', './kardpng.mjs']) assert.equal(/Floyd|ThunderStruck|Lumiea/.test(read(p)), false, p + ' credits the art to no one else');
   assert.ok(ids.has('credits'));
   assert.ok(/<a href="#credits">Credits<\/a>/.test(html));
 });

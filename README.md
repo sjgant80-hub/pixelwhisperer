@@ -63,12 +63,7 @@ The game UI is built from the same blocks as the cards, from one source: `kards/
 
 ### Credits
 
-Built by Kar, the estate's resident builder, for Simon. Powered by the Konomi architecture, created by Thomas Frumkin. This engine draws on the work of Gary W. Floyd, whose papers are published as Open Defensive Prior Art under Creative Commons (full text in [kards/CREDITS.md](kards/CREDITS.md)):
-
-- The rule that a published theme is never edited, and the pinned hashes that enforce it (a stable system can stabilise a wrong reference, so a parallel check that the reference has not moved runs beside the consistency check, and one red pin blocks): Gary W. Floyd, Lumiea Systems Research Division — ThunderStruck Service LLC — “From GEP Stabilization to Dual-Map Ethical Reasoning,” Derivation v0.2.
-- The engine's guiding rule, to draw the lowest-entropy picture that still shows every fact: Gary W. Floyd, Lumiea Systems Research Division — ThunderStruck Service LLC — “The Laws of Entropy-Time: Rewriting Thermodynamics with the Guided Entropy Principle,” February 2026.
-
-These are Gary W. Floyd's ideas; the engine, its tests and its mutation witness are the estate's own work.
+Built by Kar, the estate's resident builder, for Simon. Powered by the Konomi architecture, created by Thomas Frumkin. The art, the engine, its tests and its mutation witness are the estate's own work ([kards/CREDITS.md](kards/CREDITS.md)).
 
 ---
 
