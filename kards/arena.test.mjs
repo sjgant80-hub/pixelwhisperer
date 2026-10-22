@@ -139,11 +139,11 @@ test('sizes: a whole-number scale of 240 x 160, the arena centred, everything fr
 });
 
 const fwant = {
-  'synthwave-v1': '33f7de142af26bae25dfded106211ec044bb1c3b3e91e6f921928533d88dc6aa',
-  'blockcraft-v1': '1ef6f9ab2b0e6cc5112cec1791718edf66293d12650c11d02a7d440e7b054f62',
-  'lcd-v1': '5759e812a475542e782cd61eeb6665ac44581f0750f7564ed54fd61a0fe415d8',
-  'memphis-v1': '8bb5fdc0df1a2a4b32d586cbe2693d0f193f61d753c4fc2550f101968549a950',
-  'blueprint-v1': 'e04dde7998a0e665f768dc6853980013271a7b10beda01d9f756581791ceec49',
+  'synthwave-v1': 'f2f2df1e2bded37932b0dfad2349fa4e98f33257aec6db7937b8193b4cd8aa0f',
+  'blockcraft-v1': 'a67ee8fb028e97ec6fa74cac01faa13c13eecaf0df60fabdbfbf8fe4bef92eea',
+  'lcd-v1': '1eb9568d514c7522915a4c25af317f1fbfc6c7987a18e400fc99047fcb76f35a',
+  'memphis-v1': 'f48c1206c2f235566f358831140b97efb25354a977a9ca19b66ec3f87e399667',
+  'blueprint-v1': 'b529eba01c59e4bb8435639c96eb7be11de5e3433f5de907d381bec83bb1e787',
 };
 test('the read-back: one decided case in focus, ringed on the scoreboard, how each side did on it, and which ranked it better', () => {
   const kinds = [CASES.findIndex(([a, b]) => a > b), CASES.findIndex(([a, b]) => b > a), CASES.findIndex(([a, b]) => a === b)];
