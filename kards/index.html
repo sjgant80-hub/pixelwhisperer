@@ -426,7 +426,8 @@ paintBook({ job, page }, 'synthwave-v1', 1200, 630)   // { ok, px }: a page of t
   <canvas class="card estate" id="hero-canvas" width="768" height="600" role="img" aria-label="Two sample heroes' plates, in every theme"></canvas>
   <pre><code>import { paintHero, checkHero, HERO_SETS, HERO_STEPS, HERO_ICON } from './kards/hero.mjs';
 paintHero({ name, title, set, lit }, themeId, w, h)   // -> { ok, px RGB, scale, level } | { ok: false, why }</code></pre>
-  <p>A plate refuses, with a reason, a name or class the font cannot draw or longer than 22 characters, a business that is not one of the six, and anything but six lit-or-not steps. Nothing throws, and every picture is pinned by sha256 in the tests.</p>
+  <p>The six steps are the game's: crowned, talking (three questions its rules answered), remembers you, trained (a level kept), powered (an answer on your own key) and geared (something in its kit). The game works out which are lit from what the hero has done (<code>levelOf</code> in Kardlings' <code>src/hero.mjs</code>) and hands the plate that list; the plate draws exactly what it is given. To get a hero, open the Hero screen in Kardlings and press Crown it.</p>
+  <p>A plate refuses, with a reason, a name or class the font cannot draw or longer than 22 characters, a business that is not one of the six, and anything but six lit-or-not steps; call <code>checkHero(hero)</code> first to know whether a plate will draw, and why not. Nothing throws, and every picture is pinned by sha256 in the tests.</p>
 </section>
 
 <section id="raids" aria-labelledby="raids-h">
