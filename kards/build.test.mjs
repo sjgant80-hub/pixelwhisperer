@@ -5,7 +5,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { KINDS, ROLES, METHODS, SIZES, COMBO_WORDS, checkBuild, buildLift, buildSigil, comboName, paintBuild, checkJobs, paintJobs } from './build.mjs';
+import { KINDS, ROLES, METHODS, SIZES, COMBO_WORDS, checkBuild, buildLift, buildSigil, comboName, paintBuild, checkJobs, paintJobs, checkSheet, paintSheet } from './build.mjs';
+import { identicon } from './ui.mjs';
 import { THEMES, creatureFront } from './kardart.mjs';
 import { idOf } from './corpus.mjs';
 import { violations } from './source-check.mjs';
@@ -219,7 +220,146 @@ test('the job board: each job a note pinned up, its business, its name, its bar,
   for (const c of colours(drawBoard(BOARD, 'blueprint-v1'))) assert.ok([0x0e3b78, 0x3468b0, 0x9cc3f0, 0xeef5ff].includes(c), 'blueprint inks ' + c.toString(16));
 });
 
-test('the pins: builds and the job board, frozen byte for byte', () => {
+// the build sheet: receipts and proofs shaped as the game's measure() and proofOf() make them, read as they are
+const KEY = [1, 2, 3, 4].map((n) => sha('key-' + n)), X = ' \u00d7 ';
+const P = (s, title, alone, contribution) => ({ card: id(s), head: sha('head-' + s), title, domains: 'hospital', gate: alone === null ? null : alone + 4000, joined: alone !== null, why: alone === null ? 'a better-proven part fields hospital' : null, alone, contribution });
+const COMBO_SHEET = { job: JOB, receipt: { kind: 'build', build: sha('build-combo'), data: 'hospital:ground-1', parts: [P('sc', 'Night Nurse', null, null), P('sb', 'Ward Watch', 560500, 9000), P('sa', 'Triage Sentinel', 571000, 21000)], fielded: 2, gate: 612400, best: 571000, lift: 41400, n: 240, verdict: 'combo', name: 'Triage Sentinel' + X + 'Ward Watch' }, proof: { ok: true, verdict: 'combo', proven: true, keys: KEY.slice(0, 3), finder: KEY[0], refused: [] }, held: [id('sa'), id('sc')] };
+const ANTI_SHEET = { job: { set: 'bank', title: 'Credit Gate', bar: 780582 }, receipt: { kind: 'build', build: sha('build-anti'), data: 'bank:ground-2', parts: [P('aa', 'Census Scout', 770582, -2000), P('ab', 'Credit Oracle', 765000, -8000)], fielded: 2, gate: 762000, best: 770582, lift: -8582, n: 180, verdict: 'anti', name: 'Census Scout' + X + 'Credit Oracle' }, proof: { proven: false, keys: [KEY[3]], finder: KEY[3] } };
+const PLAIN_SHEET = { job: { set: 'telco', bar: 828213 }, receipt: { kind: 'build', build: sha('build-plain'), data: 'telco', parts: [P('pa', 'Roaming Prophet', 818213, 0), P('pb', 'Plan Whisperer', null, null)], fielded: 1, gate: 818213, best: 818213, lift: 0, n: 1, verdict: 'plain', name: 'Roaming Prophet' } };
+const FULL_TITLES = ['A', "O'Hara & Sons Retail", 'Vault Keeper', 'Late Payer Radar', 'Abcdefghijklmnopqrstuvwx', 'Churn Hunter', 'Ledger Guardian', 'Basket Whisperer'];
+const FULL_SHEET = { job: { set: 'adult', title: 'Employer', bar: 600000 }, receipt: { kind: 'build', build: sha('build-full'), data: 'adult:ground-4', parts: FULL_TITLES.map((t, i) => P('f' + i, t, i < 5 ? 590000 - i * 2000 : null, i < 5 ? [1000000, 1500, 0, -1500, -1000000][i] : null)), fielded: 5, gate: 593000, best: 590000, lift: 3000, n: 999999, verdict: 'plain', name: FULL_TITLES.slice(0, 5).join(X) }, proof: { proven: true, keys: KEY.slice(0, 2), finder: KEY[0] }, held: FULL_TITLES.map((t, i) => id('f' + i)) };
+const SHEETS = [COMBO_SHEET, ANTI_SHEET, PLAIN_SHEET, FULL_SHEET];
+const ink = (s, t = 'synthwave-v1', w = 400, h = 210) => { const r = paintSheet(s, t, w, h); assert.equal(r.ok, true, r.why); return r.px; };
+const withReceipt = (s, patch) => ({ ...s, receipt: { ...s.receipt, ...patch } });
+const whyOf = (x) => checkSheet(x).why;
+const region = (px, x0, y0, x1, y1) => { const out = []; for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) out.push(rgb(px, x, y, 400)); return out; };
+const cset = (cs) => [...new Set(cs)].sort((a, b) => a - b);
+const vox = (fr, q) => (fr.px[q * 4] << 16) | (fr.px[q * 4 + 1] << 8) | fr.px[q * 4 + 2];
+const solid = (fr) => [...Array(126).keys()].find((n) => fr.px[n * 4 + 3]);
+
+test('a build sheet: the game\'s own receipt and proof, read as they are, and refused with a reason when the numbers do not add up', () => {
+  const c = checkSheet(COMBO_SHEET);
+  assert.equal(c.ok, true, c.why);
+  assert.deepEqual(c.s, { job: JOB, build: sha('build-combo'), rows: [
+    { card: id('sa'), title: 'Triage Sentinel', joined: true, alone: 571000, contribution: 21000, held: true },
+    { card: id('sb'), title: 'Ward Watch', joined: true, alone: 560500, contribution: 9000, held: false },
+    { card: id('sc'), title: 'Night Nurse', joined: false, alone: null, contribution: null, held: true }],
+  fielded: 2, gate: 612400, best: 571000, lift: 41400, n: 240, verdict: 'combo', proof: { proven: true, keys: 3, finder: KEY[0] } });
+  const plain = { job: JOB, receipt: { ...COMBO_SHEET.receipt, parts: COMBO_SHEET.receipt.parts.map(({ card, title, joined, alone, contribution }) => ({ card, title, joined, alone, contribution })) } };
+  delete plain.receipt.kind;
+  assert.deepEqual(checkSheet(plain).s.rows.map((r) => r.held), [null, null, null], 'what it does not draw is left unread; no held list, no marks');
+  assert.equal(checkSheet(plain).s.proof, null);
+  for (const s of [ANTI_SHEET, PLAIN_SHEET, FULL_SHEET]) assert.equal(checkSheet(s).ok, true, whyOf(s));
+  assert.deepEqual(checkSheet(withReceipt(COMBO_SHEET, { name: 'Ward Watch' + X + 'Triage Sentinel' })).s.rows.map((r) => r.title), ['Ward Watch', 'Triage Sentinel', 'Night Nurse'], 'the rows field in the name\'s order');
+  assert.equal(checkSheet(withReceipt(COMBO_SHEET, { data: 'hospital' })).ok, true, 'a ground named for its business alone');
+  const twin = withReceipt(ANTI_SHEET, { parts: [P('aa', 'Twin', 770582, -2000), P('ab', 'Twin', 765000, -8000)], name: 'Twin' + X + 'Twin' });
+  assert.deepEqual(checkSheet(twin).s.rows.map((r) => r.card), [id('aa'), id('ab')], 'two parts of one title');
+
+  const R = (patch) => whyOf(withReceipt(COMBO_SHEET, patch)), two = COMBO_SHEET.receipt.parts.slice(1), bench = COMBO_SHEET.receipt.parts[0];
+  for (const x of [null, [], 5]) assert.equal(whyOf(x), 'the sheet must be an object');
+  assert.match(whyOf({ ...COMBO_SHEET, job: { set: 'x', bar: 1 } }), /^the job set must be/);
+  for (const receipt of [null, 5, []]) assert.equal(whyOf({ ...COMBO_SHEET, receipt }), 'the receipt must be an object');
+  for (const build of ['x', sha('a').toUpperCase(), sha('a') + '0', 5]) assert.equal(R({ build }), 'the receipt build is the build id: 64 lowercase hex characters');
+  for (const data of ['bank:ground-1', 'hospitalx', 7, ':hospital']) assert.equal(R({ data }), 'the receipt is for another business than the job: its data must name hospital');
+  for (const parts of ['x', [two[1]], FULL_TITLES.concat('Ninth').map((t, i) => P('n' + i, t, null, null))]) assert.equal(R({ parts }), 'a receipt has 2 to 8 parts');
+  for (const p of [5, null, { ...two[0], card: 'X'.repeat(16) }, { ...two[0], card: id('x').slice(1) }]) assert.equal(R({ parts: [p, two[1]] }), 'every part is a card: 16 lowercase hex characters');
+  assert.equal(R({ parts: [two[1], two[1]] }), 'the same card is in the build twice');
+  for (const title of ['', 'x'.repeat(25), 'Bad!', 5, 'Triage\u00d7']) assert.equal(R({ parts: [{ ...two[0], title }, two[1]] }), 'a part title is 1 to 24 characters from A-Z a-z 0-9 space & . - and the apostrophe', String(title));
+  for (const joined of ['yes', 1, undefined]) assert.equal(R({ parts: [{ ...two[0], joined }, two[1]] }), 'a part joined is true or false');
+  const NUMS = 'a part that fields has its alone GATE and its contribution in whole millionths; a benched one has null for both';
+  for (const ch of [{ alone: null }, { alone: 1000001 }, { alone: -1 }, { contribution: null }, { contribution: 1000001 }, { contribution: -1000001 }, { contribution: 0.5 }, { contribution: '1' }]) assert.equal(R({ parts: [{ ...two[0], ...ch }, two[1]] }), NUMS, JSON.stringify(ch));
+  for (const ch of [{ alone: 5 }, { contribution: 0 }, { alone: undefined }]) assert.equal(R({ parts: [{ ...bench, ...ch }, ...two] }), NUMS, JSON.stringify(ch));
+  for (const fielded of [3, 1, '2']) assert.equal(R({ fielded }), 'fielded counts the parts that field, at least one');
+  assert.equal(R({ parts: [bench, { ...bench, card: id('sd') }], fielded: 0 }), 'fielded counts the parts that field, at least one');
+  for (const ch of [{ gate: -1 }, { gate: 1000001 }, { gate: '612400' }, { best: 1000001 }, { best: null }]) assert.equal(R(ch), 'the receipt gate and best are whole millionths from 0 to 1000000', JSON.stringify(ch));
+  assert.equal(checkSheet(withReceipt(COMBO_SHEET, { gate: 1000000, lift: 429000 })).ok, true, 'a perfect GATE');
+  assert.equal(R({ best: 560500, lift: 51900 }), 'best is the highest alone GATE among the parts that field');
+  assert.equal(R({ lift: 41401 }), 'lift is the gate less the best');
+  for (const n of [0, 1000000, 2.5, '240', null]) assert.equal(R({ n }), 'n is how many held-out cases: a whole number from 1 to 999999');
+  for (const verdict of ['great', null, 'Combo']) assert.equal(R({ verdict }), 'the verdict is combo, anti or plain');
+  assert.equal(R({ gate: 571000, lift: 0 }), 'a combo has two or more parts fielding and a lift above zero');
+  assert.equal(checkSheet(withReceipt(COMBO_SHEET, { gate: 571001, lift: 1 })).ok, true, 'one millionth carries a combo');
+  assert.equal(whyOf(withReceipt(PLAIN_SHEET, { gate: 818214, lift: 1, verdict: 'combo' })), 'a combo has two or more parts fielding and a lift above zero');
+  assert.equal(checkSheet(withReceipt(PLAIN_SHEET, { gate: 818214, lift: 1 })).ok, true, 'one part fielding is plain');
+  assert.equal(whyOf(withReceipt(PLAIN_SHEET, { gate: 818212, lift: -1, verdict: 'anti' })), 'an anti-combo has two or more parts fielding and a lift below zero');
+  assert.equal(whyOf(withReceipt(ANTI_SHEET, { gate: 770582, lift: 0 })), 'an anti-combo has two or more parts fielding and a lift below zero');
+  assert.equal(checkSheet(withReceipt(ANTI_SHEET, { gate: 770581, lift: -1 })).ok, true, 'one millionth carries an anti-combo');
+  for (const name of ['Triage Sentinel', 'Triage Sentinel' + X + 'Ward Watch' + X + 'Night Nurse', 'Triage Sentinel' + X + 'Triage Sentinel', 'Triage Sentinel x Ward Watch', 5, undefined, ''])
+    assert.equal(R({ name }), 'the name is the fielding parts\' titles, each once, joined by " \u00d7 "', String(name));
+
+  const F = (proof) => whyOf({ ...COMBO_SHEET, proof });
+  for (const proof of [5, null, { ...COMBO_SHEET.proof, proven: 'yes' }, { ...COMBO_SHEET.proof, keys: 'x' }, { proven: false, keys: Array(1000).fill(KEY[0]), finder: KEY[0] }]) assert.equal(F(proof), 'the proof is { proven, keys: [up to 999 public keys], finder }');
+  const many = Array.from({ length: 999 }, (_, n) => sha('many-' + n));
+  assert.equal(checkSheet({ ...COMBO_SHEET, proof: { proven: true, keys: many, finder: many[0] } }).s.proof.keys, 999, 'nine hundred and ninety-nine keys');
+  for (const keys of [['x'], [KEY[0], KEY[0]], [KEY[0].toUpperCase()], [5]]) assert.equal(F({ proven: true, keys, finder: keys[0] }), 'the proof keys are public keys, 64 lowercase hex each, each once');
+  for (const [keys, finder] of [[[KEY[0], KEY[1]], KEY[1]], [[], KEY[0]], [[KEY[0]], null], [[KEY[0]], undefined], [[], undefined]]) assert.equal(F({ proven: false, keys, finder }), 'the finder is the first key, or null before any');
+  assert.equal(F({ proven: true, keys: [], finder: null }), 'a proof proven by no key is not one');
+  assert.deepEqual(checkSheet({ ...COMBO_SHEET, proof: { proven: false, keys: [], finder: null } }).s.proof, { proven: false, keys: 0, finder: null }, 'a proof before any re-run');
+  assert.equal(F({ ...COMBO_SHEET.proof, verdict: 'anti' }), 'the proof is of another verdict');
+  for (const held of ['x', ['zz'], [5], Array(1000).fill(id('sa'))]) assert.equal(whyOf({ ...COMBO_SHEET, held }), 'held lists the card ids this device holds, up to 999');
+  assert.equal(checkSheet({ ...COMBO_SHEET, held: Array(999).fill(id('sa')) }).ok, true, 'nine hundred and ninety-nine held');
+  assert.equal(whyOf({ ...COMBO_SHEET, receipt: { get build() { throw new Error('x'); } } }), 'the sheet could not be read');
+});
+
+test('the build sheet: every number of its receipt on it, its parts in the order they field, the same sheet always the same bytes', () => {
+  for (const t of THEME_IDS) {
+    const h = createHash('sha256');
+    for (const s of SHEETS) { const px = ink(s, t); assert.equal(px.length, 400 * 210 * 3); assert.equal(same(px, ink(s, t)), true); h.update(px); }
+    PINS['sheet ' + t] = h.digest('hex');
+    assert.equal(new Set(SHEETS.map((s) => sha(ink(s, t)))).size, SHEETS.length, t + ': every sheet its own');
+  }
+  const base = ink(COMBO_SHEET), parts = COMBO_SHEET.receipt.parts, pf = COMBO_SHEET.proof;
+  for (const [label, s] of [
+    ['job title', { ...COMBO_SHEET, job: { ...JOB, title: 'Pharmacy' } }], ['no job title', { ...COMBO_SHEET, job: { ...JOB, title: '' } }], ['bar', { ...COMBO_SHEET, job: { ...JOB, bar: 620000 } }],
+    ['business', withReceipt({ ...COMBO_SHEET, job: { ...JOB, set: 'adult' } }, { data: 'adult:ground-1' })], ['build id', withReceipt(COMBO_SHEET, { build: sha('build-other') })], ['cases', withReceipt(COMBO_SHEET, { n: 241 })],
+    ['a title', withReceipt(COMBO_SHEET, { parts: [parts[0], { ...parts[1], title: 'Ward Watcher' }, parts[2]], name: 'Triage Sentinel' + X + 'Ward Watcher' })],
+    ['a benched title', withReceipt(COMBO_SHEET, { parts: [{ ...parts[0], title: 'Night Nurses' }, parts[1], parts[2]] })],
+    ['a card', { ...withReceipt(COMBO_SHEET, { parts: [parts[0], { ...parts[1], card: id('sz') }, parts[2]] }), held: [id('sa'), id('sc')] }],
+    ['an alone GATE', withReceipt(COMBO_SHEET, { parts: [parts[0], { ...parts[1], alone: 560600 }, parts[2]] })], ['a contribution', withReceipt(COMBO_SHEET, { parts: [parts[0], { ...parts[1], contribution: 9100 }, parts[2]] })],
+    ['gate and lift', withReceipt(COMBO_SHEET, { gate: 612500, lift: 41500 })], ['the verdict', { ...withReceipt(COMBO_SHEET, { verdict: 'plain' }), proof: { ...pf, verdict: 'plain' } }],
+    ['two keys', { ...COMBO_SHEET, proof: { ...pf, keys: KEY.slice(0, 2) } }], ['the finder', { ...COMBO_SHEET, proof: { ...pf, keys: [KEY[1], KEY[0], KEY[2]], finder: KEY[1] } }], ['not proven', { ...COMBO_SHEET, proof: { ...pf, proven: false } }],
+    ['no proof', { ...COMBO_SHEET, proof: undefined }], ['all held', { ...COMBO_SHEET, held: [id('sa'), id('sb'), id('sc')] }], ['no held list', { ...COMBO_SHEET, held: undefined }],
+  ]) assert.equal(same(base, ink(s)), false, label);
+  const fa = creatureFront(id('sa')), qa = solid(fa), fb = creatureFront(id('sb')), qb = solid(fb), fc = creatureFront(id('sc')), qc = solid(fc);
+  assert.equal(rgb(base, 20 + (qa % 9), 74 + Math.floor(qa / 9), 400), vox(fa, qa), 'the first to field heads the rows, a pixel a voxel');
+  assert.equal(rgb(base, 20 + (qb % 9), 89 + Math.floor(qb / 9), 400), vox(fb, qb), 'the second next');
+  assert.notEqual(rgb(base, 20 + (qc % 9), 104 + Math.floor(qc / 9), 400), vox(fc, qc), 'the benched one last, dimmed');
+  const f = identicon(KEY[0], 1);
+  assert.equal(rgb(base, 314, 185, 400), (f.px[44 * 3] << 16) | (f.px[44 * 3 + 1] << 8) | f.px[44 * 3 + 2], 'the finder\'s face');
+  assert.equal(rgb(base, 0, 0, 400), 0xffd23c, 'a combo framed in gold'); assert.equal(rgb(ink(ANTI_SHEET), 0, 0, 400), 0xc0283c, 'an anti-combo in red'); assert.notEqual(rgb(ink(PLAIN_SHEET), 0, 0, 400), 0xffd23c);
+  const panel = rgb(base, 293, 61, 400), bare = ink({ ...COMBO_SHEET, held: undefined });
+  assert.deepEqual(cset(region(bare, 265, 63, 289, 73)), [panel], 'no held list, no HELD column'); assert.notDeepEqual(cset(region(base, 265, 63, 289, 73)), [panel]);
+  assert.ok(same(ink(PLAIN_SHEET), ink({ ...PLAIN_SHEET, proof: { proven: false, keys: [], finder: null } })), 'a proof with no keys yet is no re-run yet');
+
+  // the edges: a lift of exactly 0, a part that adds exactly 0, a GATE exactly at the bar
+  const shape = (px, x0, y0, x1, y1) => region(px, x0, y0, x1, y1).map((c) => c !== panel);
+  const [l0, l1, lm] = [[818213, 0], [818214, 1], [818212, -1]].map(([gate, lift]) => ink(withReceipt(PLAIN_SHEET, { gate, lift })));
+  assert.deepEqual(shape(l0, 292, 72, 394, 92), shape(l1, 292, 72, 394, 92), 'a lift of 0 is written +0.0000'); assert.notDeepEqual(shape(l0, 292, 72, 394, 92), shape(lm, 292, 72, 394, 92), 'and one below it with a minus');
+  assert.notDeepEqual(cset(region(l0, 292, 72, 394, 92)), cset(region(lm, 292, 72, 394, 92)), 'a lift of 0 is not inked as a loss'); assert.notDeepEqual(cset(region(l0, 292, 72, 394, 92)), cset(region(l1, 292, 72, 394, 92)), 'nor as a gain');
+  const [c0, c1, cm] = [0, 1, -1].map((contribution) => ink(withReceipt(PLAIN_SHEET, { parts: [{ ...PLAIN_SHEET.receipt.parts[0], contribution }, PLAIN_SHEET.receipt.parts[1]] })));
+  assert.deepEqual(shape(c0, 220, 77, 265, 87), shape(c1, 220, 77, 265, 87), 'adding 0 is written +0.0000'); assert.notDeepEqual(shape(c0, 220, 77, 265, 87), shape(cm, 220, 77, 265, 87));
+  assert.notDeepEqual(cset(region(c0, 220, 77, 265, 87)), cset(region(cm, 220, 77, 265, 87)), 'adding 0 is not inked as a loss'); assert.notDeepEqual(cset(region(c0, 220, 77, 265, 87)), cset(region(c1, 220, 77, 265, 87)), 'nor as a gain');
+  const [b0, b1, bp] = [818213, 818212, 818214].map((bar) => region(ink({ ...PLAIN_SHEET, job: { ...PLAIN_SHEET.job, bar } }), 292, 116, 394, 126));
+  assert.deepEqual(b0, b1, 'a GATE exactly at the bar clears it'); assert.notDeepEqual(b0, bp, 'and one under it does not');
+
+  const big = ink(COMBO_SHEET, 'synthwave-v1', 1200, 630), up = new Uint8Array(1200 * 630 * 3);
+  for (let y = 0; y < 630; y++) for (let x = 0; x < 1200; x++) up.set(base.subarray(((Math.floor(y / 3)) * 400 + Math.floor(x / 3)) * 3, ((Math.floor(y / 3)) * 400 + Math.floor(x / 3)) * 3 + 3), (y * 1200 + x) * 3);
+  assert.ok(same(big, up), 'the share picture: three pixels a pixel');
+  const h = createHash('sha256');
+  for (const [w, hh] of [[100, 100], [2400, 100], [100, 2400], [333, 777]]) h.update(ink(FULL_SHEET, 'memphis-v1', w, hh));
+  PINS['sheet sizes'] = h.digest('hex');
+  for (const [w, hh] of [[99, 210], [400, 99], [2401, 210], [400, 2401], [400.5, 210], ['400', 210], [null, 210]]) refused(paintSheet(COMBO_SHEET, 'synthwave-v1', w, hh), /^width and height must be whole numbers from 100 to 2400$/);
+  for (const t of ['', 'synthwave', 'toString', null]) refused(paintSheet(COMBO_SHEET, t, 400, 210), /^unknown theme$/);
+  refused(paintSheet(withReceipt(COMBO_SHEET, { lift: 1 }), 'synthwave-v1', 400, 210), /^lift is the gate less the best$/);
+  const circular = {}; circular.self = circular;
+  for (const x of [null, undefined, 5n, Symbol('s'), circular, { ...COMBO_SHEET, receipt: circular }, { ...COMBO_SHEET, proof: circular }, new Proxy({}, { get() { throw new Error('x'); } })]) {
+    assert.doesNotThrow(() => paintSheet(x, 'synthwave-v1', 400, 210)); assert.equal(paintSheet(x, 'synthwave-v1', 400, 210).ok, false); assert.doesNotThrow(() => checkSheet(x));
+  }
+  for (const k of Object.keys(COMBO_SHEET.receipt)) for (const v of [null, undefined, 0, -1, 'x', [], {}, NaN, 1e9]) assert.doesNotThrow(() => paintSheet(withReceipt(COMBO_SHEET, { [k]: v }), 'synthwave-v1', 400, 210), k);
+  for (const s of SHEETS) assert.deepEqual(colours(ink(s, 'lcd-v1')).filter((c) => ![0x0f1210, 0x4a5048, 0x9aa095, 0xd8dccf].includes(c)), [], 'the pocket screen is four shades');
+});
+
+test('the pins: builds, the job board and the build sheets, frozen byte for byte', () => {
   const want = {
     'synthwave-v1': '4c3f86d5d914ea95db0e143c96db7b3dff76d193eb34733ec7427217caaf95ea',
     'blockcraft-v1': 'cac4ed0fe350a0ee0f2eb9341e928f56b313f1c218ed1df5112db7a1969acd59',
@@ -232,8 +372,14 @@ test('the pins: builds and the job board, frozen byte for byte', () => {
     'jobs lcd-v1': '639bee01b4a476ac87ad6a8dfb5c761313ffa7516c86699c1c90320197aa128e',
     'jobs memphis-v1': '43a837def57f822bc88d290b9df0f077e3e208ea9ff87428cc826f635c1f63d3',
     'jobs blueprint-v1': '9a9ac23561f953595414419ca37c0cc1d716d7292e12cb3d1825139b9fca46b0',
+    'sheet synthwave-v1': '435aa29f04120a03fc62d465a4a2f673e2fc43f629618a148a0cecf87e41f38b',
+    'sheet blockcraft-v1': 'd055e37f0b1007cf8dd6f398492b4966fe8b6e596857e311f4ccf5ab3bc6f1dd',
+    'sheet lcd-v1': '7b451f3828c6491d18dcf77012157ac284bd2f2122ab2d77db8b2f83b037b8c7',
+    'sheet memphis-v1': 'ab58fb3716e4557165ca4e1e3d231b13b90bc232c4d883e597aaf7075b9ccba7',
+    'sheet blueprint-v1': '52e1ddc7487e65efc9fd02d50c7f6c6abdd0e57ff819360de15d391762524dba',
+    'sheet sizes': '34d468f51dc61defae2dd398f1b18eb37b5a9584be6fd32458a743c0e800a3b8',
   };
-  assert.deepEqual(Object.keys(PINS).sort(), [...THEME_IDS, ...THEME_IDS.map((t) => 'jobs ' + t), 'sizes'].sort());
+  assert.deepEqual(Object.keys(PINS).sort(), [...THEME_IDS, ...THEME_IDS.map((t) => 'jobs ' + t), 'sizes', ...THEME_IDS.map((t) => 'sheet ' + t), 'sheet sizes'].sort());
   assert.deepEqual(PINS, want);
 });
 

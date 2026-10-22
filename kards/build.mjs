@@ -11,8 +11,12 @@
 // the painter only refuses a combo the numbers cannot carry. Every build has a sigil, a rune grown from its recipe (its kind, and
 // each part's role and id in order), and a combo has a name grown the same way from two fixed word tables (comboName), never
 // typed: the same recipe always makes the same sigil and the same name. The first key to prove a combo is credited on its card by
-// that key's face. A card the device does not hold is drawn as "?", never invented. paintJobs draws the job board: each job a note pinned up with its business's icon, its bar and how many
-// builds cleared it. Integer arithmetic only, deterministic, total: bad input is { ok: false, why }, never a throw.
+// that key's face. A card the device does not hold is drawn as "?", never invented. paintJobs draws the job board: each job a note
+// pinned up with its business's icon, its bar and how many builds cleared it. paintSheet draws a build sheet, a decklist wide
+// enough to share, read from the game's own records as they are (a measured build's receipt and its proof): each part's
+// Kardling, its own GATE and what it adds, the fielding parts first in the order of the build's name, the benched ones dimmed;
+// the sigil grown from the build's id; and the numbers, refused when they do not add up. Integer arithmetic only,
+// deterministic, total: bad input is { ok: false, why }, never a throw.
 import { RARITIES, RAR, PIXEL, THEMES, DATASETS, ICON_ROWS, creatureFront } from './kardart.mjs';
 import { GLYPHS, identicon } from './ui.mjs';
 
@@ -136,12 +140,8 @@ function mixer(s) {   // three 32-bit words from a text, every character folded 
   return [a, b, c];
 }
 const HUES = [0xff2bd6, 0x2be8ff, 0xffd23c, 0x7dff8a, 0xff7a3c, 0xa05ae6, 0x3c8cff, 0xff4a6a];
-/** A build's sigil: a 16 x 16 rune, the same 8-fold pattern in each eighth, grown from its recipe (kind, and each part's role and
- *  id in order). -> { ok: true, cells: Uint8Array(256) (0 none, 1 ink, 2 accent, 3 edge), colors: [ink, accent, edge] } | { ok: false, why } */
-export function buildSigil(x) {
-  const c = checkBuild(x);
-  if (!c.ok) return c;
-  const [a, b, h] = mixer(recipeOf(c.b.kind, c.b.parts));
+function sigilFrom(seed) {   // the 16 x 16 rune a text grows: the same 8-fold pattern in each eighth
+  const [a, b, h] = mixer(seed);
   const ink = HUES[a & 7], accent = HUES[((a & 7) + 1 + ((a >>> 3) % 7)) & 7], G = new Uint8Array(18 * 18), cells = new Uint8Array(256);
   for (const q of span(0, 64)) {   // one eighth of the rune, read from the words, then mirrored into all eight (on a grid with a blank border)
     const i = q % 8, j = div(q, 8), lo = Math.min(i, j), hi = Math.max(i, j), bit = lo * 8 + hi - div(lo * (lo + 1), 2);   // 0..35 over the triangle
@@ -152,7 +152,13 @@ export function buildSigil(x) {
     const g = (q % 16 + 1) + (div(q, 16) + 1) * 18;
     cells[q] = G[g] || ([G[g - 1], G[g + 1], G[g - 18], G[g + 18]].some(Boolean) ? 3 : 0);
   }
-  return { ok: true, cells, colors: [ink, accent, mul(ink, 90)] };
+  return { cells, colors: [ink, accent, mul(ink, 90)] };
+}
+/** A build's sigil: a 16 x 16 rune, the same 8-fold pattern in each eighth, grown from its recipe (kind, and each part's role and
+ *  id in order). -> { ok: true, cells: Uint8Array(256) (0 none, 1 ink, 2 accent, 3 edge), colors: [ink, accent, edge] } | { ok: false, why } */
+export function buildSigil(x) {
+  const c = checkBuild(x);
+  return c.ok ? { ok: true, ...sigilFrom(recipeOf(c.b.kind, c.b.parts)) } : c;
 }
 
 // how each theme dresses a build card: the field, the frame, the panel, the lettering (the pocket screen's shades come last)
@@ -319,4 +325,151 @@ export function paintJobs(board, themeId, w, h) {
     }));
     return { ok: true, px, scale: k };
   } catch (e) { return no('the board could not be painted'); }
+}
+
+// -- the build sheet: a measured build's receipt as a decklist, wide enough to share -----------------------------------------
+const SW = 400, SH = 210, VERDICTS = ['combo', 'anti', 'plain'], TIMES = ' \u00d7 ';
+const isKey = (s) => typeof s === 'string' && s.length === 64 && Array.from(s).every((ch) => HEX.includes(ch));
+const signed = (n) => (n < 0 ? '-' : '+') + fmt(Math.abs(n));
+
+/**
+ * Check a build sheet, read from the game's own records as they are. sheet: { job: { set, title?, bar } (as a build's),
+ * receipt: a measured build's receipt { build: its id (64 lowercase hex), data: its ground (named for the job's business, before
+ * any colon), parts: [{ card (16 lowercase hex), title (as a card's), joined (true when it fields), alone: its own GATE out of
+ * fold, contribution: what the build loses without it (both whole millionths when it fields, both null when it is benched) }]
+ * (2 to 8, each card once), fielded: how many field, gate, best: the highest alone among them, lift: gate less best, n: the
+ * held-out cases, verdict: 'combo' | 'anti' | 'plain' (the game's sealed rule), name: the fielding titles joined by " \u00d7 " },
+ * proof?: { proven, keys: [public keys, 64 lowercase hex, each once] (up to 999), finder: the first key, or null },
+ * held?: [the card ids this device holds] (up to 999) }. Fields of the records the sheet does not draw are left unread.
+ * -> { ok: true, s } | { ok: false, why }
+ */
+export function checkSheet(x) {
+  try {
+    if (!isObj(x)) return no('the sheet must be an object');
+    const J = jobOf(x.job);
+    if (!J.ok) return J;
+    const r = x.receipt;
+    if (!isObj(r)) return no('the receipt must be an object');
+    if (!isKey(r.build)) return no('the receipt build is the build id: 64 lowercase hex characters');
+    if (typeof r.data !== 'string' || r.data.split(':')[0] !== J.j.set) return no('the receipt is for another business than the job: its data must name ' + J.j.set);
+    if (!Array.isArray(r.parts) || r.parts.length < 2 || r.parts.length > 8) return no('a receipt has 2 to 8 parts');
+    const ps = [], seen = new Set();
+    for (const p of r.parts) {
+      if (!isObj(p) || !isId(p.card)) return no('every part is a card: 16 lowercase hex characters');
+      if (seen.has(p.card)) return no('the same card is in the build twice');
+      seen.add(p.card);
+      if (typeof p.title !== 'string' || p.title.length < 1 || p.title.length > 24 || !Array.from(p.title).every((ch) => TITLE.includes(ch))) return no('a part title is 1 to 24 characters from A-Z a-z 0-9 space & . - and the apostrophe');
+      if (typeof p.joined !== 'boolean') return no('a part joined is true or false');
+      if (p.joined ? !whole(p.alone, 1000000) || !Number.isInteger(p.contribution) || !whole(p.contribution + 1000000, 2000000) : p.alone !== null || p.contribution !== null) return no('a part that fields has its alone GATE and its contribution in whole millionths; a benched one has null for both');
+      ps.push({ card: p.card, title: p.title, joined: p.joined, alone: p.alone, contribution: p.contribution });
+    }
+    const fielded = ps.filter((p) => p.joined);
+    if (r.fielded !== fielded.length || !fielded.length) return no('fielded counts the parts that field, at least one');
+    if (!whole(r.gate, 1000000) || !whole(r.best, 1000000)) return no('the receipt gate and best are whole millionths from 0 to 1000000');
+    if (r.best !== Math.max(...fielded.map((p) => p.alone))) return no('best is the highest alone GATE among the parts that field');
+    if (r.lift !== r.gate - r.best) return no('lift is the gate less the best');
+    if (!whole(r.n, 999999) || r.n < 1) return no('n is how many held-out cases: a whole number from 1 to 999999');
+    if (!VERDICTS.includes(r.verdict)) return no('the verdict is combo, anti or plain');
+    if (r.verdict === 'combo' && !(fielded.length > 1 && r.lift > 0)) return no('a combo has two or more parts fielding and a lift above zero');
+    if (r.verdict === 'anti' && !(fielded.length > 1 && r.lift < 0)) return no('an anti-combo has two or more parts fielding and a lift below zero');
+    const words = typeof r.name === 'string' ? r.name.split(TIMES) : [], left = fielded.slice(), order = [];
+    for (const word of words) { const k = left.findIndex((p) => p.title === word); if (k < 0) break; order.push(left.splice(k, 1)[0]); }
+    if (left.length || order.length !== words.length) return no('the name is the fielding parts\' titles, each once, joined by " \u00d7 "');
+    let proof = null;
+    if (x.proof !== undefined) {
+      const f = x.proof;
+      if (!isObj(f) || typeof f.proven !== 'boolean' || !Array.isArray(f.keys) || f.keys.length > 999) return no('the proof is { proven, keys: [up to 999 public keys], finder }');
+      if (!f.keys.every(isKey) || new Set(f.keys).size !== f.keys.length) return no('the proof keys are public keys, 64 lowercase hex each, each once');
+      if (f.finder !== (f.keys.length ? f.keys[0] : null)) return no('the finder is the first key, or null before any');
+      if (f.proven && !f.keys.length) return no('a proof proven by no key is not one');
+      if (f.verdict !== undefined && f.verdict !== r.verdict) return no('the proof is of another verdict');
+      proof = { proven: f.proven, keys: f.keys.length, finder: f.finder };
+    }
+    let held = null;
+    if (x.held !== undefined) {
+      if (!Array.isArray(x.held) || x.held.length > 999 || !x.held.every(isId)) return no('held lists the card ids this device holds, up to 999');
+      held = new Set(x.held);
+    }
+    const rows = order.concat(ps.filter((p) => !p.joined)).map((p) => ({ ...p, held: held === null ? null : held.has(p.card) }));
+    return { ok: true, s: { job: J.j, build: r.build, rows, fielded: fielded.length, gate: r.gate, best: r.best, lift: r.lift, n: r.n, verdict: r.verdict, proof } };
+  } catch (e) { return no('the sheet could not be read'); }
+}
+
+/**
+ * Draw a build sheet: the sigil grown from the build's id, its verdict, its job and bar; each part a row (its Kardling, its
+ * title, its own GATE and what it adds; the fielding parts first, in the name's order, the benched ones dimmed, and a ? by a
+ * card this device does not hold); and its numbers: the lift, the GATE against the best part's, the bar, the held-out cases,
+ * the keys that re-ran it and the finder's face. sheet as checkSheet takes it; themeId; w, h whole numbers from 100 to 2400
+ * (a share picture: 1200 x 630). The sheet is 400 x 210 logical pixels, scaled to the nearest pixel.
+ * -> { ok: true, px } | { ok: false, why }. Never throws.
+ */
+export function paintSheet(sheet, themeId, w, h) {
+  try {
+    const c = checkSheet(sheet);
+    if (!c.ok) return c;
+    if (typeof themeId !== 'string' || !Object.prototype.hasOwnProperty.call(THEMES, themeId)) return no('unknown theme');
+    if (!whole(w, 2400) || !whole(h, 2400) || w < 100 || h < 100) return no('width and height must be whole numbers from 100 to 2400');
+    const S = c.s, L = LOOKS[themeId], cv = newCanvas(SW, SH), hue = S.verdict === 'combo' ? GOLD[0] : S.verdict === 'anti' ? 0xc0283c : L.frame;
+    for (const y of span(0, SH)) rect(cv, 0, y, SW, 1, mix(L.field[0], L.field[1], div(y * 256, SH)));
+    for (const i of span(0, 3)) { rect(cv, i, i, SW - 2 * i, 1, hue); rect(cv, i, SH - 1 - i, SW - 2 * i, 1, hue); rect(cv, i, i, 1, SH - 2 * i, hue); rect(cv, SW - 1 - i, i, 1, SH - 2 * i, hue); }
+
+    // the head: the sigil, the verdict, the job and its bar, and the job's business
+    const G = sigilFrom(S.build);
+    rect(cv, 8, 6, 52, 52, hue); rect(cv, 10, 8, 48, 48, L.panel); rect(cv, 64, 6, 330, 52, L.panel);
+    for (const q of span(0, 256)) if (G.cells[q]) rect(cv, 10 + (q % 16) * 3, 8 + div(q, 16) * 3, 3, 3, inked(L, G.colors[G.cells[q] - 1]));
+    letters(cv, 'BUILD SHEET', 68, 8, L.dim, L.shadow);
+    letters(cv, S.verdict === 'combo' ? 'COMBO' : S.verdict === 'anti' ? 'ANTI-COMBO' : 'PLAIN BUILD', 68, 20, S.verdict === 'combo' ? GOLD[0] : S.verdict === 'anti' ? L.bad : L.text, L.shadow, 2);
+    letters(cv, 'FOR ' + (S.job.title || S.job.set).toUpperCase() + ' \u00b7 BAR ' + fmt(S.job.bar), 68, 44, L.text, L.shadow);
+    ICON_ROWS[S.job.set].forEach((row, y) => Array.from(row).forEach((cell, x) => { if (cell === '#') rect(cv, 358 + x * 2, 10 + y * 2, 2, 2, L.dim); }));
+
+    // the parts, a row each: the order it fields in, its Kardling, its title, its own GATE, what the build loses without it
+    rect(cv, 6, 60, 283, 136, L.panel);
+    letters(cv, 'TITLE', 34, 63, L.dim, L.shadow); letters(cv, 'ALONE', 180, 63, L.dim, L.shadow); letters(cv, 'ADDS', 220, 63, L.dim, L.shadow);
+    if (S.rows[0].held !== null) letters(cv, 'HELD', 265, 63, L.dim, L.shadow);
+    S.rows.forEach((p, m) => {
+      const y = 74 + m * 15, ink = p.joined ? L.text : L.dim, fr = creatureFront(p.card);
+      letters(cv, p.joined ? String(m + 1) : '-', 10, y + 3, ink, L.shadow);
+      for (const q of span(0, 126)) if (fr.px[q * 4 + 3]) dot(cv, 20 + (q % 9), y + div(q, 9), p.joined ? inked(L, voxel(fr, q)) : mix(inked(L, voxel(fr, q)), L.panel, 150));
+      letters(cv, p.title, 34, y + 3, ink, L.shadow);
+      if (p.joined) {
+        letters(cv, fmt(p.alone), 180, y + 3, L.text, L.shadow);
+        letters(cv, signed(p.contribution), 220, y + 3, p.contribution > 0 ? L.good : p.contribution < 0 ? L.bad : L.text, L.shadow);
+      } else letters(cv, 'BENCHED', 180, y + 3, L.dim, L.shadow);
+      if (p.held !== null) centred(cv, p.held ? '\u2713' : '?', 276, y + 3, p.held ? L.good : L.bad, L.shadow);
+    });
+
+    // the numbers: what it adds over its best part, the bar, the cases it was measured on, and who re-ran it
+    rect(cv, 292, 60, 102, 136, L.panel);
+    centred(cv, 'LIFT', 343, 62, L.dim, L.shadow);
+    centred(cv, signed(S.lift), 343, 72, S.lift > 0 ? L.good : S.lift < 0 ? L.bad : L.text, L.shadow, 2);
+    centred(cv, 'GATE ' + fmt(S.gate), 343, 94, L.text, L.shadow);
+    centred(cv, 'BEST ' + fmt(S.best), 343, 105, L.dim, L.shadow);
+    const clears = S.gate >= S.job.bar;
+    centred(cv, clears ? '\u2713 CLEARS THE BAR' : '\u2717 UNDER THE BAR', 343, 116, clears ? L.good : L.bad, L.shadow);
+    centred(cv, 'HELD-OUT CASES', 343, 128, L.dim, L.shadow);
+    centred(cv, String(S.n), 343, 138, L.text, L.shadow);
+    const P = S.proof;
+    if (P === null || !P.keys) centred(cv, 'NOT YET RE-RUN', 343, 150, L.dim, L.shadow);
+    else {
+      centred(cv, P.proven ? 'PROVEN BY' : 'RE-RUN BY', 343, 150, L.dim, L.shadow);
+      centred(cv, P.keys + (P.keys === 1 ? ' KEY' : ' KEYS'), 343, 160, P.proven ? L.good : L.text, L.shadow);
+      centred(cv, P.proven ? 'FOUND BY' : 'FIRST KEY', 343, 172, L.dim, L.shadow);
+      const f = identicon(P.finder, 1);
+      for (const q of span(0, 100)) dot(cv, 310 + (q % 10), 181 + div(q, 10), inked(L, (f.px[q * 3] << 16) | (f.px[q * 3 + 1] << 8) | f.px[q * 3 + 2]));
+      letters(cv, P.finder.slice(0, 4) + '\u2026' + P.finder.slice(60), 323, 182, L.text, L.shadow);
+    }
+
+    // the foot: the build's id, to look it up and re-run it, and how much of it this device holds
+    rect(cv, 6, 197, 388, 10, L.panel);
+    letters(cv, 'BUILD ' + S.build.slice(0, 16), 8, 198, L.dim, L.shadow);
+    if (S.rows[0].held !== null) { const n = S.rows.filter((p) => p.held).length, s = 'YOU HOLD ' + n + ' OF ' + S.rows.length; letters(cv, s, 392 - width(s), 198, n === S.rows.length ? L.good : L.text, L.shadow); }
+
+    if (L.lcd) for (const y of span(0, SH)) for (const x of span(0, SW)) { const q = at(cv, x, y); dot(cv, x, y, L.lcd[(((q >> 16) & 255) * 77 + ((q >> 8) & 255) * 150 + (q & 255) * 29) >> 14]); }
+    const px = new Uint8Array(w * h * 3), cols = span(0, w).map((x) => div(x * SW, w));
+    span(0, h).forEach((y) => {
+      const row = (div(y * SH, h) + PAD) * cv.cw + PAD;
+      cols.forEach((cx, x) => { const q = cv.d[row + cx], o = (y * w + x) * 3; px[o] = q >> 16; px[o + 1] = (q >> 8) & 255; px[o + 2] = q & 255; });
+    });
+    return { ok: true, px };
+  } catch (e) { return no('the sheet could not be painted'); }
 }

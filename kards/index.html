@@ -379,6 +379,14 @@ paintLineage({ id, rarity, parents: [{ id, rarity, parents? }, { id }] }, 'synth
       <div class="trace full" id="build-stats" aria-live="polite"></div>
     </form>
   </div>
+  <h3>The build sheet</h3>
+  <p>The build sheet is a whole build on one wide picture, the size a link preview takes (1200 &times; 630), made to share: press <b>Download the sheet</b> below it to save it as a PNG. It reads the game's own records as they are: the <b>receipt</b> the game writes when it measures a build, and the <b>proof</b> its re-runs make (the <code>paintSheet</code> line in the code above takes both, unchanged).</p>
+  <p>Each part is a row: its Kardling (the pixel creature on its card), its title, its GATE <b>alone</b>, and what it <b>adds</b>. <b>GATE</b> is a score on held-out cases, the cases none of the parts learned from (an AUC: 0.5 is chance, 1.0 perfect); a part's GATE alone is its own score on the same cases the build was scored on, and what it adds is how far the build's GATE drops without it. The parts that <b>field</b> come first, numbered in the order of the build's name (the game names a build by its fielding parts' titles, joined by &times;). A part the build does not need is <b>benched</b>: its row is dimmed, with BENCHED in place of its numbers. A <b>?</b> in the HELD column is a part this device does not hold, so you can see what you are missing. On the right: the lift over the best part, the bar, how many held-out cases it was scored on, how many keys re-ran it, and the face of the first key that did. A <b>key</b> is a player's signing key (Ed25519, made on their own device); a re-run is another player measuring the same build again and signing what they got, and the game counts it proven once two different keys got exactly the same receipt.</p>
+  <p>The sheet draws the game's own verdict. <b>COMBO</b>: the build beats its best part by at least the game's <b>sealed margin</b>, a rule fixed before anything is measured (0.005 GATE today). <b>ANTI-COMBO</b>: it does worse than its best part by at least that margin. <b>PLAIN BUILD</b>: anything in between. So a small dip the card above marks as an anti-combo can be plain here. The sheet refuses a receipt whose numbers do not add up.</p>
+  <canvas class="card estate" id="sheet-canvas" width="1200" height="630" role="img" aria-label="A build sheet"></canvas>
+  <p class="msg" id="sheet-msg" role="status" aria-live="polite"></p>
+  <div class="actions"><button type="button" class="act alt" id="sd-dl">Download the sheet (1200 &times; 630)</button><span class="msg" id="sd-act" role="status" aria-live="polite"></span></div>
+  <p class="hint">In this demo the receipt is dealt in your browser from the recipe above: what each part adds, the build's id, and its re-runs, signed by keys made from your key. Its verdict uses the game's margin. In Kardlings the game measures the build, and every number re-runs.</p>
   <h3>The job board</h3>
   <canvas class="card estate" id="jobs-canvas" width="720" height="480" role="img" aria-label="The job board"></canvas>
   <p class="hint">The real drop's jobs, raids re-skinned: each note is a job, with its business's icon, its name, its bar, and how many builds cleared it (a green check when one has). In this demo the cleared counts are an example.</p>
@@ -389,7 +397,9 @@ paintBuild({ job: { set: 'hospital', title: 'The Waiting Room', bar: 600000 }, k
 // kinds and roles: kit (lead, node, tool, voice), party (member), fusion (parent), training (data, teacher; method, student: { id, rarity?, size })
 buildLift(build)   // { ok, lift (GATE minus the best part's), best, gate, cleared }: a combo only when lift > 0
 comboName(build)   // { ok, name }: two words grown from the recipe, never typed (COMBO_WORDS)
-paintJobs({ jobs: [{ set, title?, bar, cleared, builds }] }, 'synthwave-v1', 720, 480)   // { ok, px, scale }: the job board</code></pre>
+paintJobs({ jobs: [{ set, title?, bar, cleared, builds }] }, 'synthwave-v1', 720, 480)   // { ok, px, scale }: the job board
+paintSheet({ job, receipt, proof?, held? }, 'synthwave-v1', 1200, 630)   // { ok, px }: the build sheet, from the game's receipt and proof as they are
+// receipt: { build, data, parts: [{ card, title, joined, alone, contribution }], fielded, gate, best, lift, n, verdict, name }; proof: { proven, keys, finder }</code></pre>
   <p><b>What it refuses.</b> It refuses, with a plain reason:</p>
   <ul>
     <li>a kit without exactly one lead, a fusion without two parents, a party of fewer than two;</li>
@@ -655,7 +665,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 Kardlings</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct Kardlings; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">174</b> in builds and combos, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">273</b> in builds, combos and the build sheet, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -702,7 +712,7 @@ import { paintRaid, bossHealth, bossSprite, BOSSES, paintChapter } from './raid.
 import { paintSlot, kitBadge, worthText } from './gear.mjs';
 import { paintBack, checkBack } from './back.mjs';
 import { paintFusion, fusionVerdict, paintLineage, MAX_TRIES } from './fusion.mjs';
-import { paintBuild, buildLift, checkBuild, paintJobs, ROLES } from './build.mjs';
+import { paintBuild, buildLift, checkBuild, paintJobs, paintSheet, ROLES } from './build.mjs';
 
 const $ =(s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
@@ -1092,8 +1102,35 @@ function dealRecipe() {
   const parts = roles.map((role, n) => ({ ...held(cards[n]), role, ...(role === 'tool' || role === 'data' ? {} : { gate: gate() }) }));
   const best = Math.max(...parts.filter((p) => p.gate !== undefined).map((p) => p.gate));
   recipe = { job, kind, parts, gate: Math.max(0, Math.min(1000000, best - 12000 + byte() * 140)), cases: 240, reruns: byte() % 12, ...(kind === 'training' ? { method: pick(['distil', 'merge', 'tune']), student: { id: cards[5].id, rarity: cards[5].rarity, size: pick(['tiny', 'small', 'base']) } } : {}) };
-  renderBuild();
+  sheet = dealSheet(recipe);
+  renderBuild(); renderSheet();
 }
+// the build sheet: the recipe above as the game's receipt would read, its verdict dealt with the game's margin (0.005 GATE today)
+let sheet = null;
+const SHEET_MARGIN = 5000, byId = (a, b) => (a.card < b.card ? -1 : a.card > b.card ? 1 : 0);
+function dealSheet(r) {
+  const parts = r.parts.map((p) => ({ card: p.id, title: SAMPLES.find((s) => s.id === p.id).title, joined: p.gate !== undefined, alone: p.gate === undefined ? null : p.gate, contribution: p.gate === undefined ? null : (byte() - 96) * 60 })).sort(byId);
+  const fielded = parts.filter((p) => p.joined), best = Math.max(...fielded.map((p) => p.alone)), lift = r.gate - best;
+  const verdict = fielded.length > 1 && lift >= SHEET_MARGIN ? 'combo' : fielded.length > 1 && lift <= -SHEET_MARGIN ? 'anti' : 'plain';
+  const name = fielded.slice().sort((a, b) => b.alone - a.alone || byId(a, b)).map((p) => p.title).join(' × ');
+  const build = Array.from({ length: 32 }, () => (byte() + 256).toString(16).slice(1)).join('');
+  return { job: r.job, receipt: { build, data: r.job.set + ':demo', parts, fielded: fielded.length, gate: r.gate, best, lift, n: r.cases, verdict, name }, reruns: r.reruns, held: r.parts.filter((p) => p.rarity !== undefined).map((p) => p.id) };
+}
+function currentSheet() {   // re-runs signed by keys made from yours: your key first, so you are the finder
+  const k = $('#key-in').value.trim(), base = /^[0-9a-f]{64}$/.test(k) ? k : 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07';
+  const keys = [...new Set(Array.from({ length: sheet.reruns }, (_, n) => base.slice(n) + base.slice(0, n)))];
+  return { job: sheet.job, receipt: sheet.receipt, proof: { proven: keys.length >= 2, keys, finder: keys.length ? keys[0] : null }, held: sheet.held };
+}
+function renderSheet() {
+  const s = currentSheet(), t = $('#bd-theme').value, r = paintSheet(s, t, 1200, 630), m = $('#sheet-msg'), R = s.receipt, n = s.proof.keys.length;
+  if (!r.ok) { m.className = 'msg bad'; m.textContent = 'Not drawn: ' + r.why + '.'; return; }
+  putRGB($('#sheet-canvas'), r.px, 1200, 630);
+  m.className = 'msg ok';
+  m.textContent = 'The sheet for ' + (s.job.title || s.job.set) + ': ' + R.fielded + ' of ' + R.parts.length + ' parts field, lift ' + (R.lift < 0 ? '-' : '+') + g4(Math.abs(R.lift)) + ', ' + (R.verdict === 'combo' ? 'a combo' : R.verdict === 'anti' ? 'an anti-combo' : 'a plain build') + ', ' + (n ? 're-run by ' + n + (n === 1 ? ' key' : ' keys') + (s.proof.proven ? ', proven' : ', not yet proven') : 'not yet re-run') + '.';
+  $('#sheet-canvas').setAttribute('aria-label', 'A build sheet in ' + THEMES[t].name + '. ' + m.textContent);
+}
+$('#sd-dl').addEventListener('click', () => { const r = paintSheet(currentSheet(), $('#bd-theme').value, 1200, 630); if (!r.ok) return saidIn('#sd-act')('Fix the sheet first.'); savePNG(r.px, 1200, 630, 'build-sheet-' + sheet.receipt.build.slice(0, 8) + '.png'); saidIn('#sd-act')('Downloaded.'); });
+$('#key-in').addEventListener('input', () => { if (sheet) renderSheet(); });
 function currentBuild() { return { ...recipe, ...($('#bd-combo').checked ? { combo: true, finder: $('#key-in').value.trim() } : {}), ...($('#bd-reveal').checked ? { reveal: true } : {}) }; }
 function renderBuild() {
   const b = currentBuild(), t = $('#bd-theme').value, c = checkBuild(b), m = $('#build-msg');
@@ -1107,6 +1144,7 @@ function renderBuild() {
 $('#bd-deal').addEventListener('click', () => { $('#bd-combo').checked = false; $('#bd-reveal').checked = false; dealRecipe(); });
 $('#bd-kind').addEventListener('input', () => { $('#bd-combo').checked = false; $('#bd-reveal').checked = false; dealRecipe(); });
 for (const id of ['#bd-combo', '#bd-reveal', '#bd-theme']) $(id).addEventListener('input', () => { renderBuild(); renderJobs(); });
+$('#bd-theme').addEventListener('input', renderSheet);
 $('#bd-dl').addEventListener('click', () => { const b = currentBuild(), r = paintBuild(b, $('#bd-theme').value, 384, 560); if (!r.ok) return saidIn('#bd-act')('Fix the build first.'); savePNG(r.px, 384, 560, 'build-' + b.kind + '-' + b.parts[0].id.slice(0, 6) + '.png'); saidIn('#bd-act')('Downloaded.'); });
 const JOBS = { jobs: [{ set: 'shop', bar: 931634, cleared: true, builds: 3 }, { set: 'telco', bar: 828213, cleared: false, builds: 0 }, { set: 'adult', title: 'Employer', bar: 600000, cleared: true, builds: 1 }, { set: 'bank', title: 'Credit Gate', bar: 600000, cleared: false, builds: 0 }, { set: 'credit', title: 'Billing', bar: 600000, cleared: false, builds: 0 }, { set: 'hospital', title: 'The Waiting Room', bar: 600000, cleared: true, builds: 12 }, { set: 'hospital', title: 'Pharmacy', bar: 600000, cleared: false, builds: 0 }] };
 function renderJobs() { const t = $('#bd-theme').value, r = paintJobs(JOBS, t, 720, 480); if (r.ok) { putRGB($('#jobs-canvas'), r.px, 720, 480); $('#jobs-canvas').setAttribute('aria-label', 'The job board in ' + THEMES[t].name + ': ' + JOBS.jobs.length + ' jobs, ' + JOBS.jobs.filter((j) => j.cleared).length + ' cleared.'); } }
