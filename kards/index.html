@@ -139,7 +139,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#builds">Builds</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -360,6 +360,48 @@ paintLineage({ id, rarity, parents: [{ id, rarity, parents? }, { id }] }, 'synth
   <p>Nothing throws, and every picture is pinned by sha256 in the tests.</p>
 </section>
 
+<section id="builds" aria-labelledby="builds-h">
+  <h2 id="builds-h">Builds and combos: proven decklists for real jobs</h2>
+  <p>A <b>job</b> is a business's task with a bar to clear (the raid bosses are the first jobs). A <b>build</b> is a recipe of cards for a job: a <b>kit</b> (a lead card with its helper nodes and tools), a <b>party</b> (cards clearing a world boss together), a <b>fusion</b> (two parents), or a <b>training</b> run that makes a new, smaller <b>student</b> card from a teacher and data. A <b>case</b> is one example from the job's data (one patient's record, one loan file) that a build is scored on; <b>held out</b> means none of its parts learned from it. Its <b>GATE</b> is its score on those held-out cases (an AUC: 0.5 is chance, 1.0 perfect), the same score every card has. Once measured, a build has its own GATE, and the published rule <code>buildLift</code> says what it adds: its GATE minus the best GATE among its parts. Only a build with a lift above zero can be drawn as a <b>combo</b>; one below zero is drawn as an <b>ANTI-COMBO</b>, because parts that make each other worse are a lesson too. A <b>re-run</b> is another player measuring the same recipe again on their own device, signed with their own key; the card counts the keys. Which builds are combos (a margin, and re-runs by different players' keys) is the game's own sealed rule; the painter only refuses a combo the numbers cannot carry. A combo's <b>name is never typed</b>: it is grown from its recipe just as its sigil is, an adjective and a noun each picked from a fixed list of 32 (IRON, SILVER, GOLDEN&hellip; and WARDEN, ORACLE, ENGINE&hellip;), so there are 1,024 names and no free text to police, and the first key to prove it is credited on the card by that key's face.</p>
+  <p class="hint">Try it: pick a kind and press <b>Deal a recipe</b>: the page picks a job, cards for each role, and their scores, and draws the build card. Each build has a <b>sigil</b>, a rune grown from its recipe (its kind, and each part's role and card, in order), so the same recipe always makes the same sigil and a famous combo is known on sight. Tick <b>The game calls it a combo</b> to see it named: it is taken only when the lift is above zero (tick it on an anti-combo to watch the painter refuse), and the name comes from the recipe. A new deal starts unticked, because a new recipe has its own lift. <b>Reveal</b> shows a combo's first appearance, COMBO FOUND. A part shown as <b>?</b> is a card this device does not hold. In this demo the scores are dealt in your browser; in Kardlings they are measured, and every number re-runs.</p>
+  <div class="work">
+    <div class="preview">
+      <canvas class="card" id="build-canvas" width="384" height="560" role="img" aria-label="A build card"></canvas>
+      <p class="msg" id="build-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="build-form" autocomplete="off" novalidate>
+      <div><label for="bd-kind">Kind of build</label><select id="bd-kind"><option value="kit">Kit: a lead and its nodes and tools</option><option value="party">Party: cards together</option><option value="fusion">Fusion: two parents</option><option value="training">Training: a student from a teacher</option></select></div>
+      <div><label for="bd-theme">Theme</label><select id="bd-theme"></select></div>
+      <div class="actions"><button type="button" class="act" id="bd-deal">Deal a recipe</button></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="bd-combo" type="checkbox" style="width:auto;min-height:0"><label for="bd-combo" style="margin:0">The game calls it a combo (taken only when the lift is above zero; the name grows from the recipe)</label></div>
+      <div class="full" style="display:flex;align-items:center;gap:8px"><input id="bd-reveal" type="checkbox" style="width:auto;min-height:0"><label for="bd-reveal" style="margin:0">Reveal: COMBO FOUND (a combo's first appearance)</label></div>
+      <div class="actions"><button type="button" class="act alt" id="bd-dl">Download PNG (384 &times; 560)</button><span class="msg" id="bd-act" role="status" aria-live="polite"></span></div>
+      <div class="trace full" id="build-stats" aria-live="polite"></div>
+    </form>
+  </div>
+  <h3>The job board</h3>
+  <canvas class="card estate" id="jobs-canvas" width="720" height="480" role="img" aria-label="The job board"></canvas>
+  <p class="hint">The real drop's jobs, raids re-skinned: each note is a job, with its business's icon, its name, its bar, and how many builds cleared it (a green check when one has). In this demo the cleared counts are an example.</p>
+<pre><code>import { paintBuild, buildLift, buildSigil, comboName, checkBuild, paintJobs, KINDS, ROLES } from './kards/build.mjs';
+paintBuild({ job: { set: 'hospital', title: 'The Waiting Room', bar: 600000 }, kind: 'kit',
+             parts: [{ id, rarity, role: 'lead', gate: 571000 }, { id, rarity, role: 'node', gate: 560500 }, { id, role: 'tool' }],
+             gate: 612400, cases: 240, reruns: 7, combo: true, finder: publicKeyHex, reveal?: true }, 'synthwave-v1', 384, 560)   // { ok, px } | { ok: false, why }
+// kinds and roles: kit (lead, node, tool, voice), party (member), fusion (parent), training (data, teacher; method, student: { id, rarity?, size })
+buildLift(build)   // { ok, lift (GATE minus the best part's), best, gate, cleared }: a combo only when lift > 0
+comboName(build)   // { ok, name }: two words grown from the recipe, never typed (COMBO_WORDS)
+paintJobs({ jobs: [{ set, title?, bar, cleared, builds }] }, 'synthwave-v1', 720, 480)   // { ok, px, scale }: the job board</code></pre>
+  <p><b>What it refuses.</b> It refuses, with a plain reason:</p>
+  <ul>
+    <li>a kit without exactly one lead, a fusion without two parents, a party of fewer than two;</li>
+    <li>a card in a build twice, or in a role its kind does not take;</li>
+    <li>a combo whose lift is not above zero, or one not yet measured;</li>
+    <li>a reveal of a build that is not a combo, or a finder credited on one;</li>
+    <li>a training run without its method and student, or a student that is one of its sources;</li>
+    <li>a job counted as cleared with no build that cleared it.</li>
+  </ul>
+  <p>Nothing throws, and every picture is pinned by sha256 in the tests.</p>
+</section>
+
 <section id="raids" aria-labelledby="raids-h">
   <h2 id="raids-h">Raids: the departments no card has cleared</h2>
   <p>Each boss is a department where no card has yet reached a GATE of 0.6 on cases it never saw: five in the hospital (admissions, clinical, pharmacy, history, discharge), bank credit, adult employer and credit billing. A boss's health is its distance to the bar, the published rule <code>bossHealth(best) = max(0, 600000 - best)</code> in millionths of GATE: the bar is full at chance (0.5) and empty at 0.6. When a card clears it the boss breaks apart, and the loot is that first card of its department. Click a boss below, then move the best score. <b>GATE</b> is a card's score on cases it never saw while it learned (an AUC: 0.5 is chance, 1.0 perfect); 0.6 is the bar a department must clear. Reaching the bar is clearing it: once a card reaches it, the boss falls for good and that card is the department's loot: the loot's <code>title</code> is that card's name.</p>
@@ -505,6 +547,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>gear.mjs</code></td><td>the kit: <code>paintSlot</code> for a node slot (a card and its worth on GATE, or not joined) or a tool slot (an app item in its tier), empty or filled; <code>kitBadge</code>, the overlay that says how many node slots are fielded; <code>worthText</code>.</td></tr>
       <tr><td><code>back.mjs</code></td><td>the card back: <code>paintBack</code> and <code>checkBack</code>; each theme's field and frame, the Kardlings emblem (a K), the maker's identicon in a medallion with the key written short, the edition number; the field's scatter thrown with the maker's dice.</td></tr>
       <tr><td><code>fusion.mjs</code></td><td>the Fusion Lab: <code>paintFusion</code>, <code>checkFusion</code> and the published verdict <code>fusionVerdict</code> (kept only when a try beats both parents); the parents on their pedestals, the chamber, every try against the line to beat; <code>paintLineage</code>, a fused card's family tree in blocks.</td></tr>
+      <tr><td><code>build.mjs</code></td><td>builds and combos: <code>paintBuild</code> (a build card: its sigil, its Kardlings on one platform, its lift, the bar, its re-runs, COMBO or ANTI-COMBO), the published rule <code>buildLift</code>, <code>buildSigil</code> (a rune grown from the recipe), <code>paintJobs</code> (the job board).</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
     </tbody>
   </table></div>
@@ -612,7 +655,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 Kardlings</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct Kardlings; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">174</b> in builds and combos, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -659,6 +702,7 @@ import { paintRaid, bossHealth, bossSprite, BOSSES, paintChapter } from './raid.
 import { paintSlot, kitBadge, worthText } from './gear.mjs';
 import { paintBack, checkBack } from './back.mjs';
 import { paintFusion, fusionVerdict, paintLineage, MAX_TRIES } from './fusion.mjs';
+import { paintBuild, buildLift, checkBuild, paintJobs, ROLES } from './build.mjs';
 
 const $ =(s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
@@ -1037,6 +1081,36 @@ $('#fu-end').addEventListener('input', newFusion);
 $('#fu-theme').addEventListener('input', renderFusion);
 $('#fu-dl').addEventListener('click', () => { savePNG(paintFusion(fusion, $('#fu-theme').value, 1200, 630).px, 1200, 630, 'fusion-' + fusion.a.id.slice(0, 6) + '-' + fusion.b.id.slice(0, 6) + '.png'); saidIn('#fu-act')('Downloaded.'); });
 
+// ── builds and combos: deal a recipe, try a name, reveal it; the job board ───────────────────────────────────────────
+for (const id of THEME_IDS) $('#bd-theme').add(new Option(THEMES[id].name, id));
+let recipe = null;
+const BOSS_JOBS = [{ set: 'hospital', title: 'The Waiting Room', bar: 600000 }, { set: 'bank', title: 'Credit Gate', bar: 600000 }, { set: 'adult', title: 'Employer', bar: 600000 }, { set: 'telco', title: 'Telco world boss', bar: 828213 }];
+function dealRecipe() {
+  const kind = $('#bd-kind').value, cards = [...SAMPLES].sort(() => byte() - 128), job = pick(BOSS_JOBS), base = job.bar - 40000 + byte() * 120;
+  const gate = () => Math.min(1000000, base + byte() * 60), held = (s) => (byte() % 7 ? { id: s.id, rarity: s.rarity } : { id: s.id });
+  const roles = kind === 'kit' ? ['lead', 'node', 'node', 'tool'].slice(0, 2 + (byte() % 3)) : kind === 'party' ? Array(2 + (byte() % 4)).fill('member') : kind === 'fusion' ? ['parent', 'parent'] : ['teacher', 'data'];
+  const parts = roles.map((role, n) => ({ ...held(cards[n]), role, ...(role === 'tool' || role === 'data' ? {} : { gate: gate() }) }));
+  const best = Math.max(...parts.filter((p) => p.gate !== undefined).map((p) => p.gate));
+  recipe = { job, kind, parts, gate: Math.max(0, Math.min(1000000, best - 12000 + byte() * 140)), cases: 240, reruns: byte() % 12, ...(kind === 'training' ? { method: pick(['distil', 'merge', 'tune']), student: { id: cards[5].id, rarity: cards[5].rarity, size: pick(['tiny', 'small', 'base']) } } : {}) };
+  renderBuild();
+}
+function currentBuild() { return { ...recipe, ...($('#bd-combo').checked ? { combo: true, finder: $('#key-in').value.trim() } : {}), ...($('#bd-reveal').checked ? { reveal: true } : {}) }; }
+function renderBuild() {
+  const b = currentBuild(), t = $('#bd-theme').value, c = checkBuild(b), m = $('#build-msg');
+  if (!c.ok) { m.className = 'msg bad'; m.textContent = 'Not drawn: ' + c.why + '.'; return; }
+  putRGB($('#build-canvas'), paintBuild(b, t, 384, 560).px, 384, 560);
+  const L = buildLift(b), held = c.b.parts.filter((p) => p.ri !== null).length;
+  m.className = 'msg ok'; m.textContent = 'A ' + b.kind + ' build for ' + (b.job.title || b.job.set) + ': ' + c.b.parts.length + ' parts (' + held + ' held here), ' + (L.lift === null ? 'lift not known' : 'lift ' + (L.lift < 0 ? '-' : '+') + g4(Math.abs(L.lift))) + (c.b.combo ? ', the combo ' + c.b.name + ', first proved by the key ' + c.b.finder.slice(0, 4) + '…' + c.b.finder.slice(60) : L.lift !== null && L.lift < 0 ? ', an anti-combo' : '') + '.';
+  $('#build-canvas').setAttribute('aria-label', 'A build card in ' + THEMES[t].name + '. ' + m.textContent);
+  stats($('#build-stats'), [['THE BUILD\'S GATE', L.gate === null ? 'not measured' : g4(L.gate)], ['ITS BEST PART', L.best === null ? 'none measured' : g4(L.best)], ['LIFT', L.lift === null ? 'not known' : (L.lift < 0 ? '-' : '+') + g4(Math.abs(L.lift))], ['THE BAR', g4(b.job.bar) + (L.cleared === null ? '' : L.cleared ? ', cleared' : ', short')]]);
+}
+$('#bd-deal').addEventListener('click', () => { $('#bd-combo').checked = false; $('#bd-reveal').checked = false; dealRecipe(); });
+$('#bd-kind').addEventListener('input', () => { $('#bd-combo').checked = false; $('#bd-reveal').checked = false; dealRecipe(); });
+for (const id of ['#bd-combo', '#bd-reveal', '#bd-theme']) $(id).addEventListener('input', () => { renderBuild(); renderJobs(); });
+$('#bd-dl').addEventListener('click', () => { const b = currentBuild(), r = paintBuild(b, $('#bd-theme').value, 384, 560); if (!r.ok) return saidIn('#bd-act')('Fix the build first.'); savePNG(r.px, 384, 560, 'build-' + b.kind + '-' + b.parts[0].id.slice(0, 6) + '.png'); saidIn('#bd-act')('Downloaded.'); });
+const JOBS = { jobs: [{ set: 'shop', bar: 931634, cleared: true, builds: 3 }, { set: 'telco', bar: 828213, cleared: false, builds: 0 }, { set: 'adult', title: 'Employer', bar: 600000, cleared: true, builds: 1 }, { set: 'bank', title: 'Credit Gate', bar: 600000, cleared: false, builds: 0 }, { set: 'credit', title: 'Billing', bar: 600000, cleared: false, builds: 0 }, { set: 'hospital', title: 'The Waiting Room', bar: 600000, cleared: true, builds: 12 }, { set: 'hospital', title: 'Pharmacy', bar: 600000, cleared: false, builds: 0 }] };
+function renderJobs() { const t = $('#bd-theme').value, r = paintJobs(JOBS, t, 720, 480); if (r.ok) { putRGB($('#jobs-canvas'), r.px, 720, 480); $('#jobs-canvas').setAttribute('aria-label', 'The job board in ' + THEMES[t].name + ': ' + JOBS.jobs.length + ' jobs, ' + JOBS.jobs.filter((j) => j.cleared).length + ' cleared.'); } }
+
 // ── raids: the eight bosses, and one raid at a time ───────────────────────────────────────────────────────────────────
 for (const id of THEME_IDS) $('#rd-theme').add(new Option(THEMES[id].name, id));
 $('#rd-theme').value = 'synthwave-v1';
@@ -1151,6 +1225,7 @@ function heroes() {
   renderEstate();
   newDuel(); duel.decided = 30; renderDuel();
   newFusion(); fusion.decided = fusion.tried; renderFusion();
+  dealRecipe(); renderJobs();
   renderRaid();
   campAt = 5; renderChapter();
   $('#key-in').value = 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07'; renderKey();

@@ -40,7 +40,7 @@ Also exported: `checkFacts(facts)` (the same validation on its own: `{ ok, f } |
 
 ```
 node --test kards/*.test.mjs        # determinism pins, refusals, every fact shows, 1,000 ids -> 1,000 Kardlings, static source check
-node witness-kards.mjs              # the mutation witness over kardart, kardpng, ui, ttf, estate, arena, raid, gear, back, fusion and costcase: every mutant killed, none baselined
+node witness-kards.mjs              # the mutation witness over kardart, kardpng, ui, ttf, estate, arena, raid, gear, back, fusion, build and costcase: every mutant killed, none baselined
 node tools/kards-font.mjs           # write the UI font (kards/fonts/); --check for CI
 node tools/kards-gallery.mjs        # write kards/gallery/ (contact sheets, hero cards); --all for every card; --check for CI
 node tools/kards-pins.mjs <themeId> # print the pins for a NEW theme
@@ -70,6 +70,14 @@ The game UI is built from the same blocks as the cards, from one source: `kards/
 ![every theme's back, signed by a maker and unsigned](kards/gallery/backs.png)
 
 `kards/back.mjs`: `paintBack(back, themeId, w, h) -> { ok, px RGB } | { ok: false, why }` with `back = { maker?: the maker's Ed25519 public key (64 lowercase hex), serial?: the edition number (0-999999) }`, and `checkBack(back)`. The back is the card's own 192 x 280 logical pixels, scaled to the nearest pixel for any size from 64 to 1024 (`384 x 560` is a Kardlings card at 2 x): the theme's field and frame, the Kardlings emblem (a K), the maker's identicon (`identicon` from `ui.mjs`, at 5 x) in a medallion with the key written short beneath it, and the edition number. The field's scatter (stars, ore, clouds, confetti) is thrown with the maker's dice, so all of one maker's backs match and another maker's differ; the edition changes only its number. No maker draws UNSIGNED. The pocket screen stays four shades and the blueprint keeps its own inks (the identicon is inked in them). Integer-only, never throws, witnessed with nothing baselined.
+
+### Builds and combos: proven decklists for real jobs
+
+![builds: a combo found, a party, a fusion anti-combo, a training run, a kit not yet measured](kards/gallery/builds.png)
+
+![the job board](kards/gallery/jobs.png)
+
+`kards/build.mjs`: `paintBuild(build, themeId, w, h) -> { ok, px RGB }` (the card's own 192 x 280, scaled; 384 x 560 at 2 x) with `build = { job: { set, title?, bar }, kind: 'kit' | 'party' | 'fusion' | 'training', parts: [{ id, rarity?, role, gate? }] (1 to 6; roles by kind: `ROLES`), gate?, cases?, reruns?, combo?, finder?, method?, student?, reveal? }`; `checkBuild`; the published rule `buildLift(build) -> { lift, best, gate, cleared }` (lift is the build's GATE minus the best GATE among its parts); `buildSigil(build)`, a 16 x 16 eight-fold rune grown from the recipe (its kind, and each part's role and id in order), the same recipe always the same sigil; and `paintJobs({ jobs: [{ set, title?, bar, cleared, builds }] }, themeId, w, h)`, the job board. A build is drawn as a `combo` only when its lift is above zero; one below zero is drawn as an ANTI-COMBO. Which builds are combos is the game's sealed rule (a margin, re-runs from distinct keys); the painter refuses only a combo the numbers cannot carry. A combo's name is never typed: `comboName(build)` grows it from the recipe, two words from the fixed `COMBO_WORDS` tables, and `finder` (the first prover's public key) puts that key's face on the card; `cases` is how many held-out cases it was measured on. A part not held here is `{ id, role }`, drawn as ?. Every theme, integer-only, never throws, witnessed with nothing baselined.
 
 ### The campaign: the raids as chapters
 

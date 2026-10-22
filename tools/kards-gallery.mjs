@@ -17,6 +17,7 @@ import { paintRaid, bossSprite, BOSSES, paintChapter } from '../kards/raid.mjs';
 import { paintSlot } from '../kards/gear.mjs';
 import { paintBack } from '../kards/back.mjs';
 import { paintFusion, paintLineage } from '../kards/fusion.mjs';
+import { paintBuild, paintJobs } from '../kards/build.mjs';
 import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, paintText } from '../kards/ui.mjs';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -59,6 +60,8 @@ export function gallery(all = false) {
   files.set('lineage.png', png(...lineageSheet()));
   files.set('map.png', scene2(paintEstate(MAP, 'blockcraft-v1', 480, 400), 480, 400));
   files.set('chapters.png', png(...chapterSheet()));
+  files.set('builds.png', png(...buildSheet()));
+  files.set('jobs.png', scene2(paintJobs(JOBS, 'synthwave-v1', 480, 320), 480, 320));
   files.set('readback.png', scene(paintDuel({ ...DUEL, decided: 48, result: 'left', focus: { at: 11, truth: 1, scores: [831200, 412000] } }, 'synthwave-v1', 480, 320)));
   files.set('inventory.png', png(...iconSheet([...INVENTORY.map((n) => UI_ICONS[n]), ...GEAR_SLOTS.map((n) => UI_ICONS[n]), ...Object.values(FORM_ICONS)])));
   return files;
@@ -129,6 +132,21 @@ function chapterSheet() {   // the six chapters at 1x, three to a row
   const CW = 240, CH = 160, W2 = 3 * CW, px = new Uint8Array(W2 * 2 * CH * 3);
   CHAPTERS.forEach((c, i) => { const r = paintChapter(c, 'synthwave-v1', CW, CH); if (!r.ok) throw new Error(r.why); for (let y = 0; y < CH; y++) px.set(r.px.subarray(y * CW * 3, (y + 1) * CW * 3), ((Math.floor(i / 3) * CH + y) * W2 + (i % 3) * CW) * 3); });
   return [px, W2, 2 * CH];
+}
+// the sample builds: a combo found, a party, a fusion that lost its lift, a training run, a kit not yet measured
+const BJOB = { set: 'hospital', title: 'The Waiting Room', bar: 600000 };
+export const BUILDS = [
+  { job: BJOB, kind: 'kit', parts: [{ id: SAMPLES[0].id, rarity: 'rare', role: 'lead', gate: 571000 }, { id: SAMPLES[1].id, rarity: 'uncommon', role: 'node', gate: 552000 }, { id: SAMPLES[2].id, rarity: 'epic', role: 'node', gate: 560500 }, { id: SAMPLES[3].id, role: 'tool' }], gate: 612400, cases: 240, reruns: 7, combo: true, finder: 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07', reveal: true },
+  { job: BJOB, kind: 'party', parts: [4, 5, 6, 7, 8].map((n, i) => ({ id: SAMPLES[n].id, rarity: SAMPLES[n].rarity, role: 'member', gate: 560000 + i * 3000 })), gate: 570100, reruns: 2 },
+  { job: { set: 'bank', title: 'Credit Gate', bar: 780582 }, kind: 'fusion', parts: [{ id: SAMPLES[2].id, rarity: 'rare', role: 'parent', gate: 770582 }, { id: SAMPLES[9].id, role: 'parent', gate: 765000 }], gate: 762000, reruns: 1 },
+  { job: { set: 'telco', bar: 828213 }, kind: 'training', parts: [{ id: SAMPLES[10].id, rarity: 'legendary', role: 'teacher', gate: 818213 }, { id: SAMPLES[11].id, rarity: 'common', role: 'data' }], method: 'distil', student: { id: SAMPLES[5].id, rarity: 'uncommon', size: 'tiny' }, gate: 821000 },
+  { job: BJOB, kind: 'kit', parts: [{ id: SAMPLES[6].id, rarity: 'epic', role: 'lead' }] },
+];
+export const JOBS = { jobs: [{ set: 'shop', bar: 931634, cleared: true, builds: 3 }, { set: 'telco', bar: 828213, cleared: false, builds: 0 }, { set: 'adult', title: 'Employer', bar: 600000, cleared: true, builds: 1 }, { set: 'bank', title: 'Credit Gate', bar: 600000, cleared: false, builds: 0 }, { set: 'credit', title: 'Billing', bar: 600000, cleared: false, builds: 0 }, { set: 'hospital', title: 'The Waiting Room', bar: 600000, cleared: true, builds: 12 }, { set: 'hospital', title: 'Pharmacy', bar: 600000, cleared: false, builds: 0 }] };
+function buildSheet() {   // the sample builds at 1x, side by side
+  const CW = 192, CH = 280, W2 = BUILDS.length * CW, px = new Uint8Array(W2 * CH * 3);
+  BUILDS.forEach((b, i) => { const r = paintBuild(b, 'synthwave-v1', CW, CH); if (!r.ok) throw new Error(r.why); for (let y = 0; y < CH; y++) px.set(r.px.subarray(y * CW * 3, (y + 1) * CW * 3), (y * W2 + i * CW) * 3); });
+  return [px, W2, CH];
 }
 export const FUSIONS = [
   { a: PA, b: PB, tried: 4, decided: 3, fused: { id: SAMPLES[5].id, rarity: 'legendary', gate: 878300, title: 'Fused Seer' } },
