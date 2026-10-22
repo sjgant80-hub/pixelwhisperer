@@ -243,7 +243,7 @@ kitBadge(fielded, slots, scale)                                     // the kitte
 <section id="estate" aria-labelledby="estate-h">
   <h2 id="estate-h">The estate: grow your plot</h2>
   <p>Every card a player holds is a tower on an isometric blockcraft plot, its trim in its rarity and its own Kardling on the sign. Tools are blocks, consented mesh links are cyan wires, and the districts still to come are fenced grey. The plot opens by a published rule: a district holding n blocks has <code>tilesFor(n) = min(36, 8 + 2n)</code> open tiles, so a new player starts with 16. The same holdings always draw the same picture, so a shared snapshot can be replayed and checked.</p>
-  <p class="hint">Try it: <b>Add a card</b> raises a new tower; <b>Breed a new child</b> adds a generation-1 card, standing in for one bred from two you hold, and marks it fresh, so its sign sparkles until the next child; <b>Wire two cards</b> joins two of your cards with a consented mesh link, a cyan wire; the slider sets how many tool blocks you hold; tick the snapshot to see the 1200 &times; 630 picture a shared link shows.</p>
+  <p class="hint">Try it: <b>Add a card</b> raises a new tower; <b>Fuse a new card</b> adds a generation-1 card (its generation counts the fusions it took to make it), standing in for one fused from two you hold, and marks it fresh, so its sign sparkles until the next one; <b>Wire two cards</b> joins two of your cards with a consented mesh link, a cyan wire; the slider sets how many tool blocks you hold; tick the snapshot to see the 1200 &times; 630 picture a shared link shows.</p>
   <p class="hint">The Kardlings map: tick <b>The Kardlings map</b> and the five screens Kardlings has (ARENA, RAIDS, FUSION, MINT, PROOF) stand as landmarks on their own islands along the shore. Every district and every landmark is a door: tap one on the picture, or press its button under the picture, and the page says what it opens. The doors come from <code>estateDoors</code> (where each one is, in pixels) and <code>estateDoorAt</code> (which door a tap landed on), worked out from the same layout the picture is drawn from, so a tap always lands on what is drawn. A landmark is drawn only when its screen exists, so nothing is ever marked as coming.</p>
   <p class="hint">Holding items or swarms opens the full plot: nothing fenced, nothing coming. Tick <b>Hold items</b>, or add one: an app or a pwa stands as a tool block, a node as a dark server block with its lights, a talker as a terminal with a speech bubble, a router as an antenna. <b>Form a swarm</b> joins two to four of your cards in a consented team: it stands in SWARM as a stack of its members' blocks, wired to their towers. Every district opens by the same rule and is 6 &times; 6, so the rule holds to 36 tiles in all five. An item's top edge is trimmed in its tier's colour, and a new one sparkles. Holdings of scorer cards alone draw exactly as before.</p>
   <div class="work">
@@ -255,7 +255,7 @@ kitBadge(fielded, slots, scale)                                     // the kitte
       <div class="actions">
         <button type="button" class="act" id="est-add">Add a card</button>
         <button type="button" class="act alt" id="est-remove">Remove a card</button>
-        <button type="button" class="act alt" id="est-child">Breed a new child</button>
+        <button type="button" class="act alt" id="est-child">Fuse a new card</button>
         <button type="button" class="act alt" id="est-wire">Wire two cards</button>
       </div>
       <div class="full" style="display:flex;align-items:center;gap:8px"><input id="est-items" type="checkbox" style="width:auto;min-height:0"><label for="est-items" style="margin:0">Hold items and swarms: the full plot, every district open</label></div>
@@ -278,7 +278,7 @@ kitBadge(fielded, slots, scale)                                     // the kitte
 <pre><code>import { paintEstate, estateStats, tilesFor, LANDMARKS, estateDoors, estateDoorAt } from './kards/estate.mjs';
 paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fresh? }], wires?: [[idA, idB]],
               tools?: n, levels?: n, snapshot?: true }, 'blockcraft-v1', 1200, 630)   // { ok, px, scale } | { ok: false, why }
-// a card: stage is its level, 0-99 (a tower grows a block every 25 levels); fresh marks a new child; department and generation are carried, not drawn.
+// a card: stage is its level, 0-99 (a tower grows a block every 25 levels); fresh marks a newly fused card; department and generation are carried, not drawn.
 // px: w &times; h RGB at the size asked for, each logical pixel a scale &times; scale block (480 &times; 320 is scale 2, 1200 &times; 630 is scale 3).
 // snapshot: true adds a title band and a stats band (blocks, tiles, mesh links, and levels when given): the picture a shared link shows.
 // The full plot: items: [{ id, form: 'app' | 'pwa' | 'node' | 'talker' | 'router', tier, fresh? }] and swarms: [{ id, members: [card ids] }] in place of tools.
@@ -317,8 +317,8 @@ paintDuel({ left: { id, rarity, rating, title }, right: { id, rarity, rating, ti
 
 <section id="fusion" aria-labelledby="fusion-h">
   <h2 id="fusion-h">The Fusion Lab: two cards, fused into one</h2>
-  <p>Fusing two of your cards is how Kardlings teaches <b>model merging and selection</b>. The lab tries children of the two, up to <b>twelve</b>, and scores each one's <b>GATE</b>: how well it ranks cases that neither parent learned from (an AUC: 0.5 is a coin toss, 1.0 is perfect). The first child that beats <b>both</b> parents is kept as <b>a fused card</b>. If none does, the fusion is <b>refused</b>, and nothing new is made. The picture works the verdict out from the numbers it is given, so it can never show a kept card that did not beat both.</p>
-  <p class="hint">Try it: <b>Fuse</b> runs the tries one at a time, <b>One try</b> steps, <b>New pair</b> deals two other cards. Each slot under the chamber is one try, against the dotted gold line: the better parent's GATE. Kardlings keeps the score of the child it keeps, so a try that did not beat both is a grey stub (never a made-up bar), and the kept one is the gold bar at its own GATE. A refusal can show its best child as a dim line, at or under the gold one. While it runs the chamber shows the two fusing; at the end it holds the fused card under a gold KEPT, or a red ribbon says REFUSED. Below it is the family tree: a fused card over its parents and theirs.</p>
+  <p>Fusing two of your cards is how Kardlings teaches <b>model merging and selection</b>. The lab tries fusions of the two, up to <b>twelve</b>, and scores each one's <b>GATE</b>: how well it ranks cases that neither parent learned from (an AUC: 0.5 is a coin toss, 1.0 is perfect). The first try that beats <b>both</b> parents is kept as <b>a fused card</b>. If none does, the fusion is <b>refused</b>, and nothing new is made. The picture works the verdict out from the numbers it is given, so it can never show a kept card that did not beat both.</p>
+  <p class="hint">Try it: <b>Fuse</b> runs the tries one at a time, <b>One try</b> steps, <b>New pair</b> deals two other sample cards. Each slot under the chamber is one try, against the dotted gold line: the better parent's GATE. Kardlings keeps the score of the try it keeps, so a try that did not beat both is a grey stub (never a made-up bar), and the kept one is the gold bar at its own GATE. A refusal can show its best try as a dim line, at or under the gold line. While it runs the chamber shows the two fusing; at the end it holds the fused card under a gold KEPT, or a red ribbon says REFUSED. Below it is the family tree: a fused card over its parents and theirs.</p>
   <div class="work">
     <div>
       <canvas class="card estate" id="fusion-canvas" width="720" height="480" role="img" aria-label="The Fusion Lab"></canvas>
@@ -333,14 +333,15 @@ paintDuel({ left: { id, rarity, rating, title }, right: { id, rarity, rating, ti
     </form>
   </div>
   <h3>The family tree</h3>
+  <p class="hint">Read it from the top down: the card at the top, its two parents under it, and theirs under them, three generations up. Each block is a card framed in its rarity with its Kardling inside; a gold ring marks a fused card; a dashed <b>?</b> is a card this device does not hold, drawn as unknown, never invented.</p>
   <canvas class="card estate" id="lineage-canvas" width="480" height="320" role="img" aria-label="A family tree"></canvas>
   <p class="msg" id="lineage-msg" role="status" aria-live="polite"></p>
-  <p class="hint">In this demo the tries' scores are dealt in your browser. In Kardlings they are the real children's GATE on the owner's own cases, and anyone holding the same cases can re-run the claim.</p>
+  <p class="hint">In this demo the tries' scores are dealt in your browser. In Kardlings they are the real tries' GATE on the owner's own cases, and anyone holding the same cases can re-run the claim.</p>
 <pre><code>import { paintFusion, fusionVerdict, paintLineage, MAX_TRIES } from './kards/fusion.mjs';
 paintFusion({ a: { id, rarity, gate: 874000, title? }, b: { id, rarity, gate: 861500 }, tried: 4,
               fused: { id, rarity, gate: 878300, title? }, decided?: 4 }, 'synthwave-v1', 720, 480)   // { ok, px, scale } | { ok: false, why }
-// GATE in whole millionths. tried: how many children were tried, 1 to MAX_TRIES (12). fused: the card kept, the last child tried;
-// its GATE must beat both parents'. Refused: no fused, and best?: the best child's GATE (at most the line) or null for no live child.
+// GATE in whole millionths. tried: how many fusions were tried, 1 to MAX_TRIES (12). fused: the card kept, the last one tried;
+// its GATE must beat both parents'. Refused: no fused, and best?: the best try's GATE (at most the line) or null for no live try.
 // decided: how many tries are shown so far.
 fusionVerdict(fusion)   // { ok, kept: true | false | null (still being shown), beat, gate, tried, tries }
 paintLineage({ id, rarity, parents: [{ id, rarity, parents? }, { id }] }, 'synthwave-v1', 480, 320)   // four generations; { id } alone: not held here, drawn as ?</code></pre>
@@ -993,7 +994,7 @@ function renderFusion() {
   m.className = 'msg ok';
   m.textContent = fusion.a.title + ' and ' + fusion.b.title + ' · ' + (v.kept === null ? (v.tried ? 'fusing: try ' + v.tried + ' of ' + v.tries : 'ready: press Fuse') : v.kept ? 'KEPT: try ' + v.tries + ' beat both parents, a fused card' : 'REFUSED: none of the ' + v.tries + ' tries beat both parents');
   $('#fusion-canvas').setAttribute('aria-label', 'The Fusion Lab in ' + THEMES[t].name + ': ' + m.textContent);
-  const end = v.kept ? g4(v.gate) + ', the fused card' : v.kept === false ? (fusion.best === null ? 'no live child' : g4(fusion.best) + ', not enough') : 'not yet';
+  const end = v.kept ? g4(v.gate) + ', the fused card' : v.kept === false ? (fusion.best === null ? 'no live try' : g4(fusion.best) + ', not enough') : 'not yet';
   stats($('#fusion-stats'), [['LINE TO BEAT (THE BETTER PARENT)', g4(v.beat)], ['BEST AT THE END', end], ['TRIES SHOWN', v.tried + ' of ' + v.tries], ['VERDICT', v.kept === null ? 'not yet' : v.kept ? 'kept' : 'refused']]);
   const tree = v.kept ? { id: fusion.fused.id, rarity: fusion.fused.rarity, parents: [fuTree.a, fuTree.b] } : fuTree.a, lt = paintLineage(tree, t, 480, 320), lm = $('#lineage-msg');
   if (!lt.ok) { lm.className = 'msg bad'; lm.textContent = lt.why + '.'; return; }

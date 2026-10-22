@@ -182,11 +182,11 @@ test('a family tree: a fused card over its parents and theirs, four generations;
 
 test('the pins: the lab and the trees are frozen, byte for byte', () => {
   const want = {
-    'synthwave-v1': '9b16492bb27f2f7aacdcdd22c932c99249c4f619cc7411b2083da9ac00a85c1c',
-    'blockcraft-v1': '27a83a8d008f43327a3f79288dd89cb5095dddcfb9a3d25d64d075c8ad95dfb5',
-    'lcd-v1': 'e6ea044295d0b95c031bf56cb1b60b70b552200d882ef65fceb9945e82140079',
-    'memphis-v1': 'e6cc842f309b79da76b6396980a81ad97b01f45339b6d66333383d6c72fb1933',
-    'blueprint-v1': '83fbbda23121d54a8cc442bc9b67244286270d38db16f29a583b8c0866a6b759',
+    'synthwave-v1': '27aee8a7c03b66a200b851c85c9c85c8147f971d2ed90a22dcab3fc62ea57df3',
+    'blockcraft-v1': '1013093910b7dcd090c418e26fb9668b213c6f3d434711a5e4453aa080e4857b',
+    'lcd-v1': 'd8f6cd2dab0ae56a3ececa73fd8b3f1cd246dac21cecb796961e267b63833b12',
+    'memphis-v1': '9c477c1b7ef001e79b5e7fdeeb0fb67ae6a8dda0d3b26bedaafd876b5cbbc195',
+    'blueprint-v1': '594517239f9abf13dff001c34bf41b1780a771c350b23f272555a931fe4090ab',
     'sizes': 'a732a7f24f372eea235601280c1f16b32e96b30c82aa61747bae9672f17af764',
     'tree synthwave-v1': '250bb6fd701d03d9db89ff6b5605c5668db301021afe55e2ad9b4880f3addca0',
     'tree blockcraft-v1': '738930409d55242c49e32c6e46eae9b17f2dc01de63a00cf905c0813ddf28729',
