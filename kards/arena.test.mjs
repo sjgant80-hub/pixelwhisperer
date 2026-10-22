@@ -139,11 +139,11 @@ test('sizes: a whole-number scale of 240 x 160, the arena centred, everything fr
 });
 
 const fwant = {
-  'synthwave-v1': '1cda5cb5ce396b712459d950c816e3a4279fe01e86e514683d0add5c0d682164',
-  'blockcraft-v1': 'fc69fe9ecf3a3216d2d634b9c9887fa89d925a5880188132fb09563df194723c',
-  'lcd-v1': 'b980b365b54a43fe7f77cc19edd46380299304a1344c2ec58d9f34cd9bc72baa',
-  'memphis-v1': '516055d890fd0a72235d44dcd7d4608a97962a742720ea45e3e33e78ac026efa',
-  'blueprint-v1': 'c6513d6c63f707d53cb83a6f13453b04a2a1a0b94aab1990911d00a53e340676',
+  'synthwave-v1': '33f7de142af26bae25dfded106211ec044bb1c3b3e91e6f921928533d88dc6aa',
+  'blockcraft-v1': '1ef6f9ab2b0e6cc5112cec1791718edf66293d12650c11d02a7d440e7b054f62',
+  'lcd-v1': '5759e812a475542e782cd61eeb6665ac44581f0750f7564ed54fd61a0fe415d8',
+  'memphis-v1': '8bb5fdc0df1a2a4b32d586cbe2693d0f193f61d753c4fc2550f101968549a950',
+  'blueprint-v1': 'e04dde7998a0e665f768dc6853980013271a7b10beda01d9f756581791ceec49',
 };
 test('the read-back: one decided case in focus, ringed on the scoreboard, how each side did on it, and which ranked it better', () => {
   const kinds = [CASES.findIndex(([a, b]) => a > b), CASES.findIndex(([a, b]) => b > a), CASES.findIndex(([a, b]) => a === b)];
@@ -158,7 +158,10 @@ test('the read-back: one decided case in focus, ringed on the scoreboard, how ea
   assert.equal(checkDuel(F({ at: 29 }, { decided: 30 })).ok, true, 'the last decided case');
   refused(checkDuel(F({ at: 0 }, { decided: 0 })), /^focus must be on a decided case/);
   for (const truth of [2, -1, '1', true]) refused(checkDuel(F({ at: 3, truth })), /^a case's truth is 0 or 1$/);
-  for (const scores of [[1], [1, 2, 3], [-1, 5], [5, 1000001], 'x', [1.5, 2], [1, '2']]) refused(checkDuel(F({ at: 3, scores })), /^scores are \[left, right\], each a whole number of millionths from 0 to 1000000$/);
+  for (const scores of [[1], [1, 2, 3], [-99000001, 5], [5, 99000001], 'x', [1.5, 2], [1, '2']]) refused(checkDuel(F({ at: 3, scores })), /^scores are \[left, right\], each a whole number of millionths from -99000000 to 99000000 \(the raw score of a mind\)$/);
+  for (const scores of [[-99000000, 99000000], [-2750000, 0], [0, 1000001]]) assert.deepEqual(checkDuel(F({ at: 3, scores })).d.focus.scores, scores, 'a raw score: ' + scores);
+  assert.equal(same(draw(F({ at: 3, scores: [0, 412000] })), draw(F({ at: 3, scores: [-1, 412000] }))), false, 'a score below 0 shows its sign');
+  assert.equal(same(draw(F({ at: 3, scores: [2750000, 412000] })), draw(F({ at: 3, scores: [-2750000, 412000] }))), false, 'and keeps it');
   const base = draw(F({ at: kinds[0] }));
   assert.equal(same(base, draw(DUEL)), false, 'the read-back is on the picture');
   for (const ch of [{ at: kinds[1] }, { at: kinds[2] }, { at: kinds[0], truth: 1 }, { at: kinds[0], truth: 0 }, { at: kinds[0], scores: [831200, 412000] }]) assert.equal(same(base, draw(F(ch))), false, JSON.stringify(ch));
@@ -172,7 +175,7 @@ test('the read-back: one decided case in focus, ringed on the scoreboard, how ea
   const second = draw(F({ at: 13 + 48 }, { cases: [...CASES, ...CASES], decided: 96 }));
   assert.equal((second[((129 - 6 + 12 - 2) * 240 + x - 1) * 3] << 16) | (second[((129 - 6 + 12 - 2) * 240 + x - 1) * 3 + 1] << 8) | second[((129 - 6 + 12 - 2) * 240 + x - 1) * 3 + 2], 0xffffff, 'a case on the second line is ringed there');
   const fpins = {};
-  for (const t of THEME_IDS) fpins[t] = sha(Buffer.concat([F({ at: kinds[0], truth: 1, scores: [831200, 412000] }), F({ at: kinds[1] }, { result: null, decided: 30 }), F({ at: kinds[2], truth: 0 }, { result: 'refused' }), F({ at: 0, scores: [500000, 500000] }, { result: 'draw' })].map((d) => Buffer.from(draw(d, t)))));
+  for (const t of THEME_IDS) fpins[t] = sha(Buffer.concat([F({ at: kinds[0], truth: 1, scores: [831200, 412000] }), F({ at: kinds[1] }, { result: null, decided: 30 }), F({ at: kinds[2], truth: 0 }, { result: 'refused' }), F({ at: 0, scores: [500000, 500000] }, { result: 'draw' }), F({ at: kinds[0], truth: 0, scores: [0, -2750000] }, { result: 'right' })].map((d) => Buffer.from(draw(d, t)))));
   assert.deepEqual(fpins, fwant, 'the read-back, pinned');
 });
 
