@@ -11,7 +11,7 @@ jobs:
         run: node --test kards/*.test.mjs
       - name: the witness harness is the estate's, byte for byte (dex-frontier .witness/witness.mjs)
         run: echo "1e746a48fcb2f02f563e6450e7bf95bdb0b8f177d40b6f90af9aa4e5c9433113  .witness/witness.mjs" | sha256sum -c -
-      - name: mutation witness - every mutant of every kernel (art and items, png, cost case, UI kit, font, estate, arena, raids, kit slots, card backs, Fusion Lab, campaign, read-back, builds, build sheet) killed, none baselined
+      - name: mutation witness - every mutant of every kernel (art and items, png, cost case, UI kit, font, estate, arena, raids, kit slots, card backs, Fusion Lab, campaign, read-back, builds, build sheet, build book) killed, none baselined
         run: node witness-kards.mjs | tee witness.txt
       - name: the gallery images are exactly what the engine draws
         run: node tools/kards-gallery.mjs --check

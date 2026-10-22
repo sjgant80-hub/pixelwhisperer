@@ -5,7 +5,8 @@
 //                                          cards: the four sample items, a duel and a raid per theme, a fallen boss, the eight bosses,
 //                                          the inventory icons, an estate holding items, the card backs (signed and unsigned), and the
 //                                          Fusion Lab (fusing, kept, refused per theme) with a fused card's family tree, builds and
-//                                          the job board, and the build sheets (four at 1x, and one at the share size)
+//                                          the job board, the build sheets (four at 1x, and one at the share size) and pages of
+//                                          the build book
 //   node tools/kards-gallery.mjs --all      also write every sample card, each theme, at the DIGI card's size (384 x 560) into kards/gallery/full/
 //   node tools/kards-gallery.mjs --check    exit 1 unless the committed files are exactly what the engine draws now (CI runs this)
 //   node tools/kards-gallery.mjs --out DIR  write somewhere else
@@ -18,7 +19,7 @@ import { paintRaid, bossSprite, BOSSES, paintChapter } from '../kards/raid.mjs';
 import { paintSlot } from '../kards/gear.mjs';
 import { paintBack } from '../kards/back.mjs';
 import { paintFusion, paintLineage } from '../kards/fusion.mjs';
-import { paintBuild, paintJobs, paintSheet } from '../kards/build.mjs';
+import { paintBuild, paintJobs, paintSheet, paintBook } from '../kards/build.mjs';
 import { createHash } from 'node:crypto';
 import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, paintText } from '../kards/ui.mjs';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
@@ -65,6 +66,7 @@ export function gallery(all = false) {
   files.set('builds.png', png(...buildSheet()));
   files.set('jobs.png', scene2(paintJobs(JOBS, 'synthwave-v1', 480, 320), 480, 320));
   files.set('sheets.png', png(...sheetsSheet()));
+  files.set('books.png', png(...booksSheet()));
   files.set('sheet-share.png', (() => { const r = paintSheet(SHEETS[0], 'blockcraft-v1', 1200, 630); if (!r.ok) throw new Error(r.why); return png(r.px, 1200, 630); })());
   files.set('readback.png', scene(paintDuel({ ...DUEL, decided: 48, result: 'left', focus: { at: 11, truth: 1, scores: [831200, 412000] } }, 'synthwave-v1', 480, 320)));
   files.set('inventory.png', png(...iconSheet([...INVENTORY.map((n) => UI_ICONS[n]), ...GEAR_SLOTS.map((n) => UI_ICONS[n]), ...Object.values(FORM_ICONS)])));
@@ -154,15 +156,30 @@ function buildSheet() {   // the sample builds at 1x, side by side
 }
 // the sample build sheets, from receipts and proofs shaped as the game's measure() and proofOf() make them: a combo proven by
 // three keys (one part not held here), an anti-combo re-run once, a plain build with one part fielding and none re-run, and five
-// parts fielding of eight
+// parts fielding of six
 const hx = (s) => createHash('sha256').update(s).digest('hex'), SK = [1, 2, 3, 4].map((n) => hx('gallery-key-' + n)), TX = ' × ';
 const sp = (n, alone, contribution) => ({ card: SAMPLES[n].id, title: SAMPLES[n].title, joined: alone !== null, alone, contribution });
 export const SHEETS = [
   { job: BJOB, receipt: { build: hx('gallery-build-1'), data: 'hospital:ground', parts: [sp(4, 571000, 21000), sp(1, 560500, 9000), sp(2, null, null)], fielded: 2, gate: 612400, best: 571000, lift: 41400, n: 240, verdict: 'combo', name: SAMPLES[4].title + TX + SAMPLES[1].title }, proof: { proven: true, keys: SK.slice(0, 3), finder: SK[0] }, held: [SAMPLES[4].id, SAMPLES[2].id] },
   { job: { set: 'bank', title: 'Credit Gate', bar: 780582 }, receipt: { build: hx('gallery-build-2'), data: 'bank:ground', parts: [sp(5, 770582, -2000), sp(9, 765000, -8000)], fielded: 2, gate: 762000, best: 770582, lift: -8582, n: 180, verdict: 'anti', name: SAMPLES[5].title + TX + SAMPLES[9].title }, proof: { proven: false, keys: [SK[3]], finder: SK[3] } },
   { job: { set: 'telco', bar: 828213 }, receipt: { build: hx('gallery-build-3'), data: 'telco:ground', parts: [sp(10, 818213, 0), sp(11, null, null)], fielded: 1, gate: 818213, best: 818213, lift: 0, n: 120, verdict: 'plain', name: SAMPLES[10].title } },
-  { job: { set: 'adult', title: 'Employer', bar: 600000 }, receipt: { build: hx('gallery-build-4'), data: 'adult:ground', parts: [0, 3, 6, 7, 8, 1, 2, 9].map((n, i) => sp(n, i < 5 ? 590000 - i * 2000 : null, i < 5 ? 3000 - i * 1500 : null)), fielded: 5, gate: 593000, best: 590000, lift: 3000, n: 2400, verdict: 'plain', name: [0, 3, 6, 7, 8].map((n) => SAMPLES[n].title).join(TX) }, proof: { proven: true, keys: SK.slice(0, 2), finder: SK[0] }, held: [0, 3, 6, 7, 8, 1, 2].map((n) => SAMPLES[n].id) },
+  { job: { set: 'adult', title: 'Employer', bar: 600000 }, receipt: { build: hx('gallery-build-4'), data: 'adult:ground', parts: [0, 3, 6, 7, 8, 1].map((n, i) => sp(n, i < 5 ? 590000 - i * 2000 : null, i < 5 ? 3000 - i * 1500 : null)), fielded: 5, gate: 593000, best: 590000, lift: 3000, n: 2400, verdict: 'plain', name: [0, 3, 6, 7, 8].map((n) => SAMPLES[n].title).join(TX) }, proof: { proven: true, keys: SK.slice(0, 2), finder: SK[0] }, held: [0, 3, 6, 7, 8].map((n) => SAMPLES[n].id) },
 ];
+// the sample pages of the build book, shaped as the game's bookOf() makes them: a job with more proven builds than fit, a job
+// its best has cleared, plain builds alone, and nothing proven yet
+const br = (k, ns, best, lift, keys) => ({ id: hx('gallery-receipt-' + k), build: hx('gallery-book-' + k), name: ns.map((n) => SAMPLES[n].title).join(TX), gate: best + lift, best, lift, fielded: ns.length, finder: SK[k % 4], keys });
+const rank = (rows, sign) => rows.sort((a, b) => sign * (b.lift - a.lift) || (a.build < b.build ? -1 : 1));
+export const BOOK_PAGES = [
+  { job: { set: 'hospital', title: 'The Waiting Room', bar: 650000 }, page: { combos: rank([br(1, [4, 1], 571000, 41400, 3), br(2, [2, 3, 4], 560000, 21000, 2), br(3, [5, 6], 590000, 12000, 7), br(4, [7, 8, 9, 10], 580000, 9000, 2), br(5, [1, 11], 575000, 8000, 4), br(6, [3, 9], 570000, 6000, 2), br(7, [4, 10], 565000, 5500, 3), br(8, [6, 0], 560000, 5000, 2)], 1), anti: rank([br(9, [2, 8], 590000, -8582, 2), br(10, [11, 5], 585000, -5100, 3)], -1), plain: 3, best: 612400 } },
+  { job: { set: 'bank', title: 'Credit Gate', bar: 600000 }, page: { combos: rank([br(11, [0, 5], 590000, 22000, 5), br(12, [3, 4], 585000, 7000, 2)], 1), anti: [br(13, [1, 2], 600000, -6000, 2)], plain: 0, best: 612000 } },
+  { job: { set: 'telco', bar: 828213 }, page: { combos: [], anti: [], plain: 2, best: 801000 } },
+  { job: { set: 'adult', title: 'Employer', bar: 600000 }, page: { combos: [], anti: [], plain: 0, best: null } },
+];
+function booksSheet() {   // the sample pages of the build book at 1x, two by two
+  const SW = 400, SH = 210, px = new Uint8Array(SW * 2 * SH * 2 * 3);
+  BOOK_PAGES.forEach((b, i) => { const r = paintBook(b, 'synthwave-v1', SW, SH); if (!r.ok) throw new Error(r.why); const ox = (i % 2) * SW, oy = Math.floor(i / 2) * SH; for (let y = 0; y < SH; y++) px.set(r.px.subarray(y * SW * 3, (y + 1) * SW * 3), ((oy + y) * SW * 2 + ox) * 3); });
+  return [px, SW * 2, SH * 2];
+}
 function sheetsSheet() {   // the sample build sheets at 1x, two by two
   const SW = 400, SH = 210, px = new Uint8Array(SW * 2 * SH * 2 * 3);
   SHEETS.forEach((s, i) => { const r = paintSheet(s, 'synthwave-v1', SW, SH); if (!r.ok) throw new Error(r.why); const ox = (i % 2) * SW, oy = Math.floor(i / 2) * SH; for (let y = 0; y < SH; y++) px.set(r.px.subarray(y * SW * 3, (y + 1) * SW * 3), ((oy + y) * SW * 2 + ox) * 3); });

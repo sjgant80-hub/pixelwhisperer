@@ -15,8 +15,10 @@
 // pinned up with its business's icon, its bar and how many builds cleared it. paintSheet draws a build sheet, a decklist wide
 // enough to share, read from the game's own records as they are (a measured build's receipt and its proof): each part's
 // Kardling, its own GATE and what it adds, the fielding parts first in the order of the build's name, the benched ones dimmed;
-// the sigil grown from the build's id; and the numbers, refused when they do not add up. Integer arithmetic only,
-// deterministic, total: bad input is { ok: false, why }, never a throw.
+// the sigil grown from the build's id; and the numbers, refused when they do not add up. paintBook draws a page of the build
+// book, read from the game's own book as it is: a job's proven combos ranked by lift, its anti-combos by drop, each with its
+// small sigil, its finder's face and how many keys proved it. Integer arithmetic only, deterministic, total: bad input is
+// { ok: false, why }, never a throw.
 import { RARITIES, RAR, PIXEL, THEMES, DATASETS, ICON_ROWS, creatureFront } from './kardart.mjs';
 import { GLYPHS, identicon } from './ui.mjs';
 
@@ -331,13 +333,31 @@ export function paintJobs(board, themeId, w, h) {
 const SW = 400, SH = 210, VERDICTS = ['combo', 'anti', 'plain'], TIMES = ' \u00d7 ';
 const isKey = (s) => typeof s === 'string' && s.length === 64 && Array.from(s).every((ch) => HEX.includes(ch));
 const signed = (n) => (n < 0 ? '-' : '+') + fmt(Math.abs(n));
+function shareBad(themeId, w, h) {   // why a share picture cannot be drawn in this theme at this size, or null
+  if (typeof themeId !== 'string' || !Object.prototype.hasOwnProperty.call(THEMES, themeId)) return 'unknown theme';
+  if (!whole(w, 2400) || !whole(h, 2400) || w < 100 || h < 100) return 'width and height must be whole numbers from 100 to 2400';
+  return null;
+}
+function shareFrame(cv, L, hue) {   // a share picture's field, and its frame in the hue of its news
+  for (const y of span(0, SH)) rect(cv, 0, y, SW, 1, mix(L.field[0], L.field[1], div(y * 256, SH)));
+  for (const i of span(0, 3)) { rect(cv, i, i, SW - 2 * i, 1, hue); rect(cv, i, SH - 1 - i, SW - 2 * i, 1, hue); rect(cv, i, i, 1, SH - 2 * i, hue); rect(cv, SW - 1 - i, i, 1, SH - 2 * i, hue); }
+}
+function shareOut(cv, L, w, h) {   // a share picture done: the pocket screen's four shades, then scaled to the nearest pixel
+  if (L.lcd) for (const y of span(0, SH)) for (const x of span(0, SW)) { const q = at(cv, x, y); dot(cv, x, y, L.lcd[(((q >> 16) & 255) * 77 + ((q >> 8) & 255) * 150 + (q & 255) * 29) >> 14]); }
+  const px = new Uint8Array(w * h * 3), cols = span(0, w).map((x) => div(x * SW, w));
+  span(0, h).forEach((y) => {
+    const row = (div(y * SH, h) + PAD) * cv.cw + PAD;
+    cols.forEach((cx, x) => { const q = cv.d[row + cx], o = (y * w + x) * 3; px[o] = q >> 16; px[o + 1] = (q >> 8) & 255; px[o + 2] = q & 255; });
+  });
+  return px;
+}
 
 /**
  * Check a build sheet, read from the game's own records as they are. sheet: { job: { set, title?, bar } (as a build's),
  * receipt: a measured build's receipt { build: its id (64 lowercase hex), data: its ground (named for the job's business, before
  * any colon), parts: [{ card (16 lowercase hex), title (as a card's), joined (true when it fields), alone: its own GATE out of
  * fold, contribution: what the build loses without it (both whole millionths when it fields, both null when it is benched) }]
- * (2 to 8, each card once), fielded: how many field, gate, best: the highest alone among them, lift: gate less best, n: the
+ * (2 to 6, each card once: a build is at most six cards, benched ones too), fielded: how many field, gate, best: the highest alone among them, lift: gate less best, n: the
  * held-out cases, verdict: 'combo' | 'anti' | 'plain' (the game's sealed rule), name: the fielding titles joined by " \u00d7 " },
  * proof?: { proven, keys: [public keys, 64 lowercase hex, each once] (up to 999), finder: the first key, or null },
  * held?: [the card ids this device holds] (up to 999) }. Fields of the records the sheet does not draw are left unread.
@@ -352,7 +372,7 @@ export function checkSheet(x) {
     if (!isObj(r)) return no('the receipt must be an object');
     if (!isKey(r.build)) return no('the receipt build is the build id: 64 lowercase hex characters');
     if (typeof r.data !== 'string' || r.data.split(':')[0] !== J.j.set) return no('the receipt is for another business than the job: its data must name ' + J.j.set);
-    if (!Array.isArray(r.parts) || r.parts.length < 2 || r.parts.length > 8) return no('a receipt has 2 to 8 parts');
+    if (!Array.isArray(r.parts) || r.parts.length < 2 || r.parts.length > 6) return no('a receipt has 2 to 6 parts');
     const ps = [], seen = new Set();
     for (const p of r.parts) {
       if (!isObj(p) || !isId(p.card)) return no('every part is a card: 16 lowercase hex characters');
@@ -407,11 +427,10 @@ export function paintSheet(sheet, themeId, w, h) {
   try {
     const c = checkSheet(sheet);
     if (!c.ok) return c;
-    if (typeof themeId !== 'string' || !Object.prototype.hasOwnProperty.call(THEMES, themeId)) return no('unknown theme');
-    if (!whole(w, 2400) || !whole(h, 2400) || w < 100 || h < 100) return no('width and height must be whole numbers from 100 to 2400');
+    const bad = shareBad(themeId, w, h);
+    if (bad !== null) return no(bad);
     const S = c.s, L = LOOKS[themeId], cv = newCanvas(SW, SH), hue = S.verdict === 'combo' ? GOLD[0] : S.verdict === 'anti' ? 0xc0283c : L.frame;
-    for (const y of span(0, SH)) rect(cv, 0, y, SW, 1, mix(L.field[0], L.field[1], div(y * 256, SH)));
-    for (const i of span(0, 3)) { rect(cv, i, i, SW - 2 * i, 1, hue); rect(cv, i, SH - 1 - i, SW - 2 * i, 1, hue); rect(cv, i, i, 1, SH - 2 * i, hue); rect(cv, SW - 1 - i, i, 1, SH - 2 * i, hue); }
+    shareFrame(cv, L, hue);
 
     // the head: the sigil, the verdict, the job and its bar, and the job's business
     const G = sigilFrom(S.build);
@@ -427,7 +446,7 @@ export function paintSheet(sheet, themeId, w, h) {
     letters(cv, 'TITLE', 34, 63, L.dim, L.shadow); letters(cv, 'ALONE', 180, 63, L.dim, L.shadow); letters(cv, 'ADDS', 220, 63, L.dim, L.shadow);
     if (S.rows[0].held !== null) letters(cv, 'HELD', 265, 63, L.dim, L.shadow);
     S.rows.forEach((p, m) => {
-      const y = 74 + m * 15, ink = p.joined ? L.text : L.dim, fr = creatureFront(p.card);
+      const y = 74 + m * 20, ink = p.joined ? L.text : L.dim, fr = creatureFront(p.card);
       letters(cv, p.joined ? String(m + 1) : '-', 10, y + 3, ink, L.shadow);
       for (const q of span(0, 126)) if (fr.px[q * 4 + 3]) dot(cv, 20 + (q % 9), y + div(q, 9), p.joined ? inked(L, voxel(fr, q)) : mix(inked(L, voxel(fr, q)), L.panel, 150));
       letters(cv, p.title, 34, y + 3, ink, L.shadow);
@@ -464,12 +483,96 @@ export function paintSheet(sheet, themeId, w, h) {
     letters(cv, 'BUILD ' + S.build.slice(0, 16), 8, 198, L.dim, L.shadow);
     if (S.rows[0].held !== null) { const n = S.rows.filter((p) => p.held).length, s = 'YOU HOLD ' + n + ' OF ' + S.rows.length; letters(cv, s, 392 - width(s), 198, n === S.rows.length ? L.good : L.text, L.shadow); }
 
-    if (L.lcd) for (const y of span(0, SH)) for (const x of span(0, SW)) { const q = at(cv, x, y); dot(cv, x, y, L.lcd[(((q >> 16) & 255) * 77 + ((q >> 8) & 255) * 150 + (q & 255) * 29) >> 14]); }
-    const px = new Uint8Array(w * h * 3), cols = span(0, w).map((x) => div(x * SW, w));
-    span(0, h).forEach((y) => {
-      const row = (div(y * SH, h) + PAD) * cv.cw + PAD;
-      cols.forEach((cx, x) => { const q = cv.d[row + cx], o = (y * w + x) * 3; px[o] = q >> 16; px[o + 1] = (q >> 8) & 255; px[o + 2] = q & 255; });
-    });
-    return { ok: true, px };
+    return { ok: true, px: shareOut(cv, L, w, h) };
   } catch (e) { return no('the sheet could not be painted'); }
+}
+
+// -- the build book: a job's proven builds, ranked, read from the game's own book --------------------------------------------
+const BOOK_ROWS = 6;
+
+function rowOf(r, combo) {   // a row of the book: { id, build, name, gate, best, lift, fielded, finder, keys }
+  if (!isObj(r) || !isKey(r.id) || !isKey(r.build)) return no('every row has its receipt id and its build id, 64 lowercase hex each');
+  const words = typeof r.name === 'string' ? r.name.split(TIMES) : [];
+  if (!Number.isInteger(r.fielded) || r.fielded < 2 || r.fielded > 6 || words.length !== r.fielded || !words.every((t) => t.length > 0 && t.length < 25 && Array.from(t).every((ch) => TITLE.includes(ch)))) return no('a row is named by its 2 to 6 fielding parts, their titles joined by " \u00d7 "');
+  if (!whole(r.gate, 1000000) || !whole(r.best, 1000000) || r.lift !== r.gate - r.best) return no('a row has its gate and best in whole millionths, and its lift is the gate less the best');
+  if (combo ? !(r.lift > 0) : !(r.lift < 0)) return no(combo ? 'a combo lifts its build above its best part' : 'an anti-combo drops its build below its best part');
+  if (!isKey(r.finder) || !whole(r.keys, 99999) || r.keys < 1) return no('a row has its finder (a public key) and how many keys proved it, 1 to 99999');
+  return { ok: true, r: { id: r.id, build: r.build, name: r.name, gate: r.gate, lift: r.lift, finder: r.finder, keys: r.keys, combo } };
+}
+const ranked = (list, sign) => list.every((r, k) => k === 0 || sign * (list[k - 1].lift - r.lift) > 0 || (list[k - 1].lift === r.lift && list[k - 1].build < r.build));
+
+/**
+ * Check a page of the build book, read from the game's own book as it is. book: { job: { set, title?, bar } (as a build's), page:
+ * the game's book for one ground { combos: [rows], anti: [rows] (up to 9999 each), plain: how many proven builds were plain,
+ * best: the best proven GATE, or null when nothing is proven }, each row { id: its receipt, build: its build id (64 lowercase hex
+ * each), name: its fielding parts' titles joined by " \u00d7 ", gate, best, lift (gate less best: above zero for a combo, below for an
+ * anti-combo), fielded (2 to 6), finder: the first key to prove it, keys: how many proved it } }. The combos go biggest lift first,
+ * the anti-combos biggest drop first, a tie to the lower build id; each receipt once. -> { ok: true, b } | { ok: false, why }
+ */
+export function checkBook(x) {
+  try {
+    if (!isObj(x)) return no('the book must be an object');
+    const J = jobOf(x.job);
+    if (!J.ok) return J;
+    const p = x.page;
+    if (!isObj(p) || !Array.isArray(p.combos) || !Array.isArray(p.anti) || p.combos.length > 9999 || p.anti.length > 9999) return no('a page of the book is { combos, anti, plain, best }, up to 9999 rows of each');
+    if (!whole(p.plain, 99999)) return no('plain counts the proven builds that are plain: a whole number from 0 to 99999');
+    const combos = [], anti = [];
+    for (const r of p.combos) { const c = rowOf(r, true); if (!c.ok) return c; combos.push(c.r); }
+    for (const r of p.anti) { const c = rowOf(r, false); if (!c.ok) return c; anti.push(c.r); }
+    const rows = combos.concat(anti);
+    if (new Set(rows.map((r) => r.id)).size !== rows.length) return no('a receipt is in the book once');
+    if (!ranked(combos, 1)) return no('the combos go biggest lift first, a tie to the lower build id');
+    if (!ranked(anti, -1)) return no('the anti-combos go biggest drop first, a tie to the lower build id');
+    if (rows.length + p.plain > 0 ? !whole(p.best, 1000000) || rows.some((r) => r.gate > p.best) : p.best !== null) return no('best is the best proven GATE on the page, at least every row\'s, or null when nothing is proven');
+    return { ok: true, b: { job: J.j, combos, anti, plain: p.plain, best: p.best } };
+  } catch (e) { return no('the book could not be read'); }
+}
+
+/**
+ * Draw a page of the build book: the job's business, the job, its bar and the best proven against it; then the proven builds,
+ * a row each (its rank, a small sigil grown from its build id, its name, its GATE, its lift, its finder's face and how many keys
+ * proved it), the combos first and the anti-combos after, up to six rows and a count of the rest; and a tally. book as checkBook
+ * takes it; themeId; w, h whole numbers from 100 to 2400 (a share picture: 1200 x 630). The page is 400 x 210 logical pixels,
+ * scaled to the nearest pixel. -> { ok: true, px } | { ok: false, why }. Never throws.
+ */
+export function paintBook(book, themeId, w, h) {
+  try {
+    const c = checkBook(book);
+    if (!c.ok) return c;
+    const bad = shareBad(themeId, w, h);
+    if (bad !== null) return no(bad);
+    const B = c.b, L = LOOKS[themeId], cv = newCanvas(SW, SH), done = B.best !== null && B.best >= B.job.bar, hue = done ? GOLD[0] : L.frame;
+    shareFrame(cv, L, hue);
+
+    // the head: the job's business in the medallion, the job, its bar, and the best proven against it
+    rect(cv, 8, 6, 52, 52, hue); rect(cv, 10, 8, 48, 48, L.panel); rect(cv, 64, 6, 330, 52, L.panel);
+    ICON_ROWS[B.job.set].forEach((row, y) => Array.from(row).forEach((cell, x) => { if (cell === '#') rect(cv, 10 + x * 3, 8 + y * 3, 3, 3, L.text); }));
+    letters(cv, 'BUILD BOOK', 68, 8, L.dim, L.shadow);
+    letters(cv, (B.job.title || B.job.set).toUpperCase(), 68, 20, L.text, L.shadow, 2);
+    letters(cv, 'BAR ' + fmt(B.job.bar) + ' \u00b7 ' + (B.best === null ? 'NOTHING PROVEN YET' : 'BEST ' + fmt(B.best) + (done ? ' \u2713 CLEARED' : ' \u00b7 ' + fmt(B.job.bar - B.best) + ' TO GO')), 68, 44, done ? L.good : L.text, L.shadow);
+
+    // the proven builds: the combos by lift, then the anti-combos by drop
+    rect(cv, 6, 60, 388, 136, L.panel);
+    letters(cv, '#', 10, 63, L.dim, L.shadow); letters(cv, 'BUILD', 44, 63, L.dim, L.shadow); letters(cv, 'GATE', 252, 63, L.dim, L.shadow);
+    letters(cv, 'LIFT', 292, 63, L.dim, L.shadow); letters(cv, 'BY', 338, 63, L.dim, L.shadow); letters(cv, 'KEYS', 356, 63, L.dim, L.shadow);
+    const all = B.combos.concat(B.anti), shown = all.slice(0, BOOK_ROWS);
+    shown.forEach((r, m) => {
+      const y = 74 + m * 18, G = sigilFrom(r.build), f = identicon(r.finder, 1);
+      letters(cv, r.combo ? String(m + 1) : '\u2717', 10, y + 4, r.combo ? GOLD[0] : L.bad, L.shadow);
+      for (const q of span(0, 256)) if (G.cells[q]) dot(cv, 22 + (q % 16), y + div(q, 16), inked(L, G.colors[G.cells[q] - 1]));
+      letters(cv, r.name.length > 33 ? r.name.slice(0, 32) + '\u2026' : r.name, 44, y + 4, r.combo ? L.text : L.dim, L.shadow);
+      letters(cv, fmt(r.gate), 252, y + 4, L.text, L.shadow);
+      letters(cv, signed(r.lift), 292, y + 4, r.combo ? L.good : L.bad, L.shadow);
+      for (const q of span(0, 100)) dot(cv, 338 + (q % 10), y + 3 + div(q, 10), inked(L, (f.px[q * 3] << 16) | (f.px[q * 3 + 1] << 8) | f.px[q * 3 + 2]));
+      letters(cv, String(r.keys), 356, y + 4, L.text, L.shadow);
+    });
+    if (all.length > BOOK_ROWS) letters(cv, 'AND ' + (all.length - BOOK_ROWS) + ' MORE', 44, 184, L.dim, L.shadow);
+    if (!all.length) centred(cv, B.plain ? 'NO COMBO OR ANTI-COMBO PROVEN HERE YET' : 'NOTHING PROVEN HERE YET', 200, 120, L.dim, L.shadow);
+
+    // the foot: how many of each the game has proven here
+    rect(cv, 6, 197, 388, 10, L.panel);
+    letters(cv, B.combos.length + (B.combos.length === 1 ? ' COMBO' : ' COMBOS') + ' \u00b7 ' + B.anti.length + (B.anti.length === 1 ? ' ANTI-COMBO' : ' ANTI-COMBOS') + ' \u00b7 ' + B.plain + ' PLAIN', 8, 198, L.dim, L.shadow);
+    return { ok: true, px: shareOut(cv, L, w, h) };
+  } catch (e) { return no('the book could not be painted'); }
 }

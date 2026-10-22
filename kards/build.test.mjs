@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { KINDS, ROLES, METHODS, SIZES, COMBO_WORDS, checkBuild, buildLift, buildSigil, comboName, paintBuild, checkJobs, paintJobs, checkSheet, paintSheet } from './build.mjs';
+import { KINDS, ROLES, METHODS, SIZES, COMBO_WORDS, checkBuild, buildLift, buildSigil, comboName, paintBuild, checkJobs, paintJobs, checkSheet, paintSheet, checkBook, paintBook } from './build.mjs';
 import { identicon } from './ui.mjs';
 import { THEMES, creatureFront } from './kardart.mjs';
 import { idOf } from './corpus.mjs';
@@ -226,7 +226,7 @@ const P = (s, title, alone, contribution) => ({ card: id(s), head: sha('head-' +
 const COMBO_SHEET = { job: JOB, receipt: { kind: 'build', build: sha('build-combo'), data: 'hospital:ground-1', parts: [P('sc', 'Night Nurse', null, null), P('sb', 'Ward Watch', 560500, 9000), P('sa', 'Triage Sentinel', 571000, 21000)], fielded: 2, gate: 612400, best: 571000, lift: 41400, n: 240, verdict: 'combo', name: 'Triage Sentinel' + X + 'Ward Watch' }, proof: { ok: true, verdict: 'combo', proven: true, keys: KEY.slice(0, 3), finder: KEY[0], refused: [] }, held: [id('sa'), id('sc')] };
 const ANTI_SHEET = { job: { set: 'bank', title: 'Credit Gate', bar: 780582 }, receipt: { kind: 'build', build: sha('build-anti'), data: 'bank:ground-2', parts: [P('aa', 'Census Scout', 770582, -2000), P('ab', 'Credit Oracle', 765000, -8000)], fielded: 2, gate: 762000, best: 770582, lift: -8582, n: 180, verdict: 'anti', name: 'Census Scout' + X + 'Credit Oracle' }, proof: { proven: false, keys: [KEY[3]], finder: KEY[3] } };
 const PLAIN_SHEET = { job: { set: 'telco', bar: 828213 }, receipt: { kind: 'build', build: sha('build-plain'), data: 'telco', parts: [P('pa', 'Roaming Prophet', 818213, 0), P('pb', 'Plan Whisperer', null, null)], fielded: 1, gate: 818213, best: 818213, lift: 0, n: 1, verdict: 'plain', name: 'Roaming Prophet' } };
-const FULL_TITLES = ['A', "O'Hara & Sons Retail", 'Vault Keeper', 'Late Payer Radar', 'Abcdefghijklmnopqrstuvwx', 'Churn Hunter', 'Ledger Guardian', 'Basket Whisperer'];
+const FULL_TITLES = ['A', "O'Hara & Sons Retail", 'Vault Keeper', 'Late Payer Radar', 'Abcdefghijklmnopqrstuvwx', 'Churn Hunter'];
 const FULL_SHEET = { job: { set: 'adult', title: 'Employer', bar: 600000 }, receipt: { kind: 'build', build: sha('build-full'), data: 'adult:ground-4', parts: FULL_TITLES.map((t, i) => P('f' + i, t, i < 5 ? 590000 - i * 2000 : null, i < 5 ? [1000000, 1500, 0, -1500, -1000000][i] : null)), fielded: 5, gate: 593000, best: 590000, lift: 3000, n: 999999, verdict: 'plain', name: FULL_TITLES.slice(0, 5).join(X) }, proof: { proven: true, keys: KEY.slice(0, 2), finder: KEY[0] }, held: FULL_TITLES.map((t, i) => id('f' + i)) };
 const SHEETS = [COMBO_SHEET, ANTI_SHEET, PLAIN_SHEET, FULL_SHEET];
 const ink = (s, t = 'synthwave-v1', w = 400, h = 210) => { const r = paintSheet(s, t, w, h); assert.equal(r.ok, true, r.why); return r.px; };
@@ -261,7 +261,7 @@ test('a build sheet: the game\'s own receipt and proof, read as they are, and re
   for (const receipt of [null, 5, []]) assert.equal(whyOf({ ...COMBO_SHEET, receipt }), 'the receipt must be an object');
   for (const build of ['x', sha('a').toUpperCase(), sha('a') + '0', 5]) assert.equal(R({ build }), 'the receipt build is the build id: 64 lowercase hex characters');
   for (const data of ['bank:ground-1', 'hospitalx', 7, ':hospital']) assert.equal(R({ data }), 'the receipt is for another business than the job: its data must name hospital');
-  for (const parts of ['x', [two[1]], FULL_TITLES.concat('Ninth').map((t, i) => P('n' + i, t, null, null))]) assert.equal(R({ parts }), 'a receipt has 2 to 8 parts');
+  for (const parts of ['x', [two[1]], FULL_TITLES.concat('Seventh').map((t, i) => P('n' + i, t, null, null))]) assert.equal(R({ parts }), 'a receipt has 2 to 6 parts');
   for (const p of [5, null, { ...two[0], card: 'X'.repeat(16) }, { ...two[0], card: id('x').slice(1) }]) assert.equal(R({ parts: [p, two[1]] }), 'every part is a card: 16 lowercase hex characters');
   assert.equal(R({ parts: [two[1], two[1]] }), 'the same card is in the build twice');
   for (const title of ['', 'x'.repeat(25), 'Bad!', 5, 'Triage\u00d7']) assert.equal(R({ parts: [{ ...two[0], title }, two[1]] }), 'a part title is 1 to 24 characters from A-Z a-z 0-9 space & . - and the apostrophe', String(title));
@@ -322,8 +322,8 @@ test('the build sheet: every number of its receipt on it, its parts in the order
   ]) assert.equal(same(base, ink(s)), false, label);
   const fa = creatureFront(id('sa')), qa = solid(fa), fb = creatureFront(id('sb')), qb = solid(fb), fc = creatureFront(id('sc')), qc = solid(fc);
   assert.equal(rgb(base, 20 + (qa % 9), 74 + Math.floor(qa / 9), 400), vox(fa, qa), 'the first to field heads the rows, a pixel a voxel');
-  assert.equal(rgb(base, 20 + (qb % 9), 89 + Math.floor(qb / 9), 400), vox(fb, qb), 'the second next');
-  assert.notEqual(rgb(base, 20 + (qc % 9), 104 + Math.floor(qc / 9), 400), vox(fc, qc), 'the benched one last, dimmed');
+  assert.equal(rgb(base, 20 + (qb % 9), 94 + Math.floor(qb / 9), 400), vox(fb, qb), 'the second next');
+  assert.notEqual(rgb(base, 20 + (qc % 9), 114 + Math.floor(qc / 9), 400), vox(fc, qc), 'the benched one last, dimmed');
   const f = identicon(KEY[0], 1);
   assert.equal(rgb(base, 314, 185, 400), (f.px[44 * 3] << 16) | (f.px[44 * 3 + 1] << 8) | f.px[44 * 3 + 2], 'the finder\'s face');
   assert.equal(rgb(base, 0, 0, 400), 0xffd23c, 'a combo framed in gold'); assert.equal(rgb(ink(ANTI_SHEET), 0, 0, 400), 0xc0283c, 'an anti-combo in red'); assert.notEqual(rgb(ink(PLAIN_SHEET), 0, 0, 400), 0xffd23c);
@@ -359,7 +359,120 @@ test('the build sheet: every number of its receipt on it, its parts in the order
   for (const s of SHEETS) assert.deepEqual(colours(ink(s, 'lcd-v1')).filter((c) => ![0x0f1210, 0x4a5048, 0x9aa095, 0xd8dccf].includes(c)), [], 'the pocket screen is four shades');
 });
 
-test('the pins: builds, the job board and the build sheets, frozen byte for byte', () => {
+// the build book: pages shaped as the game's bookOf() makes them, read as they are
+const BR = (k, titles, best, lift, keys = 2) => ({ id: sha('receipt-' + k), build: sha('build-' + k), name: titles.join(X), gate: best + lift, best, lift, fielded: titles.length, finder: KEY[k % 4], keys });
+const N24 = 'Abcdefghijklmnopqrstuvwx';
+const FULL_BOOK = { job: { set: 'hospital', title: 'The Waiting Room', bar: 650000 }, page: {
+  combos: [BR(1, ['Triage Sentinel', 'Ward Watch'], 571000, 41400, 3), BR(2, ['Census Scout', 'Credit Oracle', 'Vault Keeper'], 560000, 21000), BR(3, [N24, 'Abcdef'], 590000, 12000, 7), BR(4, ["O'Hara & Sons Retail", 'Late Payer Radar', 'A', 'Churn Hunter'], 580000, 9000),
+    BR(5, ['Night Nurse', 'Churn Hunter'], 575000, 8000, 4), BR(6, ['Census Scout', 'Vault Keeper'], 570000, 6000), BR(7, ['A', 'Ward Watch'], 565000, 5500, 99999), BR(8, ['Credit Oracle', 'Night Nurse'], 560000, 5000, 1)],
+  anti: [BR(9, ['Ward Watch', 'Census Scout'], 590000, -8582), BR(10, ['Vault Keeper', 'Triage Sentinel'], 585000, -5100, 3)], plain: 3, best: 612400 } };
+const CLEARED_BOOK = { job: { set: 'bank', title: 'Credit Gate', bar: 600000 }, page: { combos: [BR(11, ['Triage Sentinel', 'Credit Oracle'], 590000, 22000, 5), BR(12, ['Census Scout', 'Ward Watch'], 585000, 7000)], anti: [BR(13, ['Night Nurse', 'Vault Keeper'], 600000, -6000)], plain: 0, best: 612000 } };
+const PLAIN_BOOK = { job: { set: 'telco', bar: 828213 }, page: { combos: [], anti: [], plain: 2, best: 801000 } };
+const EMPTY_BOOK = { job: { set: 'adult', title: 'Employer', bar: 600000 }, page: { combos: [], anti: [], plain: 0, best: null } };
+const BOOKS = [FULL_BOOK, CLEARED_BOOK, PLAIN_BOOK, EMPTY_BOOK];
+const leaf = (b, t = 'synthwave-v1', w = 400, h = 210) => { const r = paintBook(b, t, w, h); assert.equal(r.ok, true, r.why); return r.px; };
+const withPage = (b, patch) => ({ ...b, page: { ...b.page, ...patch } });
+const bookWhy = (x) => checkBook(x).why;
+const lifted = (n, sign) => Array.from({ length: n }, (_, k) => ({ id: sha('many-r' + sign + k), build: sha('many-b' + sign + k), name: 'A' + X + 'B', gate: 500000 + sign * (n - k), best: 500000, lift: sign * (n - k), fielded: 2, finder: KEY[0], keys: 2 })).sort((a, b) => sign * (b.lift - a.lift));
+
+test('a page of the build book: the game\'s own book read as it is, and refused with a reason when it does not add up', () => {
+  const c = checkBook(CLEARED_BOOK);
+  assert.equal(c.ok, true, c.why);
+  const row = (r, combo) => ({ id: r.id, build: r.build, name: r.name, gate: r.gate, lift: r.lift, finder: r.finder, keys: r.keys, combo });
+  assert.deepEqual(c.b, { job: { set: 'bank', title: 'Credit Gate', bar: 600000 }, combos: CLEARED_BOOK.page.combos.map((r) => row(r, true)), anti: CLEARED_BOOK.page.anti.map((r) => row(r, false)), plain: 0, best: 612000 });
+  assert.deepEqual(checkBook(withPage(CLEARED_BOOK, { combos: CLEARED_BOOK.page.combos.map((r) => ({ ...r, note: 'unread' })) })).b, c.b, 'what it does not draw is left unread');
+  for (const b of BOOKS) assert.equal(checkBook(b).ok, true, bookWhy(b));
+  const P = (patch) => bookWhy(withPage(CLEARED_BOOK, patch)), r0 = CLEARED_BOOK.page.combos[0], r1 = CLEARED_BOOK.page.combos[1], a0 = CLEARED_BOOK.page.anti[0];
+  const C = (ch) => P({ combos: [{ ...r0, ...ch }, r1] }), A = (ch) => P({ anti: [{ ...a0, ...ch }] });
+  for (const x of [null, [], 5]) assert.equal(bookWhy(x), 'the book must be an object');
+  assert.match(bookWhy({ ...CLEARED_BOOK, job: { set: 'x', bar: 1 } }), /^the job set must be/);
+  const PAGE = 'a page of the book is { combos, anti, plain, best }, up to 9999 rows of each';
+  for (const page of [null, 5, [], {}, { ...CLEARED_BOOK.page, combos: 'x' }, { ...CLEARED_BOOK.page, anti: 5 }, { ...CLEARED_BOOK.page, combos: Array(10000).fill(r0) }, { ...CLEARED_BOOK.page, anti: Array(10000).fill(a0) }]) assert.equal(bookWhy({ ...CLEARED_BOOK, page }), PAGE);
+  assert.equal(checkBook({ ...CLEARED_BOOK, page: { combos: lifted(9999, 1), anti: lifted(9999, -1), plain: 0, best: 509999 } }).ok, true, '9999 of each');
+  for (const plain of [-1, 100000, 1.5, '2', null]) assert.equal(P({ plain }), 'plain counts the proven builds that are plain: a whole number from 0 to 99999');
+  assert.equal(checkBook(withPage(CLEARED_BOOK, { plain: 99999 })).ok, true);
+  for (const ch of [{ id: 'x' }, { build: sha('b').toUpperCase() }, { id: undefined }]) assert.equal(C(ch), 'every row has its receipt id and its build id, 64 lowercase hex each', JSON.stringify(ch));
+  assert.equal(P({ combos: [5, r1] }), 'every row has its receipt id and its build id, 64 lowercase hex each');
+  const NAMED = 'a row is named by its 2 to 6 fielding parts, their titles joined by " \u00d7 "';
+  for (const ch of [{ name: 'Triage Sentinel', fielded: 1 }, { fielded: 3 }, { fielded: '2' }, { name: 5 }, { name: 'A' + X + X + 'B', fielded: 3 }, { name: 'x'.repeat(25) + X + 'B' }, { name: 'Bad!' + X + 'B' }, { name: Array(7).fill('A').join(X), fielded: 7 }, { name: 'A x B' }])
+    assert.equal(C(ch), NAMED, JSON.stringify(ch));
+  for (const ch of [{ name: Array(6).fill('A').join(X), fielded: 6 }, { name: N24 + X + 'B' }, { name: 'A' + X + 'B' }]) assert.equal(checkBook(withPage(CLEARED_BOOK, { combos: [{ ...r0, ...ch }, r1] })).ok, true, JSON.stringify(ch));
+  const NUMS = 'a row has its gate and best in whole millionths, and its lift is the gate less the best';
+  for (const ch of [{ gate: -1, lift: -591001 }, { gate: 1000001, lift: 410001 }, { best: 1000001, lift: -388001 }, { best: '590000' }, { lift: 22001 }]) assert.equal(C(ch), NUMS, JSON.stringify(ch));
+  assert.equal(C({ gate: 590000, lift: 0 }), 'a combo lifts its build above its best part'); assert.equal(checkBook(withPage(CLEARED_BOOK, { combos: [r0, { ...r1, gate: 585001, lift: 1 }] })).ok, true, 'one millionth up is a combo');
+  assert.equal(A({ gate: 600000, lift: 0 }), 'an anti-combo drops its build below its best part'); assert.equal(checkBook(withPage(CLEARED_BOOK, { anti: [{ ...a0, gate: 599999, lift: -1 }] })).ok, true, 'one millionth down is an anti-combo');
+  for (const ch of [{ finder: 'x' }, { finder: null }, { keys: 0 }, { keys: 100000 }, { keys: 1.5 }]) assert.equal(C(ch), 'a row has its finder (a public key) and how many keys proved it, 1 to 99999', JSON.stringify(ch));
+  assert.equal(P({ combos: [r0, { ...r1, id: r0.id }] }), 'a receipt is in the book once');
+  assert.equal(P({ anti: [{ ...a0, id: r0.id }] }), 'a receipt is in the book once');
+  const RANK = 'the combos go biggest lift first, a tie to the lower build id', DROP = 'the anti-combos go biggest drop first, a tie to the lower build id';
+  assert.equal(P({ combos: [r1, r0] }), RANK);
+  const [lo, hi] = [sha('build-tie-1'), sha('build-tie-2')].sort(), tie = (build, k) => ({ ...r1, id: sha('tie-' + k), build });
+  assert.equal(checkBook(withPage(CLEARED_BOOK, { combos: [r0, tie(lo, 1), tie(hi, 2)] })).ok, true, 'a tie, the lower build id first');
+  assert.equal(P({ combos: [r0, tie(hi, 1), tie(lo, 2)] }), RANK); assert.equal(P({ combos: [r0, tie(lo, 1), tie(lo, 2)] }), RANK);
+  const d0 = { ...a0, id: sha('d0'), build: lo }, d1 = { ...a0, id: sha('d1'), build: hi }, deeper = { ...a0, id: sha('d2'), gate: 590000, lift: -10000 };
+  assert.equal(checkBook(withPage(CLEARED_BOOK, { anti: [deeper, d0, d1] })).ok, true, 'the biggest drop first, then a tie by build id');
+  assert.equal(P({ anti: [d0, deeper] }), DROP); assert.equal(P({ anti: [d1, d0] }), DROP); assert.equal(P({ anti: [d0, { ...d0, id: sha('d3') }] }), DROP);
+  const BEST = 'best is the best proven GATE on the page, at least every row\'s, or null when nothing is proven';
+  for (const best of [null, 611999, -1, 1000001, '612000']) assert.equal(P({ best }), BEST, String(best));
+  assert.equal(checkBook(withPage(CLEARED_BOOK, { best: 1000000 })).ok, true);
+  assert.equal(bookWhy(withPage(EMPTY_BOOK, { best: 0 })), BEST); assert.equal(bookWhy(withPage(PLAIN_BOOK, { best: null })), BEST);
+  assert.equal(checkBook(withPage(PLAIN_BOOK, { best: 0 })).ok, true, 'plain builds alone have a best');
+  assert.equal(bookWhy({ ...CLEARED_BOOK, page: { combos: [], anti: [], get plain() { throw new Error('x'); } } }), 'the book could not be read');
+});
+
+test('the build book: a job\'s proven builds ranked on one page, each with its sigil, its finder and its keys; the same page always the same bytes', () => {
+  for (const t of THEME_IDS) {
+    const h = createHash('sha256');
+    for (const b of BOOKS) { const px = leaf(b, t); assert.equal(px.length, 400 * 210 * 3); assert.equal(same(px, leaf(b, t)), true); h.update(px); }
+    PINS['book ' + t] = h.digest('hex');
+    assert.equal(new Set(BOOKS.map((b) => sha(leaf(b, t)))).size, BOOKS.length, t + ': every page its own');
+  }
+  const base = leaf(CLEARED_BOOK), pg = CLEARED_BOOK.page, [r0, r1] = pg.combos, a0 = pg.anti[0];
+  for (const [label, b] of [
+    ['job title', { ...CLEARED_BOOK, job: { ...CLEARED_BOOK.job, title: 'Loans' } }], ['no job title', { ...CLEARED_BOOK, job: { ...CLEARED_BOOK.job, title: '' } }], ['bar', { ...CLEARED_BOOK, job: { ...CLEARED_BOOK.job, bar: 610000 } }],
+    ['business', { ...CLEARED_BOOK, job: { ...CLEARED_BOOK.job, set: 'credit' } }], ['best', withPage(CLEARED_BOOK, { best: 613000 })], ['plain', withPage(CLEARED_BOOK, { plain: 1 })],
+    ['a name', withPage(CLEARED_BOOK, { combos: [{ ...r0, name: 'Triage Sentinel' + X + 'Credit Oracles' }, r1] })], ['a build id', withPage(CLEARED_BOOK, { combos: [{ ...r0, build: sha('other') }, r1] })],
+    ['a gate', withPage(CLEARED_BOOK, { combos: [{ ...r0, gate: 611900, best: 589900 }, r1] })], ['a lift', withPage(CLEARED_BOOK, { combos: [{ ...r0, best: 589900, lift: 22100 }, r1] })],
+    ['a finder', withPage(CLEARED_BOOK, { combos: [{ ...r0, finder: KEY[2] }, r1] })], ['keys', withPage(CLEARED_BOOK, { combos: [{ ...r0, keys: 6 }, r1] })], ['an anti-combo\'s keys', withPage(CLEARED_BOOK, { anti: [{ ...a0, keys: 3 }] })],
+    ['a row fewer', withPage(CLEARED_BOOK, { combos: [r0] })], ['no anti-combo', withPage(CLEARED_BOOK, { anti: [] })],
+  ]) assert.equal(same(base, leaf(b)), false, label);
+  const f = identicon(r0.finder, 1);
+  assert.equal(rgb(base, 342, 81, 400), (f.px[44 * 3] << 16) | (f.px[44 * 3 + 1] << 8) | f.px[44 * 3 + 2], 'the first combo\'s finder, on the first row');
+  const g = identicon(a0.finder, 1);
+  assert.equal(rgb(base, 342, 117, 400), (g.px[44 * 3] << 16) | (g.px[44 * 3 + 1] << 8) | g.px[44 * 3 + 2], 'the anti-combo after the combos');
+  assert.equal(rgb(base, 0, 0, 400), 0xffd23c, 'a job its best has cleared, framed in gold');
+  const at = (bar) => leaf({ ...CLEARED_BOOK, job: { ...CLEARED_BOOK.job, bar } });
+  assert.equal(rgb(at(612000), 0, 0, 400), 0xffd23c, 'the best exactly at the bar clears it'); assert.notEqual(rgb(at(612001), 0, 0, 400), 0xffd23c, 'and under it does not');
+  assert.notEqual(rgb(leaf(PLAIN_BOOK), 0, 0, 400), 0xffd23c); assert.notEqual(rgb(leaf(EMPTY_BOOK), 0, 0, 400), 0xffd23c, 'nothing proven clears nothing');
+  const panel = rgb(base, 200, 61, 400), quiet = (px) => cset(region(px, 44, 184, 140, 194)).join() === String(panel);
+  const six = withPage(FULL_BOOK, { combos: FULL_BOOK.page.combos.slice(0, 4) }), seven = withPage(FULL_BOOK, { combos: FULL_BOOK.page.combos.slice(0, 5) });
+  assert.ok(quiet(leaf(six)), 'six rows fit, with nothing more to count'); assert.equal(quiet(leaf(seven)), false, 'a seventh is counted');
+  assert.equal(same(leaf(seven), leaf(withPage(FULL_BOOK, { combos: FULL_BOOK.page.combos.slice(0, 6) }))), false, 'and the count is how many more');
+  const named = (name) => leaf(withPage(CLEARED_BOOK, { combos: [{ ...r0, name }, r1] }));
+  assert.equal(same(named(N24 + X + 'Abcdef'), named(N24 + X + 'Abcdeg')), false, 'a name of 33 letters shows whole');
+  assert.ok(same(named(N24 + X + 'Abcdefg'), named(N24 + X + 'Abcdefh')), 'past 33, the first 32 and an ellipsis');
+  assert.equal(same(named(N24 + X + 'Abcdefg'), named(N24 + X + 'Abcdxfg')), false, 'and the 32 are shown');
+  assert.equal(same(leaf(PLAIN_BOOK), leaf(withPage(PLAIN_BOOK, { plain: 1 }))), false, 'plain builds counted');
+  assert.equal(same(region(leaf(PLAIN_BOOK), 60, 118, 340, 130), region(leaf({ ...EMPTY_BOOK, job: PLAIN_BOOK.job }), 60, 118, 340, 130)), false, 'plain builds proven, or nothing at all');
+
+  const big = leaf(CLEARED_BOOK, 'synthwave-v1', 1200, 630), up = new Uint8Array(1200 * 630 * 3);
+  for (let y = 0; y < 630; y++) for (let x = 0; x < 1200; x++) { const o = (Math.floor(y / 3) * 400 + Math.floor(x / 3)) * 3; up.set(base.subarray(o, o + 3), (y * 1200 + x) * 3); }
+  assert.ok(same(big, up), 'the share picture: three pixels a pixel');
+  const h = createHash('sha256');
+  for (const [w, hh] of [[100, 100], [2400, 100], [100, 2400], [333, 777]]) h.update(leaf(FULL_BOOK, 'blueprint-v1', w, hh));
+  PINS['book sizes'] = h.digest('hex');
+  for (const [w, hh] of [[99, 210], [400, 99], [2401, 210], [400, 2401], [400.5, 210], ['400', 210], [null, 210]]) refused(paintBook(CLEARED_BOOK, 'synthwave-v1', w, hh), /^width and height must be whole numbers from 100 to 2400$/);
+  for (const t of ['', 'synthwave', 'toString', null]) refused(paintBook(CLEARED_BOOK, t, 400, 210), /^unknown theme$/);
+  refused(paintBook(withPage(CLEARED_BOOK, { plain: -1 }), 'synthwave-v1', 400, 210), /^plain counts/);
+  const circular = {}; circular.self = circular;
+  for (const x of [null, undefined, 5n, Symbol('s'), circular, { ...CLEARED_BOOK, page: circular }, { ...CLEARED_BOOK, page: { ...pg, combos: [circular] } }, new Proxy({}, { get() { throw new Error('x'); } })]) {
+    assert.doesNotThrow(() => paintBook(x, 'synthwave-v1', 400, 210)); assert.equal(paintBook(x, 'synthwave-v1', 400, 210).ok, false); assert.doesNotThrow(() => checkBook(x));
+  }
+  for (const k of Object.keys(r0)) for (const v of [null, undefined, 0, -1, 'x', [], {}, NaN, 1e9]) assert.doesNotThrow(() => paintBook(withPage(CLEARED_BOOK, { combos: [{ ...r0, [k]: v }, r1] }), 'synthwave-v1', 400, 210), k);
+  for (const b of BOOKS) assert.deepEqual(colours(leaf(b, 'lcd-v1')).filter((c) => ![0x0f1210, 0x4a5048, 0x9aa095, 0xd8dccf].includes(c)), [], 'the pocket screen is four shades');
+});
+
+test('the pins: builds, the job board, the build sheets and the build book, frozen byte for byte', () => {
   const want = {
     'synthwave-v1': '4c3f86d5d914ea95db0e143c96db7b3dff76d193eb34733ec7427217caaf95ea',
     'blockcraft-v1': 'cac4ed0fe350a0ee0f2eb9341e928f56b313f1c218ed1df5112db7a1969acd59',
@@ -372,14 +485,20 @@ test('the pins: builds, the job board and the build sheets, frozen byte for byte
     'jobs lcd-v1': '639bee01b4a476ac87ad6a8dfb5c761313ffa7516c86699c1c90320197aa128e',
     'jobs memphis-v1': '43a837def57f822bc88d290b9df0f077e3e208ea9ff87428cc826f635c1f63d3',
     'jobs blueprint-v1': '9a9ac23561f953595414419ca37c0cc1d716d7292e12cb3d1825139b9fca46b0',
-    'sheet synthwave-v1': '435aa29f04120a03fc62d465a4a2f673e2fc43f629618a148a0cecf87e41f38b',
-    'sheet blockcraft-v1': 'd055e37f0b1007cf8dd6f398492b4966fe8b6e596857e311f4ccf5ab3bc6f1dd',
-    'sheet lcd-v1': '7b451f3828c6491d18dcf77012157ac284bd2f2122ab2d77db8b2f83b037b8c7',
-    'sheet memphis-v1': 'ab58fb3716e4557165ca4e1e3d231b13b90bc232c4d883e597aaf7075b9ccba7',
-    'sheet blueprint-v1': '52e1ddc7487e65efc9fd02d50c7f6c6abdd0e57ff819360de15d391762524dba',
-    'sheet sizes': '34d468f51dc61defae2dd398f1b18eb37b5a9584be6fd32458a743c0e800a3b8',
+    'sheet synthwave-v1': '50e52ccffe45097214925d4d71e73b0ccce36f9d471e2cab2e3b318f128d87e4',
+    'sheet blockcraft-v1': '6ca4062bd69da39b79a1899ba0ed0865ae16140ab837fe1ab30c2776206bf992',
+    'sheet lcd-v1': '497cf1139a162703ae96ca63fd324479fd6dadb58601e709c350942d18ae0240',
+    'sheet memphis-v1': '5e3d8ce0e608f6687f49d47b790e8abc8189cd1d4d811204564e8a8baa19f6d8',
+    'sheet blueprint-v1': 'f50be772bb5247b7a3776e1c0ce20c5349c11aa306d06208a5ac5b336b5051d2',
+    'sheet sizes': '06b137d9327abe080afa8076ee4255d6d0e12bbea9820b55e24a5918c4475c9d',
+    'book synthwave-v1': '77b39aeb17a3aa93be0a94f9055afd45251abb1a5e79ad7d7aa9c2b974c402a6',
+    'book blockcraft-v1': '948f00b30f92bc9cb90c6322de7b27378ab431b41f88cf94d3b9b3c568502ed0',
+    'book lcd-v1': 'f3283c1c0a3f02fe3ca64c0130dc812b66fc855f2b49543ceae27ad939e0812f',
+    'book memphis-v1': '5590f51830aa7209e36051ee74d6b37506ca8d6c836861c88ddb59a945df5e3e',
+    'book blueprint-v1': '40805058a376edc2d86345d8783cfb3b607097b4ef93c37264e3f4a8e55b3972',
+    'book sizes': '834b55ebb030994fd1db7c53eb283a737b04efd206fbe90ac13ae281cf440873',
   };
-  assert.deepEqual(Object.keys(PINS).sort(), [...THEME_IDS, ...THEME_IDS.map((t) => 'jobs ' + t), 'sizes', ...THEME_IDS.map((t) => 'sheet ' + t), 'sheet sizes'].sort());
+  assert.deepEqual(Object.keys(PINS).sort(), [...THEME_IDS, ...THEME_IDS.map((t) => 'jobs ' + t), 'sizes', ...THEME_IDS.map((t) => 'sheet ' + t), 'sheet sizes', ...THEME_IDS.map((t) => 'book ' + t), 'book sizes'].sort());
   assert.deepEqual(PINS, want);
 });
 
