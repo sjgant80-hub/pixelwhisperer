@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { BOSSES, bossHealth, bossSprite, checkRaid, paintRaid } from './raid.mjs';
+import { BOSSES, bossHealth, bossSprite, checkRaid, paintRaid, checkChapter, paintChapter } from './raid.mjs';
 import { THEMES } from './kardart.mjs';
 import { idOf } from './corpus.mjs';
 import { violations } from './source-check.mjs';
@@ -130,6 +130,90 @@ test('sizes: a whole-number scale of 240 x 160, the raid centred, everything fro
     assert.doesNotThrow(() => paintRaid(RAID, x, 240, 160));
     assert.equal(paintRaid(x, 'synthwave-v1', 240, 160).ok, false);
   }
+});
+
+// the campaign's six chapters as DIGI reads them from its drop (src/campaign.mjs chaptersOf), in some states of play
+const HOSP = ['hospital-discharge', 'hospital-clinical', 'hospital-history', 'hospital-admissions', 'hospital-pharmacy'], HB = [580771, 565893, 563159, 546728, 539168];
+const CHAPTERS = [
+  { n: 1, set: 'shop', raids: [], world: { best: 921634, bar: 931634, fallen: true } },
+  { n: 2, set: 'telco', raids: [], world: { best: 818213, bar: 828213, fallen: false } },
+  { n: 3, set: 'adult', raids: [{ domain: 'adult-employer', best: 572118, fallen: true }], world: { best: 807504, bar: 817504, fallen: false }, now: true },
+  { n: 4, set: 'bank', raids: [{ domain: 'bank-credit', best: 569346, fallen: false }], world: { best: 770582, bar: 780582, fallen: false } },
+  { n: 5, set: 'hospital', raids: HOSP.slice(0, 2).map((domain, i) => ({ domain, best: HB[i], fallen: false })), world: { best: 580771, bar: 610000, fallen: false } },
+  { n: 6, set: 'hospital', raids: HOSP.map((domain, i) => ({ domain, best: HB[i], fallen: i < 2 })), world: { best: 580771, bar: 610000, fallen: false } },
+];
+const chap = (c, theme = 'synthwave-v1', w = 240, h = 160) => { const x = paintChapter(c, theme, w, h); assert.equal(x.ok, true, x.why); return x.px; };
+const cpins = {};
+const cwant = {
+  'synthwave-v1': '2619d0fd5d9b35edabf02a5a25305742c0683949891b132e37a2614fb5eb1ce8',
+  'blockcraft-v1': 'e7465c0036324c19f0d5ff2921b1f03c36ebcd21ca981ce0c26f5d8533c47c99',
+  'lcd-v1': 'c64654990d633053b5c267078c44a03658593cdb543604812c0f36debf0bd360',
+  'memphis-v1': '2d33cfb21b7fe333cfed27bed07b5ff0757af2e6a6a31cbdad334329bb07cafd',
+  'blueprint-v1': '7afc4325a3377ce0a8389e12e3fbc4e10e9936cac51f7544107def1cf918e09b',
+  sizes: '3d233247e3e33ecd895bc62a0ad9ffc4df44ee3fae5603256ae31af5de4b66e3',
+};
+test('a chapter of the campaign: read once, and anything that is not one refused with a reason', () => {
+  assert.deepEqual(checkChapter(CHAPTERS[2]), { ok: true, c: { n: 3, set: 'adult', raids: [{ key: 'adult-employer', best: 572118, fallen: true }], world: { best: 807504, bar: 817504, fallen: false }, now: true, cleared: false } });
+  assert.equal(checkChapter(CHAPTERS[0]).c.cleared, true, 'every boss fallen: cleared');
+  assert.equal(checkChapter(CHAPTERS[0]).c.now, false, 'now is false unless it says');
+  assert.equal(checkChapter({ ...CHAPTERS[5], raids: CHAPTERS[5].raids.map((r) => ({ ...r, fallen: true })) }).c.cleared, false, 'not while the world boss stands');
+  assert.equal(checkChapter({ ...CHAPTERS[3], world: { ...CHAPTERS[3].world, fallen: true } }).c.cleared, false, 'not while a department boss stands');
+  for (const x of [null, 5, 'chapter', []]) refused(checkChapter(x), /^the chapter must be an object$/);
+  for (const n of [0, 100, 1.5, '1', null]) refused(checkChapter({ ...CHAPTERS[0], n }), /^n must be a whole number from 1 to 99$/);
+  for (const n of [1, 99]) assert.equal(checkChapter({ ...CHAPTERS[0], n }).c.n, n);
+  for (const set of ['health', '', null, 'Shop']) refused(checkChapter({ ...CHAPTERS[0], set }), /^set must be one of telco, shop, bank, adult, hospital, credit, custom$/);
+  for (const raids of ['x', null, { length: 1 }]) refused(checkChapter({ ...CHAPTERS[0], raids }), /^raids must be an array of at most 5$/);
+  refused(checkChapter({ ...CHAPTERS[5], raids: [...CHAPTERS[5].raids, CHAPTERS[5].raids[0]] }), /^raids must be an array of at most 5$/);
+  assert.equal(checkChapter(CHAPTERS[5]).ok, true, 'five raids');
+  for (const r of [null, 5, []]) refused(checkChapter({ ...CHAPTERS[3], raids: [r] }), /^every raid must be an object$/);
+  refused(checkChapter({ ...CHAPTERS[3], raids: [{ domain: 'adult-employer', best: 5, fallen: false }] }), /^every raid is one of this business's bosses: bank-credit$/);
+  refused(checkChapter({ ...CHAPTERS[0], raids: [{ domain: 'nope', best: 5, fallen: false }] }), /^every raid is one of this business's bosses: $/);
+  refused(checkChapter({ ...CHAPTERS[5], raids: [CHAPTERS[5].raids[0], CHAPTERS[5].raids[0]] }), /^a boss is raided once: hospital-discharge$/);
+  for (const best of [-1, 1000001, 1.5, '5', null]) refused(checkChapter({ ...CHAPTERS[3], raids: [{ ...CHAPTERS[3].raids[0], best }] }), /^a raid's best must be a whole number of millionths from 0 to 1000000$/);
+  for (const best of [0, 1000000]) assert.equal(checkChapter({ ...CHAPTERS[3], raids: [{ ...CHAPTERS[3].raids[0], best }] }).ok, true);
+  for (const fallen of [1, 'yes', null, undefined]) refused(checkChapter({ ...CHAPTERS[3], raids: [{ ...CHAPTERS[3].raids[0], fallen }] }), /^a raid's fallen must be true or false$/);
+  for (const world of [null, 5, []]) refused(checkChapter({ ...CHAPTERS[0], world }), /^the world boss must be an object$/);
+  for (const w of [{ best: 5, bar: 5 }, { best: 6, bar: 5 }, { best: -1, bar: 5 }, { best: 1000001, bar: 1010000 }, { best: 5, bar: 1010001 }, { best: 5, bar: 7.5 }, { best: '5', bar: 9 }]) refused(checkChapter({ ...CHAPTERS[0], world: { ...w, fallen: false } }), /^the world boss's best and bar are whole numbers of millionths, the bar above the best$/);
+  for (const w of [{ best: 5, bar: 6 }, { best: 1000000, bar: 1010000 }, { best: 0, bar: 1 }]) assert.equal(checkChapter({ ...CHAPTERS[0], world: { ...w, fallen: false } }).ok, true, JSON.stringify(w));
+  for (const fallen of [0, 'no', null]) refused(checkChapter({ ...CHAPTERS[0], world: { ...CHAPTERS[0].world, fallen } }), /^the world boss's fallen must be true or false$/);
+  for (const now of [1, 'yes', null]) refused(checkChapter({ ...CHAPTERS[1], now }), /^now must be true or false$/);
+  refused(checkChapter({ ...CHAPTERS[0], now: true }), /^a cleared chapter is not the one to play now$/);
+  refused(checkChapter({ ...CHAPTERS[0], get world() { throw new Error('toxic'); } }), /^the chapter could not be read$/);
+});
+
+test('a chapter on the picture: every boss, its health, the next one to beat, NOW and CLEARED, and the pins that freeze it', () => {
+  for (const t of THEME_IDS) {
+    const h = createHash('sha256');
+    for (const c of CHAPTERS) { const px = chap(c, t); assert.equal(same(px, chap(c, t)), true); h.update(px); }
+    cpins[t] = h.digest('hex');
+  }
+  assert.equal(new Set(CHAPTERS.map((c) => sha(chap(c)))).size, CHAPTERS.length, 'every chapter its own picture');
+  for (const base of [CHAPTERS[3], CHAPTERS[5]]) {
+    const px = chap(base);
+    const changes = [{ n: base.n + 1 }, { world: { ...base.world, best: base.world.best - 5000 } }, { world: { ...base.world, bar: base.world.bar + 5000 } }, { world: { ...base.world, fallen: true } }, { now: !base.now },
+      { raids: base.raids.map((r, i) => (i === base.raids.findIndex((x) => !x.fallen) ? { ...r, best: r.best - 5000 } : r)) }, { raids: base.raids.map((r, i) => (i === base.raids.length - 1 ? { ...r, fallen: !r.fallen } : r)) }];
+    for (const ch of changes) assert.equal(same(px, chap({ ...base, ...ch })), false, JSON.stringify(ch).slice(0, 80));
+  }
+  assert.equal(same(chap(CHAPTERS[4]), chap({ ...CHAPTERS[4], raids: [...CHAPTERS[4].raids].reverse() })), false, 'the order they are played in');
+  assert.ok(same(chap(CHAPTERS[2]), chap({ ...CHAPTERS[2], raids: [{ ...CHAPTERS[2].raids[0], best: 100 }] })), 'a fallen boss shows no health');
+  assert.ok(same(chap(CHAPTERS[0]), chap({ ...CHAPTERS[0], world: { ...CHAPTERS[0].world, best: 5, bar: 9 } })), 'nor a fallen world boss');
+  assert.equal(same(chap(CHAPTERS[3]), chap({ ...CHAPTERS[3], raids: [{ ...CHAPTERS[3].raids[0], best: 569346 - 1500 }] })), false, 'one bar step: 0.1 GATE over the bar\'s width');
+  const three = chap(CHAPTERS[4]), four = chap({ ...CHAPTERS[4], raids: HOSP.slice(0, 3).map((domain, i) => ({ domain, best: HB[i], fallen: false })) });
+  const bossAt = (px, x, y) => (px[(y * 240 + x) * 3] << 16) | (px[(y * 240 + x) * 3 + 1] << 8) | px[(y * 240 + x) * 3 + 2];
+  const B = bossSprite('hospital-discharge', 2), q = [...Array(64 * 64).keys()].find((n) => B.px[n * 4 + 3]), want = (B.px[q * 4] << 16) | (B.px[q * 4 + 1] << 8) | B.px[q * 4 + 2];
+  assert.equal(bossAt(three, 40 - 32 + (q % 64), 110 - 64 + Math.floor(q / 64)), want, 'three stops: each boss at 2 px a cell, first at x 40');
+  const B1 = bossSprite('hospital-discharge', 1), q1 = [...Array(32 * 32).keys()].find((n) => B1.px[n * 4 + 3]);
+  assert.equal(bossAt(four, 30 - 16 + (q1 % 32), 110 - 32 + Math.floor(q1 / 32)), (B1.px[q1 * 4] << 16) | (B1.px[q1 * 4 + 1] << 8) | B1.px[q1 * 4 + 2], 'four stops: 1 px a cell, first at x 30');
+  cpins.sizes = sha(Buffer.concat([chap(CHAPTERS[5], 'memphis-v1', 720, 480), chap(CHAPTERS[2], 'lcd-v1', 64, 200), chap(CHAPTERS[0], 'blueprint-v1', 2048, 160)].map((x) => Buffer.from(x))));
+  assert.deepEqual(cpins, cwant, 'the chapters, pinned');
+  for (const [w, h] of [[63, 160], [240, 2049], [240.5, 160], ['240', 160]]) refused(paintChapter(CHAPTERS[0], 'synthwave-v1', w, h), /^width and height must be whole numbers from 64 to 2048$/);
+  for (const t of ['', 'synthwave', 'toString', null]) refused(paintChapter(CHAPTERS[0], t, 240, 160), /^unknown theme$/);
+  refused(paintChapter({ ...CHAPTERS[0], n: 0 }, 'synthwave-v1', 240, 160), /^n must be/);
+  for (const [w, h, k] of [[240, 160, 1], [480, 320, 2], [720, 480, 3], [64, 64, 1]]) assert.equal(paintChapter(CHAPTERS[5], 'synthwave-v1', w, h).scale, k);
+  const one = chap(CHAPTERS[5], 'blockcraft-v1'), two = chap(CHAPTERS[5], 'blockcraft-v1', 480, 320), wide = chap(CHAPTERS[5], 'blockcraft-v1', 400, 160);
+  for (let y = 0; y < 160; y += 3) for (let x = 0; x < 240; x += 3) { assert.equal(bossAt(one, x, y), (two[((2 * y) * 480 + 2 * x) * 3] << 16) | (two[((2 * y) * 480 + 2 * x) * 3 + 1] << 8) | two[((2 * y) * 480 + 2 * x) * 3 + 2]); assert.equal(bossAt(one, x, y), (wide[(y * 400 + x + 80) * 3] << 16) | (wide[(y * 400 + x + 80) * 3 + 1] << 8) | wide[(y * 400 + x + 80) * 3 + 2]); }
+  const circular = {}; circular.self = circular;
+  for (const x of [null, undefined, 5n, Symbol('s'), circular, { ...CHAPTERS[0], raids: [circular] }, new Proxy({}, { get() { throw new Error('x'); } })]) { assert.doesNotThrow(() => paintChapter(x, 'synthwave-v1', 240, 160)); assert.equal(paintChapter(x, 'synthwave-v1', 240, 160).ok, false); }
 });
 
 test('the raid painter keeps the kernel rules, building on the card engine and the UI kit only', () => {

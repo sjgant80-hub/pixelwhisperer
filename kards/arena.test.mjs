@@ -138,6 +138,44 @@ test('sizes: a whole-number scale of 240 x 160, the arena centred, everything fr
   }
 });
 
+const fwant = {
+  'synthwave-v1': '1cda5cb5ce396b712459d950c816e3a4279fe01e86e514683d0add5c0d682164',
+  'blockcraft-v1': 'fc69fe9ecf3a3216d2d634b9c9887fa89d925a5880188132fb09563df194723c',
+  'lcd-v1': 'b980b365b54a43fe7f77cc19edd46380299304a1344c2ec58d9f34cd9bc72baa',
+  'memphis-v1': '516055d890fd0a72235d44dcd7d4608a97962a742720ea45e3e33e78ac026efa',
+  'blueprint-v1': 'c6513d6c63f707d53cb83a6f13453b04a2a1a0b94aab1990911d00a53e340676',
+};
+test('the read-back: one decided case in focus, ringed on the scoreboard, how each side did on it, and which ranked it better', () => {
+  const kinds = [CASES.findIndex(([a, b]) => a > b), CASES.findIndex(([a, b]) => b > a), CASES.findIndex(([a, b]) => a === b)];
+  assert.ok(kinds.every((k) => k >= 0), 'the batch holds a left case, a right case and a tie');
+  const F = (focus, extra = {}) => ({ ...DUEL, decided: 48, ...extra, focus });
+  assert.deepEqual(checkDuel(F({ at: 3 })).d.focus, { at: 3, truth: null, scores: null });
+  assert.deepEqual(checkDuel(F({ at: 47, truth: 0, scores: [0, 1000000] })).d.focus, { at: 47, truth: 0, scores: [0, 1000000] });
+  assert.equal(checkDuel(DUEL).d.focus, null, 'no focus: none');
+  for (const f of [null, 5, [], 'case']) refused(checkDuel(F(f)), /^focus must be an object$/);
+  for (const at of [-1, 48, 1.5, '3', null, undefined]) refused(checkDuel(F({ at })), /^focus must be on a decided case: at from 0 to decided - 1$/);
+  refused(checkDuel(F({ at: 30 }, { decided: 30 })), /^focus must be on a decided case/);
+  assert.equal(checkDuel(F({ at: 29 }, { decided: 30 })).ok, true, 'the last decided case');
+  refused(checkDuel(F({ at: 0 }, { decided: 0 })), /^focus must be on a decided case/);
+  for (const truth of [2, -1, '1', true]) refused(checkDuel(F({ at: 3, truth })), /^a case's truth is 0 or 1$/);
+  for (const scores of [[1], [1, 2, 3], [-1, 5], [5, 1000001], 'x', [1.5, 2], [1, '2']]) refused(checkDuel(F({ at: 3, scores })), /^scores are \[left, right\], each a whole number of millionths from 0 to 1000000$/);
+  const base = draw(F({ at: kinds[0] }));
+  assert.equal(same(base, draw(DUEL)), false, 'the read-back is on the picture');
+  for (const ch of [{ at: kinds[1] }, { at: kinds[2] }, { at: kinds[0], truth: 1 }, { at: kinds[0], truth: 0 }, { at: kinds[0], scores: [831200, 412000] }]) assert.equal(same(base, draw(F(ch))), false, JSON.stringify(ch));
+  assert.equal(same(draw(F({ at: kinds[0], truth: 1 })), draw(F({ at: kinds[0], truth: 0 }))), false, 'its truth');
+  assert.equal(same(draw(F({ at: kinds[0], scores: [831200, 412000] })), draw(F({ at: kinds[0], scores: [831200, 412100] }))), false, 'the right score');
+  assert.equal(same(draw(F({ at: kinds[0], scores: [831200, 412000] })), draw(F({ at: kinds[0], scores: [831300, 412000] }))), false, 'the left score');
+  assert.equal(same(draw(F({ at: 3 }, { result: null, decided: 30 })), draw(F({ at: 3 }, { result: null, decided: 31 }))), false, 'it stays a replay: the scoreboard still fills');
+  const px = draw(F({ at: 13 })), rgb = (x, y) => (px[(y * 240 + x) * 3] << 16) | (px[(y * 240 + x) * 3 + 1] << 8) | px[(y * 240 + x) * 3 + 2];
+  const x = 25 + 13 * 4, y = 129;
+  for (const [rx, ry] of [[x - 1, y - 2], [x + 3, y - 2], [x - 1, y + 12], [x - 2, y + 5], [x + 4, y + 5]]) assert.equal(rgb(rx, ry), 0xffffff, 'the ring round case 14 at ' + rx + ',' + ry);
+  const second = draw(F({ at: 13 + 48 }, { cases: [...CASES, ...CASES], decided: 96 }));
+  assert.equal((second[((129 - 6 + 12 - 2) * 240 + x - 1) * 3] << 16) | (second[((129 - 6 + 12 - 2) * 240 + x - 1) * 3 + 1] << 8) | second[((129 - 6 + 12 - 2) * 240 + x - 1) * 3 + 2], 0xffffff, 'a case on the second line is ringed there');
+  const fpins = {};
+  for (const t of THEME_IDS) fpins[t] = sha(Buffer.concat([F({ at: kinds[0], truth: 1, scores: [831200, 412000] }), F({ at: kinds[1] }, { result: null, decided: 30 }), F({ at: kinds[2], truth: 0 }, { result: 'refused' }), F({ at: 0, scores: [500000, 500000] }, { result: 'draw' })].map((d) => Buffer.from(draw(d, t)))));
+  assert.deepEqual(fpins, fwant, 'the read-back, pinned');
+});
+
 test('the arena keeps the kernel rules, building on the card engine and the UI kit only', () => {
   assert.deepEqual(violations(readFileSync(new URL('./arena.mjs', import.meta.url), 'utf8'), { imports: ['./kardart.mjs', './ui.mjs'] }), []);
 });

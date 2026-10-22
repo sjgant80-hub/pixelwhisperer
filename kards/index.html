@@ -291,8 +291,8 @@ paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fre
 
 <section id="arena" aria-labelledby="arena-h">
   <h2 id="arena-h">The arena: two cards, one batch of cases</h2>
-  <p>Two scorer cards face each other on the same batch of cases. On each case a card either <b>hits</b> (ranks it right) or <b>misses</b>; the side that hits where the other misses ranked that case better, and anything else is a tie. The scoreboard fills as the cases are decided: each side's hit or miss, and between them a block in the colour of the side that ranked the case better (grey for a tie). The latest case puts a tick or a cross beside each fighter, a rating badge sits over each, and the end is a <b>WIN</b> banner over the winner, a <b>DRAW</b> ribbon across both, or a <b>REFUSED</b> ribbon. The tally is published as <code>duelScore</code>, and the same duel always draws the same picture, so a replay can be checked.</p>
-  <p class="hint">Press <b>Play the duel</b> to watch it a case at a time, <b>One case</b> to step, <b>New duel</b> to deal another pair and batch. The badge over each card is its arena rating; the platform and badge colour are its rarity; the pips under the badge, when a card is kitted, are its node slots, lit for each one fielded. In Kardlings a duel is decided by each card's <b>AUC</b> on the batch: the chance it ranks a case that is truly positive above one that is not (0.5 is a coin toss, 1.0 is perfect). Equal AUCs are a draw.</p>
+  <p>Two scorer cards face each other on the same batch of cases: one set of real cases (rows of the business's own data that neither card learned from), dealt to both. On each case a card either <b>hits</b> (ranks it right) or <b>misses</b>; the side that hits where the other misses ranked that case better, and anything else is a tie. The scoreboard fills as the cases are decided: each side's hit or miss, and between them a block in the colour of the side that ranked the case better (grey for a tie). The latest case puts a tick or a cross beside each fighter, a rating badge sits over each, and the end is a <b>WIN</b> banner over the winner, a <b>DRAW</b> ribbon across both, or a <b>REFUSED</b> ribbon. The tally is published as <code>duelScore</code>, and the same duel always draws the same picture, so a replay can be checked.</p>
+  <p class="hint">Press <b>Play the duel</b> to watch it a case at a time, <b>One case</b> to step, <b>New duel</b> to deal another pair and batch. The badge over each card is its arena rating; the platform and badge colour are its rarity; the pips under the badge, when a card is kitted (it fields helper cards in its node slots, as the kit above shows), are its node slots, lit for each one fielded. In Kardlings a duel is decided by each card's <b>AUC</b> on the batch: the chance it ranks a case that is truly positive above one that is not (0.5 is a coin toss, 1.0 is perfect). Equal AUCs are a draw.</p>
   <div class="work">
     <div>
       <canvas class="card estate" id="arena-canvas" width="720" height="480" role="img" aria-label="A duel"></canvas>
@@ -303,16 +303,19 @@ paintEstate({ cards: [{ id, dataset, stage, rarity, generation, department?, fre
       <div><label for="ar-cases">Cases in the batch</label><select id="ar-cases"><option value="16">16</option><option value="48" selected>48</option><option value="96">96</option><option value="192">192</option></select></div>
       <div><label for="ar-theme">Theme</label><select id="ar-theme"></select></div>
       <div class="full"><label for="ar-result">How the duel ends</label><select id="ar-result"><option value="auto">By the tally (level is a draw)</option><option value="left">The left card wins</option><option value="right">The right card wins</option><option value="draw">A draw</option><option value="refused">Refused</option></select></div>
+      <div class="full"><label for="ar-focus">Read back a case: <output id="o-focus"></output></label><input id="ar-focus" type="range" min="0" max="48" step="1" value="0"></div>
       <div class="actions"><button type="button" class="act alt" id="ar-dl">Download PNG (1200 &times; 630)</button><span class="msg" id="ar-act" role="status" aria-live="polite"></span></div>
       <div class="trace full" id="arena-stats" aria-live="polite"></div>
     </form>
   </div>
   <p class="hint">In this demo each card has a hidden hit rate for the batch and the cases are dealt in your browser; in Kardlings the cases are real, and the AUCs decide the ending. The painter draws whatever duel it is given.</p>
+  <p class="hint"><b>Read back a case</b>: slide to any decided case to hold it in focus, the replay's read-back. It is ringed on the scoreboard, and the middle says how each side did on it and which ranked it better. In Kardlings a replay also gives the case's truth and the two minds' scores (<code>focus.truth</code>, <code>focus.scores</code>) from re-running the receipt; this demo has neither, so it shows neither.</p>
 <pre><code>import { paintDuel, duelScore, checkDuel } from './kards/arena.mjs';
 paintDuel({ left: { id, rarity, rating, title }, right: { id, rarity, rating, title }, cases: [[1, 0], [1, 1], [0, 1]],
             decided: 3, result: null }, 'synthwave-v1', 1200, 630)   // { ok, px, scale } | { ok: false, why }
 // cases: [leftHit, rightHit] per case, 1 to 192. result: null while it runs, then 'left' or 'right' (WIN), 'draw' or 'refused'.
-// duelScore(duel): { left, right, ties, decided, cases }, counting only the decided cases</code></pre>
+// duelScore(duel): { left, right, ties, decided, cases }, counting only the decided cases
+// focus: { at: a decided case (0-based), truth?: 0 | 1, scores?: [left, right] in millionths }: the read-back, that case ringed and told.</code></pre>
 </section>
 
 <section id="fusion" aria-labelledby="fusion-h">
@@ -359,7 +362,7 @@ paintLineage({ id, rarity, parents: [{ id, rarity, parents? }, { id }] }, 'synth
 
 <section id="raids" aria-labelledby="raids-h">
   <h2 id="raids-h">Raids: the departments no card has cleared</h2>
-  <p>Each boss is a department where no card has yet reached a GATE of 0.6 on cases it never saw: five in the hospital (admissions, clinical, pharmacy, history, discharge), bank credit, adult employer and credit billing. A boss's health is its distance to the bar, the published rule <code>bossHealth(best) = max(0, 600000 - best)</code> in millionths of GATE: the bar is full at chance (0.5) and empty at 0.6. When a card clears it the boss breaks apart, and the loot is that first card of its department. Click a boss below, then move the best score. <b>GATE</b> is a card's score on cases it never saw while it learned (an AUC: 0.5 is chance, 1.0 perfect); 0.6 is the bar a department must clear. Once a card reaches it, the boss falls for good and that card is the department's loot: the loot's <code>title</code> is that card's name.</p>
+  <p>Each boss is a department where no card has yet reached a GATE of 0.6 on cases it never saw: five in the hospital (admissions, clinical, pharmacy, history, discharge), bank credit, adult employer and credit billing. A boss's health is its distance to the bar, the published rule <code>bossHealth(best) = max(0, 600000 - best)</code> in millionths of GATE: the bar is full at chance (0.5) and empty at 0.6. When a card clears it the boss breaks apart, and the loot is that first card of its department. Click a boss below, then move the best score. <b>GATE</b> is a card's score on cases it never saw while it learned (an AUC: 0.5 is chance, 1.0 perfect); 0.6 is the bar a department must clear. Reaching the bar is clearing it: once a card reaches it, the boss falls for good and that card is the department's loot: the loot's <code>title</code> is that card's name.</p>
   <div class="icons" id="bosses" role="group" aria-label="The eight bosses"></div>
   <div class="work">
     <div>
@@ -378,6 +381,26 @@ paintLineage({ id, rarity, parents: [{ id, rarity, parents? }, { id }] }, 'synth
 paintRaid({ dataset: 'hospital', department: 'admissions', best: 554000, attempts: 12 }, 'synthwave-v1', 480, 320)   // { ok, px, scale } | { ok: false, why }
 // best: GATE in millionths, or null for no score yet. From 600000 the boss falls: pass loot: { id, rarity, title? }, the first card to clear it.
 // bossSprite(key, scale): a boss's 32 x 32 sprite as RGBA, for a roster</code></pre>
+  <h3>The campaign: the raids as chapters</h3>
+  <p>Each business is a chapter. First come its departments that no card has cleared (its department bosses, the nearest to the 0.6 bar first); last comes the business itself, its <b>world boss</b>, drawn as a crest bearing the business's icon. A world boss is cleared by a <b>party</b> of cards, at its best lone card's GATE plus 0.010, so its bar is its own. Chapters run with the least left to clear first, and a chapter is cleared only when every boss in it has fallen. Every health bar is on one scale: a full bar is 0.1 GATE still to find.</p>
+  <p class="hint">Try it: pick a chapter, then <b>Fell the next boss</b> to watch it go: the fallen boss dims under a gold check, NEXT moves on, and when the last one falls the chapter reads CLEARED and NOW moves to the next chapter. The numbers are the real Kardlings drop's (its admission record); in the game a boss falls only when a receipt says a card cleared its bar.</p>
+  <div class="actions" id="ch-list" role="group" aria-label="The six chapters"></div>
+  <div class="work">
+    <div>
+      <canvas class="card estate" id="chapter-canvas" width="720" height="480" role="img" aria-label="A chapter of the campaign"></canvas>
+      <p class="msg" id="chapter-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="chapter-form" autocomplete="off" novalidate>
+      <div class="actions"><button type="button" class="act" id="ch-strike">Fell the next boss</button><button type="button" class="act alt" id="ch-reset">Start over</button></div>
+      <div><label for="ch-theme">Theme</label><select id="ch-theme"></select></div>
+      <div class="actions"><button type="button" class="act alt" id="ch-dl">Download PNG (1200 &times; 630)</button><span class="msg" id="ch-act" role="status" aria-live="polite"></span></div>
+    </form>
+  </div>
+<pre><code>import { paintChapter, checkChapter } from './kards/raid.mjs';
+paintChapter({ n: 6, set: 'hospital', raids: [{ domain: 'hospital-discharge', best: 580771, fallen: true }, ...],
+               world: { best: 580771, bar: 610000, fallen: false }, now: true }, 'synthwave-v1', 720, 480)   // { ok, px, scale } | { ok: false, why }
+// raids: up to 5 of the business's bosses, in the order they are played; best in millionths; fallen is the receipts' word.
+// world: the business itself, its bar above its best. A chapter is cleared when every boss has fallen; a cleared chapter is never now.</code></pre>
 </section>
 
 <section id="ui" aria-labelledby="ui-h">
@@ -589,7 +612,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 Kardlings</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct Kardlings; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">105</b> in the arena, <b data-kernel="kards/raid.mjs">76</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">135</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -632,7 +655,7 @@ import { costCase, verdict } from './costcase.mjs';
 import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, WORLD_ICONS, identicon, paintText } from './ui.mjs';
 import { paintEstate, estateStats, LANDMARKS, estateDoors, estateDoorAt } from './estate.mjs';
 import { paintDuel, duelScore } from './arena.mjs';
-import { paintRaid, bossHealth, bossSprite, BOSSES } from './raid.mjs';
+import { paintRaid, bossHealth, bossSprite, BOSSES, paintChapter } from './raid.mjs';
 import { paintSlot, kitBadge, worthText } from './gear.mjs';
 import { paintBack, checkBack } from './back.mjs';
 import { paintFusion, fusionVerdict, paintLineage, MAX_TRIES } from './fusion.mjs';
@@ -954,11 +977,12 @@ function ending(d) {   // the demo's ending: the tally decides, level is a draw 
   return v !== 'auto' ? v : s.left > s.right ? 'left' : s.right > s.left ? 'right' : 'draw';
 }
 function renderDuel() {
-  const d = { ...duel, result: ending(duel) }, r = paintDuel(d, $('#ar-theme').value, 720, 480), m = $('#arena-msg'), s = duelScore(d);
+  const at = Number($('#ar-focus').value) - 1; $('#ar-focus').max = String(duel.decided); $('#o-focus').textContent = at < 0 || at >= duel.decided ? 'off' : 'case ' + (at + 1);
+  const d = { ...duel, result: ending(duel), ...(at >= 0 && at < duel.decided ? { focus: { at } } : {}) }, r = paintDuel(d, $('#ar-theme').value, 720, 480), m = $('#arena-msg'), s = duelScore(d);
   if (!r.ok) { m.className = 'msg bad'; m.textContent = r.why + '.'; return; }
   putRGB($('#arena-canvas'), r.px, 720, 480);
   const end = d.result === null ? '' : d.result === 'refused' ? ' · refused' : d.result === 'draw' ? ' · a draw' : ' · ' + d[d.result].title + ' wins';
-  m.className = 'msg ok'; m.textContent = d.left.title + ' (' + d.left.rating + ') against ' + d.right.title + ' (' + d.right.rating + ') · case ' + d.decided + ' of ' + d.cases.length + end;
+  m.className = 'msg ok'; m.textContent = d.left.title + ' (' + d.left.rating + ') against ' + d.right.title + ' (' + d.right.rating + ') · case ' + d.decided + ' of ' + d.cases.length + end + (d.focus ? ' · reading back case ' + (d.focus.at + 1) + ': the left card ' + (d.cases[d.focus.at][0] ? 'hit' : 'missed') + ', the right ' + (d.cases[d.focus.at][1] ? 'hit' : 'missed') : '');
   $('#arena-canvas').setAttribute('aria-label', 'A duel in ' + THEMES[$('#ar-theme').value].name + ': ' + m.textContent);
   stats($('#arena-stats'), [['LEFT RANKED BETTER', s.left], ['RIGHT RANKED BETTER', s.right], ['TIES', s.ties], ['DECIDED', d.decided + ' of ' + d.cases.length]]);
 }
@@ -970,7 +994,7 @@ $('#ar-play').addEventListener('click', () => {
 $('#ar-step').addEventListener('click', () => { clearInterval(timer); if (duel.decided < duel.cases.length) duel.decided++; renderDuel(); });
 $('#ar-new').addEventListener('click', newDuel);
 $('#ar-cases').addEventListener('input', newDuel);
-for (const id of ['#ar-theme', '#ar-result']) $(id).addEventListener('input', renderDuel);
+for (const id of ['#ar-theme', '#ar-result', '#ar-focus']) $(id).addEventListener('input', renderDuel);
 $('#ar-dl').addEventListener('click', () => { const d = { ...duel, result: ending(duel) }; savePNG(paintDuel(d, $('#ar-theme').value, 1200, 630).px, 1200, 630, 'duel-' + d.left.id.slice(0, 6) + '-' + d.right.id.slice(0, 6) + '.png'); saidIn('#ar-act')('Downloaded.'); });
 
 // ── the Fusion Lab: two cards, up to twelve tries, kept only when a try beats both parents ─────────────────────────────────
@@ -1042,6 +1066,35 @@ function renderRaid() {
 }
 for (const id of ['#rd-best', '#rd-tries', '#rd-theme', '#rd-none']) $(id).addEventListener('input', renderRaid);
 $('#rd-loot').addEventListener('click', () => { loot = { id: randHex(8), rarity: pick(RARS) }; if ($('#rd-none').checked || Number($('#rd-best').value) < 600000) { $('#rd-none').checked = false; $('#rd-best').value = '612000'; } renderRaid(); });
+// ── the campaign: the real drop's six chapters, a boss felled at a time ────────────────────────────────────────────────────
+const HOSPITAL = [['hospital-discharge', 580771], ['hospital-clinical', 565893], ['hospital-history', 563159], ['hospital-admissions', 546728], ['hospital-pharmacy', 539168]];
+const CAMPAIGN = [   // the drop's admission record, read into chapters as the game reads it: least left to clear first
+  { n: 1, set: 'shop', raids: [], world: { best: 921634, bar: 931634 } }, { n: 2, set: 'telco', raids: [], world: { best: 818213, bar: 828213 } },
+  { n: 3, set: 'adult', raids: [['adult-employer', 572118]], world: { best: 807504, bar: 817504 } }, { n: 4, set: 'bank', raids: [['bank-credit', 569346]], world: { best: 770582, bar: 780582 } },
+  { n: 5, set: 'credit', raids: [['credit-billing', 552927]], world: { best: 738587, bar: 748587 } }, { n: 6, set: 'hospital', raids: HOSPITAL, world: { best: 580771, bar: 610000 } },
+];
+const fresh = () => CAMPAIGN.map((c) => ({ n: c.n, set: c.set, raids: c.raids.map(([domain, best]) => ({ domain, best, fallen: false })), world: { ...c.world, fallen: false } }));
+let camp = fresh(), campAt = 0;
+for (const id of THEME_IDS) $('#ch-theme').add(new Option(THEMES[id].name, id));
+const clearedCh = (c) => c.raids.every((r) => r.fallen) && c.world.fallen;
+const nowCh = () => camp.findIndex((c) => !clearedCh(c));
+function renderChapter() {
+  const c = { ...camp[campAt], now: campAt === nowCh() }, t = $('#ch-theme').value, r = paintChapter(c, t, 720, 480), m = $('#chapter-msg');
+  if (!r.ok) { m.className = 'msg bad'; m.textContent = r.why + '.'; return; }
+  putRGB($('#chapter-canvas'), r.px, 720, 480);
+  const stops = [...c.raids.map((x) => ({ name: BOSSES.find((b) => b.key === x.domain).name, fallen: x.fallen })), { name: c.set.toUpperCase() + ', THE WORLD BOSS', fallen: c.world.fallen }];
+  const next = stops.find((x) => !x.fallen), down = stops.filter((x) => x.fallen).length;
+  m.className = 'msg ok'; m.textContent = 'Chapter ' + c.n + ', ' + c.set + ': ' + down + ' of ' + stops.length + ' fallen' + (next ? '; next, ' + next.name : '; cleared') + (c.now ? ' (the chapter to play now)' : '') + '.';
+  $('#chapter-canvas').setAttribute('aria-label', 'A chapter of the campaign in ' + THEMES[t].name + '. ' + m.textContent);
+  $('#ch-strike').disabled = !next;
+  for (const b of document.querySelectorAll('#ch-list button')) b.setAttribute('aria-pressed', String(Number(b.dataset.k) === campAt));
+}
+camp.forEach((c, k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'act alt'; b.dataset.k = String(k); b.textContent = 'Chapter ' + c.n + ': ' + c.set; b.addEventListener('click', () => { campAt = k; renderChapter(); }); $('#ch-list').append(b); });
+$('#ch-strike').addEventListener('click', () => { const c = camp[campAt], r = c.raids.find((x) => !x.fallen); if (r) r.fallen = true; else c.world.fallen = true; renderChapter(); });
+$('#ch-reset').addEventListener('click', () => { camp = fresh(); renderChapter(); });
+$('#ch-theme').addEventListener('input', renderChapter);
+$('#ch-dl').addEventListener('click', () => { const c = { ...camp[campAt], now: campAt === nowCh() }; savePNG(paintChapter(c, $('#ch-theme').value, 1200, 630).px, 1200, 630, 'chapter-' + c.n + '-' + c.set + '.png'); saidIn('#ch-act')('Downloaded.'); });
+
 $('#rd-dl').addEventListener('click', () => { const raid = raidNow(), r = paintRaid(raid, $('#rd-theme').value, 1200, 630); if (!r.ok) return saidIn('#rd-act')(r.why + '.'); savePNG(r.px, 1200, 630, 'raid-' + BOSSES[boss].key + '.png'); saidIn('#rd-act')('Downloaded.'); });
 
 // ── the UI kit: crisp pixels for the sample line, every character, every icon, a key's face ─────────────────────────
@@ -1099,6 +1152,7 @@ function heroes() {
   newDuel(); duel.decided = 30; renderDuel();
   newFusion(); fusion.decided = fusion.tried; renderFusion();
   renderRaid();
+  campAt = 5; renderChapter();
   $('#key-in').value = 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07'; renderKey();
   $('#b-maker').value = $('#key-in').value; renderBack();   // the same key as the UI kit's: its face is the mark on the back
   if (!item) { renderItem(); setWork(first, theme); return; }   // the address bar keeps the link the page was opened with

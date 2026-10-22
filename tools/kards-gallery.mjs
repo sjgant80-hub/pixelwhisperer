@@ -13,7 +13,7 @@ import { pngOf } from '../kards/kardpng.mjs';
 import { SAMPLES } from '../kards/samples.mjs';
 import { paintEstate } from '../kards/estate.mjs';
 import { paintDuel } from '../kards/arena.mjs';
-import { paintRaid, bossSprite, BOSSES } from '../kards/raid.mjs';
+import { paintRaid, bossSprite, BOSSES, paintChapter } from '../kards/raid.mjs';
 import { paintSlot } from '../kards/gear.mjs';
 import { paintBack } from '../kards/back.mjs';
 import { paintFusion, paintLineage } from '../kards/fusion.mjs';
@@ -58,6 +58,8 @@ export function gallery(all = false) {
   files.set('fusion.png', png(...fusionSheet()));
   files.set('lineage.png', png(...lineageSheet()));
   files.set('map.png', scene2(paintEstate(MAP, 'blockcraft-v1', 480, 400), 480, 400));
+  files.set('chapters.png', png(...chapterSheet()));
+  files.set('readback.png', scene(paintDuel({ ...DUEL, decided: 48, result: 'left', focus: { at: 11, truth: 1, scores: [831200, 412000] } }, 'synthwave-v1', 480, 320)));
   files.set('inventory.png', png(...iconSheet([...INVENTORY.map((n) => UI_ICONS[n]), ...GEAR_SLOTS.map((n) => UI_ICONS[n]), ...Object.values(FORM_ICONS)])));
   return files;
 }
@@ -114,6 +116,20 @@ const PA = { id: SAMPLES[0].id, rarity: SAMPLES[0].rarity, gate: 874000, title: 
 // the DIGI World map: the sample estate as DIGI draws it (SCORER, TOOLS, KITTED) with the five landmarks along the shore
 export const MAP = { ...ESTATE_ITEMS, items: ESTATE_ITEMS.items.filter((it) => ['app', 'pwa', 'node'].includes(it.form)), districts: ['scorer', 'tools', 'swarm'], names: { swarm: 'KITTED' }, landmarks: ['arena', 'raids', 'fusion', 'mint', 'proof'] };
 const scene2 = (r, w, h) => { if (!r.ok) throw new Error(r.why); const p = pngOf(r.px, w, h); if (!p.ok) throw new Error(p.why); return p.png; };
+// the campaign's six chapters as the drop's admission record gives them, in a state of play: two cleared, the third the one to play
+const HOSPITAL = [['hospital-discharge', 580771], ['hospital-clinical', 565893], ['hospital-history', 563159], ['hospital-admissions', 546728], ['hospital-pharmacy', 539168]];
+export const CHAPTERS = [
+  { n: 1, set: 'shop', raids: [], world: { best: 921634, bar: 931634, fallen: true } }, { n: 2, set: 'telco', raids: [], world: { best: 818213, bar: 828213, fallen: true } },
+  { n: 3, set: 'adult', raids: [{ domain: 'adult-employer', best: 572118, fallen: true }], world: { best: 807504, bar: 817504, fallen: false }, now: true },
+  { n: 4, set: 'bank', raids: [{ domain: 'bank-credit', best: 569346, fallen: false }], world: { best: 770582, bar: 780582, fallen: false } },
+  { n: 5, set: 'credit', raids: [{ domain: 'credit-billing', best: 552927, fallen: false }], world: { best: 738587, bar: 748587, fallen: false } },
+  { n: 6, set: 'hospital', raids: HOSPITAL.map(([domain, best]) => ({ domain, best, fallen: false })), world: { best: 580771, bar: 610000, fallen: false } },
+];
+function chapterSheet() {   // the six chapters at 1x, three to a row
+  const CW = 240, CH = 160, W2 = 3 * CW, px = new Uint8Array(W2 * 2 * CH * 3);
+  CHAPTERS.forEach((c, i) => { const r = paintChapter(c, 'synthwave-v1', CW, CH); if (!r.ok) throw new Error(r.why); for (let y = 0; y < CH; y++) px.set(r.px.subarray(y * CW * 3, (y + 1) * CW * 3), ((Math.floor(i / 3) * CH + y) * W2 + (i % 3) * CW) * 3); });
+  return [px, W2, 2 * CH];
+}
 export const FUSIONS = [
   { a: PA, b: PB, tried: 4, decided: 3, fused: { id: SAMPLES[5].id, rarity: 'legendary', gate: 878300, title: 'Fused Seer' } },
   { a: PA, b: PB, tried: 4, fused: { id: SAMPLES[5].id, rarity: 'legendary', gate: 878300, title: 'Fused Seer' } },
