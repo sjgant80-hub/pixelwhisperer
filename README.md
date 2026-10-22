@@ -93,6 +93,12 @@ The game UI is built from the same blocks as the cards, from one source: `kards/
 
 `paintBook({ job, page }, themeId, w, h) -> { ok, px RGB }` (the same 400 x 210 share picture, 1200 x 630 at 3 x) draws a page of the build book from the game's `bookOf().jobs[ground]` as it is: `{ combos: [rows], anti: [rows], plain, best }`, each row `{ id, build, name, gate, best, lift, fielded, finder, keys }`. The combos come first, biggest lift first, then the anti-combos (marked ✗), biggest drop first; a tie goes to the lower build id. Each row has its rank, a small sigil grown from its build id, its name (cut with … past 33 letters), its GATE, its lift, its finder's face and how many keys proved it; six rows fit and the rest are counted. The head shows the job, its bar and the best proven GATE against it, framed in gold once the best clears the bar; the foot counts the combos, anti-combos and plain builds. It refuses a page whose numbers or order do not add up: a lift that is not the gate less the best, a combo that does not lift or an anti-combo that does not drop, a name that is not its 2 to 6 fielding titles, rows out of order, a receipt twice, or a best below a row's GATE. `checkBook` reads one without drawing it.
 
+#### The hero plate: a crowned card
+
+![two sample heroes' plates in every theme](kards/gallery/heroes.png)
+
+`paintHero({ name, title, set, lit }, themeId, w, h) -> { ok, px RGB, scale, level }` (192 x 60 logical, at the largest whole scale that fits) draws a Kardlings hero's plate from the hero's own record: the crest of its business (the dataset icon the cards wear) under a crown, its name and class lettered in capitals, and six gems for the six steps of its level, each lit or hollow as the record says (the level is how many are lit, in any order). `checkHero` refuses a name or class the font cannot draw or longer than 22 characters, a business that is not one of the six, and anything but six lit-or-not steps. `HERO_ICON` is the crown alone, for a dock. Integer-only, deterministic, total; pinned in every theme.
+
 ### The campaign: the raids as chapters
 
 ![the campaign's six chapters](kards/gallery/chapters.png)

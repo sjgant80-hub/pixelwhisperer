@@ -5,8 +5,8 @@
 //                                          cards: the four sample items, a duel and a raid per theme, a fallen boss, the eight bosses,
 //                                          the inventory icons, an estate holding items, the card backs (signed and unsigned), and the
 //                                          Fusion Lab (fusing, kept, refused per theme) with a fused card's family tree, builds and
-//                                          the job board, the build sheets (four at 1x, and one at the share size) and pages of
-//                                          the build book
+//                                          the job board, the build sheets (four at 1x, and one at the share size), pages of
+//                                          the build book, and two heroes' plates in every theme
 //   node tools/kards-gallery.mjs --all      also write every sample card, each theme, at the DIGI card's size (384 x 560) into kards/gallery/full/
 //   node tools/kards-gallery.mjs --check    exit 1 unless the committed files are exactly what the engine draws now (CI runs this)
 //   node tools/kards-gallery.mjs --out DIR  write somewhere else
@@ -20,6 +20,7 @@ import { paintSlot } from '../kards/gear.mjs';
 import { paintBack } from '../kards/back.mjs';
 import { paintFusion, paintLineage } from '../kards/fusion.mjs';
 import { paintBuild, paintJobs, paintSheet, paintBook } from '../kards/build.mjs';
+import { paintHero } from '../kards/hero.mjs';
 import { createHash } from 'node:crypto';
 import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, paintText } from '../kards/ui.mjs';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
@@ -29,7 +30,7 @@ import { join, dirname } from 'node:path';
 const W = 192, H = 280, COLS = 4;   // a contact-sheet tile: the card's own 192 x 280 canvas, 1:1
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-/** → Map of file name -> PNG bytes, for the contact sheets and hero cards (and every card at full size with all = true). */
+/** \u2192 Map of file name -> PNG bytes, for the contact sheets and hero cards (and every card at full size with all = true). */
 export function gallery(all = false) {
   const files = new Map();
   const png = (px, w, h) => { const r = pngOf(px, w, h); if (!r.ok) throw new Error(r.why); return r.png; };
@@ -67,6 +68,7 @@ export function gallery(all = false) {
   files.set('jobs.png', scene2(paintJobs(JOBS, 'synthwave-v1', 480, 320), 480, 320));
   files.set('sheets.png', png(...sheetsSheet()));
   files.set('books.png', png(...booksSheet()));
+  files.set('heroes.png', png(...heroesSheet()));
   files.set('sheet-share.png', (() => { const r = paintSheet(SHEETS[0], 'blockcraft-v1', 1200, 630); if (!r.ok) throw new Error(r.why); return png(r.px, 1200, 630); })());
   files.set('readback.png', scene(paintDuel({ ...DUEL, decided: 48, result: 'left', focus: { at: 11, truth: 1, scores: [831200, 412000] } }, 'synthwave-v1', 480, 320)));
   files.set('inventory.png', png(...iconSheet([...INVENTORY.map((n) => UI_ICONS[n]), ...GEAR_SLOTS.map((n) => UI_ICONS[n]), ...Object.values(FORM_ICONS)])));
@@ -157,7 +159,7 @@ function buildSheet() {   // the sample builds at 1x, side by side
 // the sample build sheets, from receipts and proofs shaped as the game's measure() and proofOf() make them: a combo proven by
 // three keys (one part not held here), an anti-combo re-run once, a plain build with one part fielding and none re-run, and five
 // parts fielding of six
-const hx = (s) => createHash('sha256').update(s).digest('hex'), SK = [1, 2, 3, 4].map((n) => hx('gallery-key-' + n)), TX = ' × ';
+const hx = (s) => createHash('sha256').update(s).digest('hex'), SK = [1, 2, 3, 4].map((n) => hx('gallery-key-' + n)), TX = ' \u00d7 ';
 const sp = (n, alone, contribution) => ({ card: SAMPLES[n].id, title: SAMPLES[n].title, joined: alone !== null, alone, contribution });
 export const SHEETS = [
   { job: BJOB, receipt: { build: hx('gallery-build-1'), data: 'hospital:ground', parts: [sp(4, 571000, 21000), sp(1, 560500, 9000), sp(2, null, null)], fielded: 2, gate: 612400, best: 571000, lift: 41400, n: 240, verdict: 'combo', name: SAMPLES[4].title + TX + SAMPLES[1].title }, proof: { proven: true, keys: SK.slice(0, 3), finder: SK[0] }, held: [SAMPLES[4].id, SAMPLES[2].id] },
@@ -175,6 +177,16 @@ export const BOOK_PAGES = [
   { job: { set: 'telco', bar: 828213 }, page: { combos: [], anti: [], plain: 2, best: 801000 } },
   { job: { set: 'adult', title: 'Employer', bar: 600000 }, page: { combos: [], anti: [], plain: 0, best: null } },
 ];
+// two sample heroes, as the game's hero screen makes them: a level counted from what is lit, in any order
+export const HEROES = [
+  { name: 'Shop Context', title: 'Shopkeeper Sage', set: 'shop', lit: [true, true, true, false, false, false] },
+  { name: 'Tariff Tamer', title: 'Telecom Tactician', set: 'telco', lit: [true, false, true, false, true, true] },
+];
+function heroesSheet() {   // the sample heroes' plates in every theme at 2x, a theme to a row
+  const SW = 384, SH = 120, themes = Object.keys(THEMES), px = new Uint8Array(SW * 2 * SH * themes.length * 3);
+  themes.forEach((t, ti) => HEROES.forEach((h, hi) => { const r = paintHero(h, t, SW, SH); if (!r.ok) throw new Error(r.why); for (let y = 0; y < SH; y++) px.set(r.px.subarray(y * SW * 3, (y + 1) * SW * 3), ((ti * SH + y) * SW * 2 + hi * SW) * 3); }));
+  return [px, SW * 2, SH * themes.length];
+}
 function booksSheet() {   // the sample pages of the build book at 1x, two by two
   const SW = 400, SH = 210, px = new Uint8Array(SW * 2 * SH * 2 * 3);
   BOOK_PAGES.forEach((b, i) => { const r = paintBook(b, 'synthwave-v1', SW, SH); if (!r.ok) throw new Error(r.why); const ox = (i % 2) * SW, oy = Math.floor(i / 2) * SH; for (let y = 0; y < SH; y++) px.set(r.px.subarray(y * SW * 3, (y + 1) * SW * 3), ((oy + y) * SW * 2 + ox) * 3); });

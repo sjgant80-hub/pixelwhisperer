@@ -139,7 +139,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#builds">Builds</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#builds">Builds</a><a href="#hero">Hero</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -420,6 +420,14 @@ paintBook({ job, page }, 'synthwave-v1', 1200, 630)   // { ok, px }: a page of t
   </ul>
   <p>Nothing throws, and every picture is pinned by sha256 in the tests.</p>
 </section>
+<section id="hero" aria-labelledby="hero-h">
+  <h2 id="hero-h">The hero plate: a crowned card</h2>
+  <p>In Kardlings your <b>hero</b> is one of your cards, crowned: the one you talk to, teach, train and power with your own AI key. Its <b>plate</b> says who it is at a glance: the crest of its business under a crown, its name, its class, and six gems for the six steps of its level, each lit or hollow as the hero's own record says (a level is how many are lit, in any order). The two sample heroes below were just drawn in this tab, in every theme, by <code>kards/hero.mjs</code>, the same file the game uses.</p>
+  <canvas class="card estate" id="hero-canvas" width="768" height="600" role="img" aria-label="Two sample heroes' plates, in every theme"></canvas>
+  <pre><code>import { paintHero, checkHero, HERO_SETS, HERO_STEPS, HERO_ICON } from './kards/hero.mjs';
+paintHero({ name, title, set, lit }, themeId, w, h)   // -> { ok, px RGB, scale, level } | { ok: false, why }</code></pre>
+  <p>A plate refuses, with a reason, a name or class the font cannot draw or longer than 22 characters, a business that is not one of the six, and anything but six lit-or-not steps. Nothing throws, and every picture is pinned by sha256 in the tests.</p>
+</section>
 
 <section id="raids" aria-labelledby="raids-h">
   <h2 id="raids-h">Raids: the departments no card has cleared</h2>
@@ -674,7 +682,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 Kardlings</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct Kardlings; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">331</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">331</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab, <b data-kernel="kards/hero.mjs">33</b> in the hero plate and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -722,6 +730,7 @@ import { paintSlot, kitBadge, worthText } from './gear.mjs';
 import { paintBack, checkBack } from './back.mjs';
 import { paintFusion, fusionVerdict, paintLineage, MAX_TRIES } from './fusion.mjs';
 import { paintBuild, buildLift, checkBuild, paintJobs, paintSheet, paintBook, ROLES } from './build.mjs';
+import { paintHero } from './hero.mjs';
 
 const $ =(s, r = document) => r.querySelector(s);
 const THEME_IDS = Object.keys(THEMES);
@@ -1154,6 +1163,13 @@ function dealBook() {
   const plain = byte() % 5, gates = combos.concat(anti).map((r) => r.gate);
   bookPage = { job, page: { combos, anti, plain, best: gates.length || plain ? Math.max(0, ...gates, plain ? job.bar - 30000 + byte() * 120 : 0) : null } };
   renderBook();
+}
+// the hero plates: two sample heroes in every theme at 2 x, a theme to a row
+{
+  const HEROES = [{ name: 'Shop Context', title: 'Shopkeeper Sage', set: 'shop', lit: [true, true, true, false, false, false] }, { name: 'Tariff Tamer', title: 'Telecom Tactician', set: 'telco', lit: [true, false, true, false, true, true] }];
+  const W = 384, H = 120, px = new Uint8Array(768 * 600 * 3);
+  THEME_IDS.forEach((t, ti) => HEROES.forEach((h, hi) => { const r = paintHero(h, t, W, H); if (r.ok) for (let y = 0; y < H; y++) px.set(r.px.subarray(y * W * 3, (y + 1) * W * 3), ((ti * H + y) * 768 + hi * W) * 3); }));
+  putRGB($('#hero-canvas'), px, 768, 600);
 }
 function renderBook() {
   const t = $('#bd-theme').value, r = paintBook(bookPage, t, 1200, 630), m = $('#book-msg'), P = bookPage.page, J = bookPage.job;
