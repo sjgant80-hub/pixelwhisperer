@@ -211,7 +211,7 @@ paintBack({ maker: publicKeyHex, serial: 123 }, 'synthwave-v1', 384, 560)   // {
 
 <section id="items" aria-labelledby="items-h">
   <h2 id="items-h">Items: apps, pwas, nodes, talkers and routers</h2>
-  <p>A card can be more than a scorer. Its <code>form</code> says what it is: an <b>app</b> is drawn as a window, a <b>pwa</b> as a phone with a bolt, a <b>node</b> as a server, a <b>talker</b> as a terminal with a speech bubble, a <b>router</b> (it picks, case by case, which of its owner's allies answers) as an antenna. Every theme draws the object its own way, from the item's own facts: its name, its form's icon, the source it was minted from, the gear slot it fits, its id and barcode, and a frame in the rarity its verified tier earns (<b>prototype</b> common, <b>works</b> uncommon, <b>proven</b> rare). A scorer card, which names no form, is drawn exactly as before, byte for byte. The form is one of the card's facts like any other: a card with a different form is a different card, with a different face.</p>
+  <p>A card can be more than a scorer. Its <code>form</code> says what it is: an <b>app</b> is drawn as a window, a <b>pwa</b> as a phone with a bolt, a <b>node</b> as a server, a <b>talker</b> as a terminal with a speech bubble, a <b>router</b> (it picks, case by case, which of its owner's allies answers) as an antenna. Every theme draws the object its own way, from the item's own facts: its name, its form's icon, the source it was minted from, the gear slot it fits, its id and barcode, and a frame in the rarity its verified tier earns (<b>prototype</b> common, <b>works</b> uncommon, <b>proven</b> rare). An app that stands in for a rented tool can say which: given a <code>retires</code> line (at most 60 characters, wrapped onto two lines at word breaks, a <b>~</b> ending what does not fit), the card shows <b>RETIRES</b> and that line where the licence and the tier ladder were; Kardlings’ gear cards carry it. A scorer card, which names no form, is drawn exactly as before, byte for byte. The form is one of the card's facts like any other: a card with a different form is a different card, with a different face.</p>
   <div class="work">
     <div class="preview">
       <canvas class="card" id="item-canvas" width="384" height="560" role="img" aria-label="An item card"></canvas>
@@ -221,9 +221,10 @@ paintBack({ maker: publicKeyHex, serial: 123 }, 'synthwave-v1', 384, 560)   // {
       <div><label for="i-form">Form</label><select id="i-form"></select></div>
       <div><label for="i-tier">Verified tier</label><select id="i-tier"></select></div>
       <div class="full"><label for="i-name">Name (at most 24 of A-Z a-z 0-9 space &amp; ' . -)</label><input id="i-name" maxlength="24" value="Churn Radar"></div>
-      <div><label for="i-source">Minted from (1 to 20 of A-Z a-z 0-9 . -)</label><input id="i-source" maxlength="20" spellcheck="false" value="divorcerbot"></div>
+      <div><label for="i-source">Minted from (1 to 22 of A-Z a-z 0-9 . -)</label><input id="i-source" maxlength="22" spellcheck="false" value="divorcerbot"></div>
       <div><label for="i-theme">Theme</label><select id="i-theme"></select></div>
       <div class="full" style="display:flex;align-items:center;gap:8px"><input id="i-kit" type="checkbox" style="width:auto;min-height:0"><label for="i-kit" style="margin:0">Name the slot in the words of the Kardlings kit (a node slot, a tool slot)</label></div>
+      <div class="full"><label for="i-retires">Retires: the rented tool an app stands in for (optional, at most 60 of A-Z a-z 0-9 space &amp; ' . -)</label><input id="i-retires" maxlength="60" value="" placeholder="a rented AI search engine"></div>
       <div class="full"><label for="i-id">Id (16 lowercase hex)</label><div class="row"><input id="i-id" maxlength="16" spellcheck="false"><button type="button" class="act alt" id="i-roll">Roll an id</button></div></div>
       <div class="actions"><button type="button" class="act" id="i-dl">Download PNG</button><button type="button" class="act alt" id="i-json">Copy the facts as JSON</button><span class="msg" id="i-act" role="status" aria-live="polite"></span></div>
     </form>
@@ -683,7 +684,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 Kardlings</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct Kardlings; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">298</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">331</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab, <b data-kernel="kards/hero.mjs">33</b> in the hero plate and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">314</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">331</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab, <b data-kernel="kards/hero.mjs">33</b> in the hero plate and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -887,12 +888,12 @@ const pick = (a) => a[crypto.getRandomValues(new Uint8Array(1))[0] % a.length];
 const byte = () => crypto.getRandomValues(new Uint8Array(1))[0];
 
 // ── items: the item workshop and the gear slots ───────────────────────────────────────────────────────────────────────────
-const I = { form: $('#i-form'), tier: $('#i-tier'), name: $('#i-name'), source: $('#i-source'), theme: $('#i-theme'), id: $('#i-id') };
+const I = { form: $('#i-form'), tier: $('#i-tier'), name: $('#i-name'), source: $('#i-source'), theme: $('#i-theme'), id: $('#i-id'), retires: $('#i-retires') };
 for (const f of FORMS.slice(1)) I.form.add(new Option(f, f));
 for (const t of TIERS) I.tier.add(new Option(t, t));
 for (const id of THEME_IDS) I.theme.add(new Option(THEMES[id].name, id));
 I.form.value = 'app'; I.tier.value = 'works'; I.theme.value = 'synthwave-v1'; I.id.value = '7c41e2a9d05b38f6';
-const readItem = () => ({ form: I.form.value, id: I.id.value.trim(), name: I.name.value, source: I.source.value.trim(), tier: I.tier.value, ...($('#i-kit').checked ? { kit: true } : {}) });
+const readItem = () => ({ form: I.form.value, id: I.id.value.trim(), name: I.name.value, source: I.source.value.trim(), tier: I.tier.value, ...($('#i-kit').checked ? { kit: true } : {}), ...(I.retires.value.trim() ? { retires: I.retires.value.trim().replace(/ +/g, ' ') } : {}) });
 $('#i-kit').addEventListener('input', () => renderItem());
 let lastItem = null;
 function slotFigure(slot, label) {   // one kit slot, drawn by paintSlot in the item's theme, at twice its size

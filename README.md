@@ -30,7 +30,9 @@ paintArt(facts, themeId, w, h)   // -> { ok: true, px: Uint8Array(w*h*3) }  RGB 
 
 `facts = { id (16 lowercase hex), title (at most 24 of A-Za-z0-9 space & ' . -), dataset (telco | shop | bank | adult | hospital | credit | custom), department (at most 16 of a-z 0-9 -), stage (0-99), rarity (common | uncommon | rare | epic | legendary), generation (0-99), parents (0-2 ids) }`. Anything else is refused. The Kardlings card calls it with `384 x 560`: the card is 384 x 576 and its top 16 rows are its data band.
 
-Also exported: `checkFacts(facts)` (the same validation on its own: `{ ok, f } | { ok: false, why }`) and `spriteOf(id)` (the Kardling an id makes).
+An **item** (an app, pwa, node, talker or router) has `{ form, id, name (at most 24), source (1 to 22 of A-Za-z0-9 . -), tier (prototype | works | proven), spdx?, kit?, retires? }` instead. `retires` is the rented tool an app stands in for (at most 60 of A-Za-z0-9 space & ' . -, single-spaced, no word over 27): the card then shows **RETIRES** and that line on two lines where the licence and the tier ladder were, wrapped at word breaks by `retiresLines()`, a `~` ending what does not fit. Kardlings' gear cards carry it. Without it every item draws exactly as before.
+
+Also exported: `checkFacts(facts)` (the same validation on its own: `{ ok, f } | { ok: false, why }`), `spriteOf(id)` (the Kardling an id makes), `retiresLines(s)` and `RETIRES_MAX` (60).
 
 - **Integer arithmetic only** in drawing: no `Math.sin / cos / sqrt / pow / random`, no `Date`, no float literal. A test reads the source and fails if one appears.
 - **`THEMES` is append-only.** A published theme is never changed: a redesign is a new id (`synthwave-v2`), so old cards still re-draw exactly. Pinned sha256 hashes guard every published theme (`kards/kardart.pins.mjs`).
