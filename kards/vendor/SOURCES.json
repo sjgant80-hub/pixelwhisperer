@@ -1,0 +1,14 @@
+{
+  "what": "the sourced cost basis the page's cost case reads (ONS pay, ONS CPI, DESNZ electricity, Intel processor power): every external figure with where it came from",
+  "note": "Copied byte for byte with git show (not a working copy) from the commit named. Never edit it here: re-vendor. kards/basis.mjs carries the same JSON for the page; a test checks the two agree and this hash holds.",
+  "files": [
+    {
+      "path": "kards/vendor/basis.json",
+      "repo": "sjgant80-hub/liveware",
+      "commit": "48205c71f6ba923182beaccf51fc656b4174b785",
+      "src": "vendor/ai-first-company/vendor/sovereign-enterprise/data/basis.json",
+      "upstream": "sjgant80-hub/sovereign-enterprise data/basis.json, vendored into sjgant80-hub/ai-first-company and from there into liveware",
+      "sha256": "83e9c2effa2f81596dcfa7110f030940032c1910cdf928d27d628ae59d73bb42"
+    }
+  ]
+}

@@ -9,8 +9,13 @@ jobs:
         with: { node-version: "22" }
       - name: tests of the art engine, the PNG writer and the proof tools (every file on its own)
         run: node --test kards/*.test.mjs
-      - name: the witness harness is the estate's, byte for byte (dex-frontier .witness/witness.mjs)
-        run: echo "1e746a48fcb2f02f563e6450e7bf95bdb0b8f177d40b6f90af9aa4e5c9433113  .witness/witness.mjs" | sha256sum -c -
+      - name: the witness harness is witness v0.6, byte for byte (pinned tag, pinned commit, pinned hashes)
+        run: |
+          git clone --depth 1 --branch v0.6 https://github.com/sjgant80-hub/witness.git /tmp/witness
+          test "$(git -C /tmp/witness rev-parse HEAD)" = "f04fe3047e3d49b98c67713befd5b77182afa0d4" || { echo "::error::the v0.6 tag no longer names the vendored commit"; exit 1; }
+          cmp .witness/witness.mjs /tmp/witness/witness.mjs
+          cmp .witness/runner.mjs /tmp/witness/runner.mjs
+          printf '%s  %s\n' 9918297aa5f8fc4e1d26d9e6b25226f56102fdc04f0c634155bfcba1c086ef48 .witness/witness.mjs e85f13b1b30c40c045bcb7997a5d73808c14684dcd161c4a2ea14caaf47c3a0e .witness/runner.mjs | sha256sum -c -
       - name: mutation witness - every mutant of every kernel (art and items, png, cost case, UI kit, font, estate, arena, raids, kit slots, card backs, Fusion Lab, campaign, read-back, builds, build sheet, build book, hero plate) killed, none baselined
         run: node witness-kards.mjs | tee witness.txt
       - name: the gallery images are exactly what the engine draws

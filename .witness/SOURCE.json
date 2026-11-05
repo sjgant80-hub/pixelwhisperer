@@ -1,7 +1,11 @@
 {
-  "what": "the estate's mutation + fuzz harness, vendored byte for byte for witness-kards.mjs",
-  "source": "sjgant80-hub/dex-frontier .witness/witness.mjs",
-  "commit": "c3491b1f63ba2ea991da733f7d98829d3fadc06a",
-  "sha256": "1e746a48fcb2f02f563e6450e7bf95bdb0b8f177d40b6f90af9aa4e5c9433113",
-  "note": "CI re-checks the hash; do not edit witness.mjs here. Fix it upstream and re-vendor."
+  "what": "the estate's mutation + fuzz gate, witness v0.6, vendored byte for byte for witness-kards.mjs (witness.mjs and the runner it spawns every test command under)",
+  "source": "sjgant80-hub/witness, tag v0.6",
+  "commit": "f04fe3047e3d49b98c67713befd5b77182afa0d4",
+  "files": {
+    "witness.mjs": "9918297aa5f8fc4e1d26d9e6b25226f56102fdc04f0c634155bfcba1c086ef48",
+    "runner.mjs": "e85f13b1b30c40c045bcb7997a5d73808c14684dcd161c4a2ea14caaf47c3a0e"
+  },
+  "replaces": "the dex-frontier copy of the harness (commit c3491b1, sha256 1e746a48...): v0.6 also mutates operators inside string literals, so one more mutant is judged (arena.mjs, a refusal's wording, killed by its exact-message test)",
+  "note": "CI clones witness at tag v0.6, checks the tag still names this commit, and compares both files byte for byte and by hash; do not edit them here. Fix upstream and re-vendor with git show (LF bytes), never from a Windows working copy."
 }

@@ -102,6 +102,14 @@ pre code{border:0;padding:0;background:none}
 .trace div{background:#10052a;border:1px solid var(--line);border-radius:6px;padding:6px 10px}
 .trace span{display:block;color:var(--muted);font-size:.78rem}
 .trace code{overflow-wrap:anywhere}
+.dgwrap{margin:10px 0 6px}
+.dg{display:block;width:100%;max-width:560px;height:auto}
+.dg .bx{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.dg .bx.k{stroke:var(--magenta)}
+.dg .t{fill:var(--cyan);font:700 12px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.dg .v{fill:var(--ink);font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
+.dg .ar{stroke:var(--muted);stroke-width:1.5}
+.dg .ah{fill:var(--muted)}
 footer{margin:46px 0 40px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:.9rem}
 .sr{position:absolute;left:-9999px}
 canvas.estate{aspect-ratio:auto;max-width:100%}
@@ -129,6 +137,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
  <div class="herotext">
   <p class="eyebrow">PixelWhisperer Kards &middot; the Kardlings card's art engine</p>
   <h1>Every card has a <span>face</span> only its facts can draw.</h1>
+  <p class="lede"><b>In plain words:</b> give this engine a card's facts and it draws that card's picture, the same picture on every device, so anyone can check that a card's picture is honest by drawing it again.</p>
   <p class="lede">A Kardlings card is a sealed picture that carries an ownable intelligence, one that grows as it proves itself. This engine draws that picture: a <b>Kardling</b> born from the card's own id, in the world its theme paints (neon synthwave, blockcraft islands, a four-shade pocket screen, Memphis pop, an engineering blueprint, and whatever is added next), with the title, level, rarity, dataset, lineage and id printed in a pixel font. It draws the game around the cards too: the back of every card with its maker's mark, item cards (apps, pwas, nodes, talkers, routers), the estate a player grows, duels in the arena, the Fusion Lab with its family trees, and the raid bosses. It is drawn with whole numbers only, so any browser re-draws the same bytes, and a reader can refuse any card whose picture is not the one its facts make.</p>
   <p class="byline">Built by <b>Kar</b>, the estate's resident builder, as a side build for PixelWhisperer. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
   <ul class="badges" aria-label="Facts about this build">
@@ -139,7 +148,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#builds">Builds</a><a href="#hero">Hero</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#builds">Builds</a><a href="#hero">Hero</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#paper">White paper</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -537,12 +546,58 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 <section id="how" aria-labelledby="how-h">
   <h2 id="how-h">How it works</h2>
   <p>Nothing about a face is random and nothing about it is stored. The card's facts go in; the same bytes come out, every time, everywhere.</p>
+  <h3>The flow, drawn from the code</h3>
+  <p class="hint">Each box is a step <code>paintArt</code> takes in <code>kardart.mjs</code>, in order. The second line of each box is the workshop card above, traced live as it is drawn: change a fact there and watch it move here.</p>
+  <figure class="dgwrap">
+<svg class="dg" id="how-svg" viewBox="0 0 360 520" role="img" aria-labelledby="how-svg-t" aria-describedby="how-svg-d">
+<title id="how-svg-t">How paintArt draws a card's face, step by step</title>
+<desc id="how-svg-d">Eight steps from the card's facts to its RGB bytes, then a reader re-drawing the face and comparing the bytes. The second line of each step shows the workshop card's real values, traced as it is drawn.</desc>
+<defs><marker id="dg-ah" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path class="ah" d="M0,0 L8,4 L0,8 z"/></marker></defs>
+<rect class="bx" x="10" y="8" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="25">1 · checkFacts(facts)</text>
+<text class="v" x="20" y="41" id="dg-1">the facts are accepted, or refused with a reason</text>
+<line class="ar" x1="180" y1="51" x2="180" y2="61" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="64" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="81">2 · whiten(id): a 4-round Feistel network</text>
+<text class="v" x="20" y="97" id="dg-2">64 bits in, 64 bits out, no two ids alike</text>
+<line class="ar" x1="180" y1="107" x2="180" y2="117" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="120" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="137">3 · reader(hi, lo): the genome</text>
+<text class="v" x="20" y="153" id="dg-3">head, torso, legs, arms, crown, eyes, mouth, back</text>
+<line class="ar" x1="180" y1="163" x2="180" y2="173" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="176" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="193">4 · modelOf(genome): the Kardling</text>
+<text class="v" x="20" y="209" id="dg-4">a 9 x 14 x 7 voxel body, one piece, with eyes</text>
+<line class="ar" x1="180" y1="219" x2="180" y2="229" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="232" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="249">5 · THEMES[themeId].scene: the world</text>
+<text class="v" x="20" y="265" id="dg-5">the theme paints the art window around it</text>
+<line class="ar" x1="180" y1="275" x2="180" y2="285" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="288" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="305">6 · chrome + frame: the facts printed</text>
+<text class="v" x="20" y="321" id="dg-6">title, LV bar, rarity, lineage, id barcode</text>
+<line class="ar" x1="180" y1="331" x2="180" y2="341" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="344" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="361">7 · nearest-pixel scale</text>
+<text class="v" x="20" y="377" id="dg-7">192 x 280 logical pixels to the size asked</text>
+<line class="ar" x1="180" y1="387" x2="180" y2="397" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="400" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="417">8 · { ok: true, px }: RGB bytes</text>
+<text class="v" x="20" y="433" id="dg-8">the same bytes on every device, every time</text>
+<line class="ar" x1="180" y1="443" x2="180" y2="453" marker-end="url(#dg-ah)"/>
+<rect class="bx k" x="10" y="456" width="340" height="56" rx="6"/>
+<text class="t" x="20" y="473">9 · a card reader re-draws and compares</text>
+<text class="v" x="20" y="489">the same bytes: the card opens</text>
+<text class="v" x="20" y="504">one byte off: the card is refused</text>
+</svg>
+  </figure>
+  <h3>Each step, in words</h3>
   <ol class="flow">
     <li><b>Check the facts</b><small><code>checkFacts</code> accepts exactly what a Kardlings card can hold and refuses everything else, with a reason.</small></li>
     <li><b>Whiten the id</b><small>The 16 hex digits become 64 bits and pass through a 4-round Feistel network, so ids that differ by one digit look nothing alike. It is a bijection: no two ids share a genome.</small></li>
     <li><b>Read the genome</b><small>Every one of the 64 bits picks something: head, torso, legs, arms, crown, eyes, mouth, back, pattern, two colours and a 34-bit speckle.</small></li>
     <li><b>Build the Kardling</b><small>A symmetric voxel model, 9 &times; 14 &times; 7. Always one connected piece, always with eyes.</small></li>
-    <li><b>Draw the world</b><small>The theme paints the art window: synthwave in a neon front view, blockcraft in isometric blocks, pocket LCD in four dithered shades, Memphis in flat pop colour. All integer geometry.</small></li>
+    <li><b>Draw the world</b><small>The theme paints the art window: synthwave in a neon front view, blockcraft in isometric blocks, pocket LCD in four dithered shades, Memphis in flat pop colour, blueprint as an engineering drawing with its dimensions. All integer geometry.</small></li>
     <li><b>Print the chrome</b><small>Title, LV bar, dataset icon, department, rarity, lineage and id in a 5 &times; 9 pixel font, then the rarity frame.</small></li>
     <li><b>Scale to the size asked</b><small>The face is a 192 &times; 280 pixel canvas. At a Kardlings card's 384 &times; 560 each pixel is exactly 2 &times; 2. Other sizes pick the nearest pixel.</small></li>
     <li><b>Hand back RGB bytes</b><small><code>{ ok: true, px }</code>. The PNG writer is separate and also deterministic.</small></li>
@@ -556,32 +611,51 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 
 <section id="blueprint" aria-labelledby="bp-h">
   <h2 id="bp-h">The blueprint</h2>
-  <p>One pure ES module, no imports, no browser or Node APIs. The organs, in the order a card flows through them:</p>
+  <p>The engine is one pure ES module with no imports and no browser or Node APIs; the game's painters build on it, one file each. Organ by organ, in the order a card flows through them, with the proof each one carries in this repository. A mutant count is how many deliberate bugs the witness plants in that file; every one must make its tests fail, and none is written off. A test checks each count against the witness itself.</p>
   <div class="tw" role="region" aria-label="Blueprint organs (scrolls sideways on a small screen)" tabindex="0"><table>
-    <thead><tr><th scope="col">Organ</th><th scope="col">What it owns</th></tr></thead>
+    <thead><tr><th scope="col">Organ</th><th scope="col">What it owns</th><th scope="col">Its proof, as the repo shows it</th></tr></thead>
     <tbody>
-      <tr><td><code>checkFacts</code></td><td>the contract: id (16 hex), title (&le; 24, <code>A-Za-z0-9 &amp;'.-</code>), dataset, department (&le; 16, <code>a-z0-9-</code>), stage 0-99, rarity, generation 0-99, up to 2 parents. Total: never throws.</td></tr>
-      <tr><td><code>whiten</code> / <code>reader</code></td><td>id to 64 bits, bit by bit. Integer hash only (<code>Math.imul</code>, shifts).</td></tr>
+      <tr><td><code>checkFacts</code></td><td>the contract: id (16 hex), title (&le; 24, <code>A-Za-z0-9 &amp;'.-</code>), dataset, department (&le; 16, <code>a-z0-9-</code>), stage 0-99, rarity, generation 0-99, up to 2 parents. Total: never throws.</td><td rowspan="8">inside <code>kardart.mjs</code>: <code>kardart.test.mjs</code> (refusals, every fact shows, 1,000 ids to 1,000 Kardlings, connectivity, the static source check), <code>items.test.mjs</code> and the pinned smoke test <code>kardart.smoke.test.mjs</code>; <b data-bp="kards/kardart.mjs">314</b> mutants, all killed</td></tr>
+      <tr><td><code>whiten</code> / <code>reader</code></td><td>id to 64 bits through a 4-round Feistel network, then read bit by bit. Integer hash only (<code>Math.imul</code>, shifts).</td></tr>
       <tr><td><code>modelOf</code> / <code>spriteOf</code></td><td>the genome to a 9 &times; 14 &times; 7 voxel Kardling, mirrored, with speckle.</td></tr>
-      <tr><td><code>itemModel</code> / <code>itemChrome</code></td><td>an item (<code>facts.form</code>: app, pwa, node, talker) as its object in the same voxel grid, so each theme draws it as it draws a Kardling, and its own panel: form, tier ladder, source, gear slot, id.</td></tr>
+      <tr><td><code>itemModel</code> / <code>itemChrome</code></td><td>an item (<code>facts.form</code>: app, pwa, node, talker, router) as its object in the same voxel grid, so each theme draws it as it draws a Kardling, and its own panel: form, tier ladder, source, gear slot, id.</td></tr>
       <tr><td>font and icons</td><td>a 5 &times; 9 pixel font (66 glyphs) and seven 16 &times; 16 dataset icons, kept as readable art in the source.</td></tr>
       <tr><td><code>chrome</code> / <code>frame</code></td><td>everything that is the same in every theme: plate, LV bar, rarity frame and stars, lineage, id barcode.</td></tr>
       <tr><td><code>THEMES</code></td><td>the registry: <span id="theme-list"></span>. Frozen, versioned, append-only.</td></tr>
       <tr><td><code>paintArt</code></td><td>the one call: facts, theme id, width, height to RGB bytes, or a refusal.</td></tr>
-      <tr><td><code>ui.mjs</code></td><td>the UI kit: the card font plus the glyphs a label needs (95 in all, a real space, no currency), the dock and action icons, <code>identicon(pubHex)</code> and <code>paintText</code>, all built on kardart.mjs's own tables.</td></tr>
-      <tr><td><code>ttf.mjs</code></td><td>a deterministic TrueType writer: the glyph table as <code>fonts/PixelWhisperer.ttf</code>, square-pixel contours, byte for byte on every rebuild.</td></tr>
-      <tr><td><code>estate.mjs</code></td><td>the estate painter: <code>paintEstate</code>, <code>tilesFor</code>, <code>estateStats</code>, drawing a player's holdings as an isometric plot with the card engine's own cube; items open TALKER and stand as tool, server and terminal blocks.</td></tr>
-      <tr><td><code>arena.mjs</code></td><td>the duel painter: <code>paintDuel</code>, <code>checkDuel</code> and the published tally <code>duelScore</code>; two Kardlings in profile (<code>creatureSide</code>), rating badges, a scoreboard of every case, WIN or REFUSED.</td></tr>
-      <tr><td><code>raid.mjs</code></td><td>the raids: eight boss sprites built from rectangles and ellipses and shaded by one rule, the published <code>bossHealth</code>, <code>paintRaid</code> for a boss standing or falling with its loot.</td></tr>
-      <tr><td><code>gear.mjs</code></td><td>the kit: <code>paintSlot</code> for a node slot (a card and its worth on GATE, or not joined) or a tool slot (an app item in its tier), empty or filled; <code>kitBadge</code>, the overlay that says how many node slots are fielded; <code>worthText</code>.</td></tr>
-      <tr><td><code>back.mjs</code></td><td>the card back: <code>paintBack</code> and <code>checkBack</code>; each theme's field and frame, the Kardlings emblem (a K), the maker's identicon in a medallion with the key written short, the edition number; the field's scatter thrown with the maker's dice.</td></tr>
-      <tr><td><code>fusion.mjs</code></td><td>the Fusion Lab: <code>paintFusion</code>, <code>checkFusion</code> and the published verdict <code>fusionVerdict</code> (kept only when a try beats both parents); the parents on their pedestals, the chamber, every try against the line to beat; <code>paintLineage</code>, a fused card's family tree in blocks.</td></tr>
-      <tr><td><code>build.mjs</code></td><td>builds and combos: <code>paintBuild</code> (a build card: its sigil, its Kardlings on one platform, its lift, the bar, its re-runs, COMBO or ANTI-COMBO), the published rule <code>buildLift</code>, <code>buildSigil</code> (a rune grown from the recipe), <code>paintJobs</code> (the job board).</td></tr>
-      <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td></tr>
+      <tr><td><code>kardart.pins.mjs</code></td><td>the published record of what each theme draws: sha256 of the hero cards, a 36-card corpus, odd sizes and 2,000 creatures.</td><td>re-checked on every push by the smoke test; a red pin means a published theme was edited</td></tr>
+      <tr><td><code>ui.mjs</code></td><td>the UI kit: the card font plus the glyphs a label needs (95 in all, a real space, no currency), the dock and action icons, <code>identicon(pubHex)</code> and <code>paintText</code>, all built on kardart.mjs's own tables.</td><td><code>ui.test.mjs</code>; <b data-bp="kards/ui.mjs">44</b> mutants, all killed</td></tr>
+      <tr><td><code>ttf.mjs</code></td><td>a deterministic TrueType writer: the glyph table as <code>fonts/PixelWhisperer.ttf</code>, square-pixel contours, byte for byte on every rebuild.</td><td><code>ttf.test.mjs</code>; <b data-bp="kards/ttf.mjs">55</b> mutants, all killed; CI rebuilds the font and compares it byte for byte</td></tr>
+      <tr><td><code>estate.mjs</code></td><td>the estate painter: <code>paintEstate</code>, <code>tilesFor</code>, <code>estateStats</code>, drawing a player's holdings as an isometric plot with the card engine's own cube; items open TALKER and stand as tool, server and terminal blocks; <code>estateDoors</code> and <code>estateDoorAt</code> make the map's districts and landmarks into doors.</td><td><code>estate.test.mjs</code>; <b data-bp="kards/estate.mjs">251</b> mutants, all killed</td></tr>
+      <tr><td><code>arena.mjs</code></td><td>the duel painter: <code>paintDuel</code>, <code>checkDuel</code> and the published tally <code>duelScore</code>; two Kardlings in profile (<code>creatureSide</code>), rating badges, a scoreboard of every case, WIN or REFUSED, and the read-back of one case.</td><td><code>arena.test.mjs</code>; <b data-bp="kards/arena.mjs">139</b> mutants, all killed</td></tr>
+      <tr><td><code>raid.mjs</code></td><td>the raids: eight boss sprites built from rectangles and ellipses and shaded by one rule, the published <code>bossHealth</code>, <code>paintRaid</code> for a boss standing or falling with its loot, and <code>paintChapter</code> for the campaign.</td><td><code>raid.test.mjs</code>; <b data-bp="kards/raid.mjs">134</b> mutants, all killed</td></tr>
+      <tr><td><code>gear.mjs</code></td><td>the kit: <code>paintSlot</code> for a node slot (a card and its worth on GATE, or not joined) or a tool slot (an app item in its tier), empty or filled; <code>kitBadge</code>, the overlay that says how many node slots are fielded; <code>worthText</code>.</td><td><code>gear.test.mjs</code>; <b data-bp="kards/gear.mjs">75</b> mutants, all killed</td></tr>
+      <tr><td><code>back.mjs</code></td><td>the card back: <code>paintBack</code> and <code>checkBack</code>; each theme's field and frame, the Kardlings emblem (a K), the maker's identicon in a medallion with the key written short, the edition number; the field's scatter thrown with the maker's dice.</td><td><code>back.test.mjs</code>; <b data-bp="kards/back.mjs">57</b> mutants, all killed</td></tr>
+      <tr><td><code>fusion.mjs</code></td><td>the Fusion Lab: <code>paintFusion</code>, <code>checkFusion</code> and the published verdict <code>fusionVerdict</code> (kept only when a try beats both parents); the parents on their pedestals, the chamber, every try against the line to beat; <code>paintLineage</code>, a fused card's family tree in blocks.</td><td><code>fusion.test.mjs</code>; <b data-bp="kards/fusion.mjs">118</b> mutants, all killed</td></tr>
+      <tr><td><code>build.mjs</code></td><td>builds and combos: <code>paintBuild</code> (a build card: its sigil, its Kardlings on one platform, its lift, the bar, its re-runs, COMBO or ANTI-COMBO), the published rule <code>buildLift</code>, <code>buildSigil</code> (a rune grown from the recipe), <code>paintJobs</code> (the job board), <code>paintSheet</code> (a whole build on one share picture) and <code>paintBook</code> (a job's proven builds, ranked).</td><td><code>build.test.mjs</code>; <b data-bp="kards/build.mjs">331</b> mutants, all killed</td></tr>
+      <tr><td><code>hero.mjs</code></td><td>the hero plate: <code>paintHero</code> and <code>checkHero</code>; a hero's crest under a crown, its name and class, and six gems lit or hollow as its record says.</td><td><code>hero.test.mjs</code>; <b data-bp="kards/hero.mjs">33</b> mutants, all killed</td></tr>
+      <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td><td><code>kardpng.test.mjs</code>; <b data-bp="kards/kardpng.mjs">16</b> mutants, all killed; CI re-draws the gallery PNGs and compares them byte for byte</td></tr>
+      <tr><td><code>costcase.mjs</code></td><td>the cost case for the people who decide: today's card art against the engine's, from the reader's counts, the sourced basis and the measured draw time.</td><td><code>costcase.test.mjs</code> (the arithmetic spelled out apart from the kernel, every boundary, every refusal); <b data-bp="kards/costcase.mjs">20</b> mutants, all killed</td></tr>
+      <tr><td><code>basis.mjs</code> and <code>vendor/basis.json</code></td><td>the sourced figures the cost case reads, copied byte for byte from the estate's basis, with where each came from.</td><td><code>costcase.test.mjs</code> checks the file's SHA-256 against <code>vendor/SOURCES.json</code> and that the module the page imports is the same JSON</td></tr>
+      <tr><td><code>samples.mjs</code> / <code>corpus.mjs</code></td><td>the twelve sample cards on this page, and the 36-card corpus the tests and pins draw (every icon, rarity, glyph and extreme). Example facts only; no real data.</td><td>used by the tests above</td></tr>
+      <tr><td><code>witness-kards.mjs</code> and <code>.witness/</code></td><td>the mutation gate over every kernel above, run by its test files in order; the harness is witness v0.6, vendored byte for byte.</td><td>CI checks the harness against the v0.6 tag, its commit and its hashes, then runs the whole gate on GitHub's runner on every push</td></tr>
+      <tr><td><code>page.test.mjs</code></td><td>this page's own gate: no dead controls, every label and link lands, nothing loaded from anywhere else, every printed count is the witness's.</td><td>runs in CI with the rest</td></tr>
     </tbody>
   </table></div>
-  <p>Read it: <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.mjs">kardart.mjs</a> (the engine), <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.test.mjs">its tests</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.pins.mjs">the published pins</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/witness-kards.mjs">the witness</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardpng.mjs">kardpng.mjs</a> and <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/costcase.mjs">costcase.mjs</a>.</p>
+  <p>Read it: <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.mjs">kardart.mjs</a> (the engine), <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.test.mjs">its tests</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardart.pins.mjs">the published pins</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/witness-kards.mjs">the witness</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/kardpng.mjs">kardpng.mjs</a>, <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/costcase.mjs">costcase.mjs</a> and <a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/.github/workflows/kards.yml">the CI workflow</a>.</p>
   <p>Proof sits beside it: <code>kardart.test.mjs</code>, a pinned-hash smoke test, a static check of the source, and <code>witness-kards.mjs</code>, a mutation gate whose every mutant must be killed.</p>
+</section>
+
+<section id="paper" aria-labelledby="paper-h">
+  <h2 id="paper-h">The white paper: a picture anyone can check</h2>
+  <div class="cols">
+    <div class="box"><h3>The problem</h3><p>A collectible's picture is usually just a file stored beside its data. Nothing ties the two together: a card that says it is legendary can carry any image, an image service will not draw the same picture twice, and commissioned art costs staff time and fees for every new card. The picture is the part people look at, and it is the part nobody can check.</p></div>
+    <div class="box"><h3>The idea</h3><p>Make the picture a pure function of the facts. The engine takes a card's id, title, rarity, level, dataset, department and lineage, and nothing else, and draws its face. Then the picture works like a checksum anyone can recompute: re-draw it from the facts the card carries and compare the bytes. What you see is what the card carries, or the card is refused.</p></div>
+    <div class="box"><h3>What makes it hold</h3><p><b>Determinism everywhere:</b> whole-number arithmetic only, one floor division, no clock and no random numbers, so every JavaScript engine draws the same bytes. <b>A face for every id:</b> the 64-bit id is whitened by a 4-round Feistel network, a one-to-one mixing, so two ids never share a genome and ids one digit apart look nothing alike. <b>Looks that never move:</b> a published theme is frozen and pinned by hash; a new look is a new theme id, so a new season never changes an old card.</p></div>
+    <div class="box"><h3>How it is proven</h3><p>Tests pin the bytes of every theme, refuse every bad input with a reason, and check that every fact changes the picture where that fact lives. A mutation witness then plants deliberate bugs in every kernel and requires the tests to catch each one, with none written off (the counts are in the blueprint above, and a test checks them against the witness). GitHub's runner repeats all of it on every push, and the button under <a href="#proof">The proof</a> repeats the pin check in your own browser.</p></div>
+    <div class="box"><h3>What it is not</h3><p>It does not say who made a card or who owns it: that is the card's seal. It is not an image generator and holds no model: every Kardling comes from the code and the id. Taste is a judgement: the engine guarantees the same picture, not that you will like it, which is why a look you do not like is replaced by a new theme.</p></div>
+    <div class="box"><h3>Why it matters beyond cards</h3><p>Any product that shows a picture of a record (a badge, a certificate, a game item, a dashboard tile) can draw that picture from the record itself, on the viewer's own device, with nothing to host and nothing to send. Kardlings, the game these cards belong to, vendors this engine for exactly that: facts in, checkable bytes out.</p></div>
+  </div>
 </section>
 
 <section id="decide" aria-labelledby="decide-h">
@@ -590,30 +664,41 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
   <h3>What each role gets</h3>
   <div class="cols">
     <div class="box"><h3>CEO</h3><p>Every card is its own character, visibly rarer as it gets rarer, parents printed on its face, shareable by link. You get collectibility without commissioning art, and a new season is a new theme, not a rebuild.</p></div>
-    <div class="box"><h3>CFO</h3><p>The marginal cost of one more card's art is zero: it is drawn on the viewer's device. No per-image fee, no per-seat licence, no cloud bill for art. The case below is arithmetic on your own numbers, not ours.</p></div>
+    <div class="box"><h3>CFO</h3><p>One more card's art costs the electricity of drawing it on a device that is already on: no fee per image, no licence fee (the code is MIT), no cloud bill for art. The case below prices that electricity, and every staff hour, from sourced public figures (listed beside it) and your own counts. None of the money in it is ours.</p></div>
     <div class="box"><h3>COO</h3><p>One module and one call. There is nothing to host, schedule or scale: no server, no queue, no storage, no dependencies. If a device can show a page, it can draw a card.</p></div>
     <div class="box"><h3>CTO and CISO</h3><p>Pure integer code with no network access and no imports, in one file you pin by SHA-256. Deterministic: the same facts give the same bytes in any browser, so a reader can verify a card's picture by re-drawing it. Hostile input is refused, never thrown. Proven by tests, hash pins and a mutation witness in which every mutant is killed.</p></div>
     <div class="box"><h3>Product and design</h3><p>Every theme in the switcher above is finished and pinned. A new theme is a new id (for example <code>synthwave-v2</code>) and never breaks an old card. The gallery and workshop above show every fact on the card before you commit to anything. Item cards, the estate, duels and raids are drawn in every theme too, so a re-skin reaches the whole game at once.</p></div>
-    <div class="box"><h3>Community and marketing</h3><p>Cards that look different from each other, rarity you can read from across a room, a link that shows the same card on any phone, and a download button. All twelve sample cards, in both themes, are on this page.</p></div>
+    <div class="box"><h3>Community and marketing</h3><p>Cards that look different from each other, rarity you can read from across a room, a link that shows the same card on any phone, and a download button. All twelve sample cards, in every theme, are on this page.</p></div>
   </div>
 
   <h3>The cost case, on your numbers</h3>
-  <p>These four inputs are yours. What falls out is arithmetic, computed by <code>costcase.mjs</code>, which is tested and mutation-witnessed like the engine. The starting values are illustrative only: not a quote, and not a price from anyone. Replace them with what you pay.</p>
+  <p>What a year of card art costs your team today, against what it costs once the engine draws every face. <code>costcase.mjs</code> computes it, tested and mutation-witnessed like the engine. <b>The counts, minutes, hours and fees are yours:</b> the starting values are an illustration to replace, not a quote and not a price from anyone. <b>Every outside figure is sourced:</b> the wage an hour of staff time is costed at, inflation, the price of electricity and the power a laptop draws are read from a vendored basis file, listed under the calculator with where each came from. <b>The draw time is measured</b> here, in this tab, on your device.</p>
   <form class="panel" id="cost-form" autocomplete="off" novalidate>
-    <div><label for="c-cards">Cards a year</label><input id="c-cards" type="number" min="0" step="1" value="10000" inputmode="numeric"></div>
-    <div><label for="c-percard">What one card's art costs you today, in pence or cents (250 means 2.50)</label><input id="c-percard" type="number" min="0" step="1" value="250" inputmode="numeric"></div>
-    <div><label for="c-hours">Hours to adopt the engine</label><input id="c-hours" type="number" min="0" step="1" value="16" inputmode="numeric"></div>
-    <div><label for="c-rate">What an hour of your team costs, in whole currency units</label><input id="c-rate" type="number" min="0" step="1" value="60" inputmode="numeric"></div>
+    <div><label for="c-cards">New cards a year</label><input id="c-cards" type="number" min="0" step="1" inputmode="numeric"></div>
+    <div><label for="c-minutes">Minutes of staff time one card's art takes today</label><input id="c-minutes" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="c-fee">What you pay outside for one card's art today, in pounds</label><input id="c-fee" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="c-adopt">Staff hours to adopt the engine, once</label><input id="c-adopt" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="c-themes">Staff hours a year designing new themes (0 if you use the published ones)</label><input id="c-themes" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="c-draws">Times each card is drawn in a year</label><input id="c-draws" type="number" min="1" step="1" inputmode="numeric"></div>
+    <div><label for="c-years">Years to compare (1 to 10)</label><input id="c-years" type="number" min="1" max="10" step="1" inputmode="numeric"></div>
+    <div class="full"><label for="c-drawms">One face's draw time on this device, in milliseconds (measured, not typed)</label><div class="row"><input id="c-drawms" type="text" readonly aria-describedby="c-drawms-how"><button type="button" class="act alt" id="c-measure">Measure again</button></div></div>
+    <p class="hint full" id="c-drawms-how">Measured by drawing one 384 &times; 560 face over and over for a moment and dividing the time by the count. Each draw runs the engine on this device's processor, so its electricity is the draw time at the laptop power below.</p>
     <p class="msg full" id="cost-msg" role="status" aria-live="polite"></p>
   </form>
   <div class="trace" id="cost-out" aria-live="polite"></div>
-  <p class="hint">The engine's own cost per card is 0: it draws on the viewer's device. If the saving shows as negative, that is the honest answer for those numbers.</p>
+  <p class="hint">How it is counted. <b>Today</b>: each card's minutes of staff time at the UK median hourly wage, plus any outside fee. <b>With the engine</b>: the hours your team still spends designing new themes, at the same wage, plus the electricity of every draw. <b>Adoption</b>: the hours to adopt, once, in the first year. Later years rise by UK inflation on both sides. The wage leaves out employer National Insurance and pension, so the saving is a floor, not a top end; the laptop figure is a processor's whole base power, so the engine's electricity is, if anything, overstated. Money is in pounds before VAT, as the basis states. If the answer comes out as a cost, that is the honest answer for those numbers.</p>
+  <div class="tw" role="region" aria-label="Where every outside figure in the cost case comes from (scrolls sideways on a small screen)" tabindex="0"><table>
+    <thead><tr><th scope="col">Figure the case reads</th><th scope="col">Value</th><th scope="col">What it is, and its source</th></tr></thead>
+    <tbody id="cost-src"></tbody>
+  </table></div>
+  <p class="hint">Those figures are copied byte for byte from the estate's sourced basis (<a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/kards/vendor/SOURCES.json">kards/vendor/SOURCES.json</a> names the commit and the hash; a test checks both).</p>
 
   <h3>Against what you pay now</h3>
   <div class="tw" role="region" aria-label="Comparison (scrolls sideways on a small screen)" tabindex="0"><table>
     <thead><tr><th scope="col"><span class="sr">Question</span></th><th scope="col">This engine</th><th scope="col">Commissioned art</th><th scope="col">An image-generation service</th></tr></thead>
     <tbody>
-      <tr><th scope="row">Cost of one more card</th><td>none, drawn on the viewer's device</td><td>your quote, per card</td><td>a fee per image: check your plan</td></tr>
+      <tr><th scope="row">Cost of one more card</th><td>the electricity of one draw on a device already on (the case above prices it)</td><td>your quote, per card</td><td>a fee per image: check your plan</td></tr>
+      <tr><th scope="row">Staff time for each new card</th><td>none: the facts draw the face; a team's time goes into new themes, once a season</td><td>briefing, review and sign-off for each card</td><td>prompting, picking and checking each image</td></tr>
       <tr><th scope="row">Same facts, same picture, every time</th><td>yes, byte for byte</td><td>not applicable</td><td>not reproducible byte for byte in general</td></tr>
       <tr><th scope="row">A reader can check the picture against the facts</th><td>yes: re-draw and compare</td><td>no</td><td>no</td></tr>
       <tr><th scope="row">Works offline</th><td>yes</td><td>yes, it is a file</td><td>no</td></tr>
@@ -624,9 +709,10 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 
   <h3>Security, data protection and compliance</h3>
   <ul>
-    <li><b>Network:</b> none. The module imports nothing and this page makes no requests; a test fails the build if either changes.</li>
+    <li><b>Network:</b> none. The module imports nothing, and this page loads only its own files from this site and sends nothing anywhere; a test fails the build if either changes.</li>
     <li><b>Data:</b> the only inputs are a card's own facts (id, title, dataset, department, level, rarity, generation, parents). They are processed where the code runs and never sent anywhere by it. The engine holds no personal data of its own; what a card's title says is the card owner's choice, limited to 24 characters of letters, digits and a few marks.</li>
-    <li><b>Supply chain:</b> one file, no dependencies, vendored byte for byte and pinned by SHA-256. CI re-checks the harness and the pins on every push.</li>
+    <li><b>Data protection (UK GDPR and GDPR):</b> drawing a face adds no processor, no transfer and no store to your data map: the facts stay in the memory of the device that draws them, and nothing is kept once the picture is made. Your obligations for the card data itself are unchanged, because the engine never holds it. Nothing reaches the supplier either: there is no telemetry and nothing calls home.</li>
+    <li><b>Supply chain:</b> one file, no dependencies, vendored byte for byte and pinned by SHA-256. On every push CI checks that the mutation harness is witness v0.6, by its tag, its commit and its hash, and re-checks every pin.</li>
     <li><b>Hostile input:</b> every entry point is total. Null, BigInt, circular objects, throwing getters and proxies come back as a refusal with a reason.</li>
     <li><b>Audit:</b> published themes are pinned by hash. If a theme's pixels ever change, the build fails.</li>
     <li><b>Assets and trademarks:</b> no third-party art, fonts or images: the font, icons and every Kardling are in the source. "Blockcraft" is a style name only.</li>
@@ -641,10 +727,17 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <li>Store the theme id with the card. Readers re-draw from the facts and compare every byte.</li>
     <li>For a new season, append a theme and its pins. Nothing else changes and no existing card is affected.</li>
   </ol>
-  <p>The effort is one import and one call; you size it for your team in the calculator.</p>
+  <p>The effort is one import and one call; you size it for your team in the calculator. A sensible pilot is one season's cards in one theme, with your card reader re-drawing every face it opens; a full roll-out is the same change, kept.</p>
 
   <h3>Support and ownership</h3>
-  <p>Built by Kar, the estate's resident builder, in the open repository. Vendoring means you hold the file: there is no runtime dependency on anyone. Updates arrive as new commits you choose to take, and because a published theme cannot change, taking an update never alters an existing card. Questions and defects go to the repository's issues.</p>
+  <ul>
+    <li><b>Who supplies it:</b> AI Native Solutions (<a href="https://www.ai-nativesolutions.com">ai-nativesolutions.com</a>). To start, or to ask anything, contact them through that site.</li>
+    <li><b>Support, service levels, warranty and liability:</b> agreed per deployment, in that deployment's agreement.</li>
+    <li><b>Ownership:</b> the code is MIT-licensed (<a href="https://github.com/sjgant80-hub/pixelwhisperer/blob/main/LICENSE">the licence</a>) and you hold the file you vendor. There is no account, no key and no runtime dependency on anyone, so it keeps running without us.</li>
+    <li><b>Updates:</b> new commits you choose to take. A published theme cannot change, so taking an update never alters an existing card.</li>
+    <li><b>Exit:</b> stop taking updates, or delete the file. Cards you have already drawn are ordinary pictures; the facts that draw them are yours.</li>
+    <li><b>Built by</b> Kar, the estate's resident builder, in the open repository, where defects can also be reported as issues.</li>
+  </ul>
 
   <h3>Risks, answered straight</h3>
   <ul>
@@ -653,11 +746,28 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <li><b>Family resemblance.</b> The 2<sup>64</sup> figure counts distinct genomes. Kardlings share one anatomy (a 9 &times; 14 &times; 7 voxel body), so expect relatives to look related; every one of 1,000 random ids was tested to give a different Kardling.</li>
     <li><b>Not a seal.</b> A face proves a picture matches its facts. Who made the card and who owns it is the card's seal's job.</li>
     <li><b>Text limits.</b> Titles and departments use a restricted alphabet and length, because nothing else can be printed.</li>
-    <li><b>Speed.</b> About 25 ms for a 384 &times; 560 face on the machine that built it; the trace above shows the figure for your device, live. Draw once and keep the bytes.</li>
+    <li><b>Speed.</b> A face is drawn by the device's own processor, not a server's, in the time the trace and the calculator above measure live on this device. A screen that shows many cards draws each once and keeps the bytes.</li>
+    <li><b>Supplier risk.</b> None at run time: nothing calls home, so if the supplier stopped tomorrow every vendored copy would keep drawing the same bytes.</li>
+  </ul>
+
+  <h3>Questions a buyer asked, answered</h3>
+  <p class="hint">We read this page cold as four buyers would, a finance director, a security lead, an operations lead and procurement, and wrote down what each asked. The answers are here, and each one is on the page above.</p>
+  <ul>
+    <li><b>Finance: where do the starting numbers come from?</b> The counts, minutes, hours and fees are an illustration for you to replace. Only the four outside figures are fixed, and each is sourced in the table under the calculator.</li>
+    <li><b>Finance: is the wage a loaded cost?</b> No. It is the UK median hourly wage with employer National Insurance and pension left out, so on your own counts the saving it shows is a floor, not a top end.</li>
+    <li><b>Finance: does it cost anything to use?</b> The code is MIT, so there is no licence fee. Support, if you want it, is agreed per deployment with the supplier.</li>
+    <li><b>Security: what can it reach?</b> Nothing. The module has no imports and makes no network calls; this page loads only its own files. Tests fail the build if either changes.</li>
+    <li><b>Security: how do we know the code we run is the code that was tested?</b> Vendor the file at a named commit and check its SHA-256; the published pins re-draw byte for byte in your own browser with the button under The proof.</li>
+    <li><b>Operations: what do we have to run?</b> Nothing new: no server, no queue, no storage. A pilot is one season's cards in one theme, with your card reader re-drawing every face it opens.</li>
+    <li><b>Operations: what happens when we want a new look?</b> A new theme id. Old cards keep their theme and keep re-drawing exactly.</li>
+    <li><b>Procurement: who is the supplier, and on what terms?</b> AI Native Solutions, contacted through <a href="https://www.ai-nativesolutions.com">ai-nativesolutions.com</a>. Support, service levels, warranty and liability are agreed per deployment, in that deployment's agreement.</li>
+    <li><b>Procurement: does any personal data go to the supplier?</b> No. The engine runs on your devices and sends nothing anywhere, so nothing reaches the supplier at all.</li>
+    <li><b>Procurement: what if the supplier goes away?</b> Nothing changes at run time. You hold the source under the MIT licence, and every vendored copy keeps drawing the same bytes.</li>
   </ul>
 
   <h3>The case for the board</h3>
-  <p>Collectible, verifiable, season-proof card art at zero marginal cost per card, from a one-file, no-dependency, no-network component that is proven by tests, hash pins and a mutation witness instead of promised. The downside is bounded: it is a single file that you can delete.</p>
+  <p>Collectible, verifiable, season-proof card art for the electricity of a draw per card, from a one-file, no-dependency, no-network component that is proven by tests, hash pins and a mutation witness instead of promised. The downside is bounded: it is a single file that you can delete.</p>
+  <p><b>On the numbers in the calculator above:</b> <span id="board-verdict">open this page with scripts on to compute it.</span></p>
 </section>
 
 <section id="adoption" aria-labelledby="ad-h">
@@ -684,7 +794,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 Kardlings</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct Kardlings; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">314</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">138</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">331</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab, <b data-kernel="kards/hero.mjs">33</b> in the hero plate and <b data-kernel="kards/costcase.mjs">11</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">314</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">139</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">331</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab, <b data-kernel="kards/hero.mjs">33</b> in the hero plate and <b data-kernel="kards/costcase.mjs">20</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -723,7 +833,8 @@ import { THEMES, FORMS, TIERS, GEAR, KIT_SLOTS, paintArt, spriteOf, checkFacts }
 import { pngOf } from './kardpng.mjs';
 import { SAMPLES } from './samples.mjs';
 import { PINS } from './kardart.pins.mjs';
-import { costCase, verdict } from './costcase.mjs';
+import { costCase, verdict, sourcesOf, DEFAULTS } from './costcase.mjs';
+import { BASIS } from './basis.mjs';
 import { CHARSET, UI_ICONS, DATASET_ICONS, FORM_ICONS, STAR, DOCK, ACTIONS, INVENTORY, GEAR_SLOTS, WORLD_ICONS, identicon, paintText } from './ui.mjs';
 import { paintEstate, estateStats, LANDMARKS, estateDoors, estateDoorAt } from './estate.mjs';
 import { paintDuel, duelScore } from './arena.mjs';
@@ -815,7 +926,7 @@ async function renderWork() {
   $('#work-canvas').setAttribute('aria-label', describe(f, THEMES[workTheme].name));
   history.replaceState(null, '', '#card=' + encodeURIComponent(JSON.stringify({ t: workTheme, f })));
   const digest = await sha(r.px);
-  if (mine === tick) trace(f, digest, took);
+  if (mine === tick) trace(f, digest, took, r.px.length);
 }
 for (const el of Object.values(F)) el.addEventListener('input', renderWork);
 $('#roll').addEventListener('click', () => { const b = crypto.getRandomValues(new Uint8Array(8)); F.id.value = hex(b); renderWork(); });
@@ -837,8 +948,15 @@ const NAMES = {
   crown: ['none', 'ears', 'horns', 'antenna', 'cap', 'side ears', 'mohawk', 'twin antennae'], eyes: ['beady', 'googly', 'glowing', 'cat', 'wide-set', 'visor', 'angry', 'sleepy'],
   mouth: ['none', 'small', 'wide', 'snout'], back: ['none', 'tail', 'wings', 'mane'], pattern: ['plain', 'belly', 'stripes', 'spots'],
 };
-function trace(f, digest, took) {
+function trace(f, digest, took, bytes) {
   const s = spriteOf(f.id), g = s.g, voxels = s.v.reduce((n, c) => n + (c ? 1 : 0), 0), box = $('#trace');
+  const h8 = (n) => n.toString(16).padStart(8, '0'), fit = (t) => (t.length > 46 ? t.slice(0, 45) + '…' : t);
+  for (const [id, t] of [   // the diagram's second lines: this card, as it is drawn
+    ['dg-1', 'accepted: ' + (f.title || '(no title)') + ', ' + f.rarity + ' ' + f.dataset], ['dg-2', f.id + ' → ' + h8(s.hi) + ' ' + h8(s.lo)],
+    ['dg-3', 'legs ' + NAMES.legs[g.legs] + ', eyes ' + NAMES.eyes[g.eyes] + ', crown ' + NAMES.crown[g.crown]], ['dg-4', voxels + ' voxels in a 9 x 14 x 7 grid, mirrored'],
+    ['dg-5', THEMES[workTheme].name + ' (' + workTheme + ')'], ['dg-6', 'LV ' + f.stage + ', ' + f.rarity + ', GEN ' + f.generation + (f.parents.length ? ', ' + f.parents.length + ' parent' + (f.parents.length > 1 ? 's' : '') : ', GENESIS')],
+    ['dg-7', '192 x 280 → 384 x 560: each pixel 2 x 2'], ['dg-8', bytes.toLocaleString('en-GB') + ' bytes, sha256 ' + digest.slice(0, 12) + '…, ' + Math.round(took) + ' ms'],
+  ]) $('#' + id).textContent = fit(t);
   const cells = [
     ['id', f.id], ['whitened (hi, lo)', s.hi.toString(16).padStart(8, '0') + ' ' + s.lo.toString(16).padStart(8, '0')], ['body colour', g.hueA + ' of 16'], ['accent colour', g.hueB + ' of 8'],
     ['head shape', g.head + ' of 8'], ['torso shape', g.torso + ' of 8'], ['legs', NAMES.legs[g.legs]], ['arms', NAMES.arms[g.arms]], ['crown', NAMES.crown[g.crown]], ['eyes', NAMES.eyes[g.eyes]],
@@ -867,16 +985,46 @@ $('#verify').addEventListener('click', async () => {
 });
 
 // ── the cost case, on the reader's numbers ───────────────────────────────────────────────────────────────────────────────
-const money = (minor) => (minor < 0 ? '-' : '') + new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(minor) / 100);
+// every outside figure comes from the vendored, sourced basis; the counts are the reader's; the draw time is measured here
+const COST_IN = { cards: 'cardsPerYear', minutes: 'minutesPerCard', fee: 'feePerCard', adopt: 'adoptHours', themes: 'themeHoursPerYear', draws: 'drawsPerCard', years: 'years' };
+const money = (pounds) => new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(pounds);
+let drawMs = NaN;
+function measureDraw() {   // draw one face over and over for at least 60 ms, then divide: a coarse clock cannot round one draw to 0
+  const f = SAMPLES[4], t0 = performance.now(); let n = 0, t = t0;
+  while (n < 3 || t - t0 < 60) { paintArt(f, 'synthwave-v1', 384, 560); n++; t = performance.now(); }
+  drawMs = (t - t0) / n;
+  $('#c-drawms').value = drawMs.toFixed(2) + ' ms (' + n + ' draws)';
+  cost();
+}
 function cost() {
   const num = (id) => { const v = $('#c-' + id).value; return v.trim() === '' ? NaN : Number(v); };
-  const r = costCase({ cards: num('cards'), perCard: num('percard'), hours: num('hours'), rate: num('rate') }), out = $('#cost-out'), m = $('#cost-msg');
+  const input = { drawMs };
+  for (const [id, key] of Object.entries(COST_IN)) input[key] = num(id);
+  const r = costCase(BASIS, input), out = $('#cost-out'), m = $('#cost-msg'), y = r.ok ? r.inputs.years : 0;
   out.textContent = '';
-  m.className = 'msg full ' + (r.ok ? 'ok' : 'bad'); m.textContent = verdict(r, money, (n) => n.toLocaleString());
+  m.className = 'msg full ' + (r.ok ? 'ok' : 'bad'); m.textContent = verdict(r, money);
+  $('#board-verdict').textContent = verdict(r, money);
   if (!r.ok) return;
-  for (const [k, v] of [['A year of art today', money(r.today)], ['One-off adoption', money(r.adoption)], ['First-year saving', money(r.saving)], ['Cards until it has paid for itself', r.payback === null ? 'art is free today: nothing to repay' : r.payback.toLocaleString()]]) { const d = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = v; d.append(a, b); out.append(d); }
+  const per = (x) => money(x) + ' a year';
+  stats(out, [
+    ['Today: staff time on card art', per(r.lines.staff)], ['Today: outside fees', per(r.lines.fees)], ['Today, in all', per(r.perYear.today)],
+    ['With the engine: designing themes', per(r.lines.themes)], ['With the engine: electricity of every draw', r.lines.kwh + ' kWh, ' + r.lines.powerPence + 'p a year'],
+    ['With the engine, in all', per(r.perYear.engine)], ['Adoption, once', money(r.adopt)], ['Staff hours freed a year', String(r.hoursOff)],
+    ['Over ' + y + (y === 1 ? ' year' : ' years') + ', today', money(r.over.today)], ['Over ' + y + (y === 1 ? ' year' : ' years') + ', with the engine', money(r.over.engine)],
+    ['Saving in the first year, adoption included', money(r.savingFirstYear)], ['Saving over ' + y + (y === 1 ? ' year' : ' years') + ', adoption included', money(r.savingOver)],
+    ['Adoption repaid after', r.paybackMonths === null ? 'never, on these numbers' : r.paybackMonths === 0 ? 'at once: nothing to repay' : r.paybackMonths + (r.paybackMonths === 1 ? ' month' : ' months')],
+  ]);
 }
-for (const id of ['cards', 'percard', 'hours', 'rate']) $('#c-' + id).addEventListener('input', cost);
+for (const [id, key] of Object.entries(COST_IN)) { $('#c-' + id).value = DEFAULTS[key]; $('#c-' + id).addEventListener('input', cost); }
+$('#c-measure').addEventListener('click', measureDraw);
+const UNITS = { cpi: 'a year, as a fraction', electricityPencePerKwh: 'pence per kWh', laptopExtraWatts: 'watts' };
+for (const s of sourcesOf(BASIS)) {   // the figures the case reads, each with what it is and where it came from
+  const tr = document.createElement('tr'), k = document.createElement('td'), v = document.createElement('td'), w = document.createElement('td'), a = document.createElement('a');
+  k.append(Object.assign(document.createElement('code'), { textContent: s.key }));
+  v.textContent = s.value + ' ' + (BASIS[s.key].unit || UNITS[s.key] || '');
+  a.href = s.source; a.textContent = new URL(s.source).hostname; a.rel = 'noopener';
+  w.append(s.what + ' (', a, ')'); tr.append(k, v, w); $('#cost-src').append(tr);
+}
 
 // ── drawing helpers shared by the item, estate, arena and raid sections ─────────────────────────────────────────────────────
 function putRGB(canvas, px, w, h) { canvas.width = w; canvas.height = h; const img = new ImageData(w, h), d = img.data; for (let i = 0, j = 0; i < px.length; i += 3, j += 4) { d[j] = px[i]; d[j + 1] = px[i + 1]; d[j + 2] = px[i + 2]; d[j + 3] = 255; } canvas.getContext('2d').putImageData(img, 0, 0); }
@@ -1311,7 +1459,7 @@ function heroes() {
   heroes();
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { heroAt++; heroes(); }, 3500);
   buildGallery();
-  cost();
+  measureDraw();
   renderEstate();
   newDuel(); duel.decided = 30; renderDuel();
   newFusion(); fusion.decided = fusion.tried; renderFusion();

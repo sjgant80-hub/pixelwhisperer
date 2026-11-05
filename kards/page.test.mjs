@@ -28,7 +28,7 @@ test('the page: every form control has a label, every button and canvas a name',
 
 test('the page: its imports exist, and it loads nothing from anywhere else', () => {
   const imports = [...html.matchAll(/from '\.\/([\w.-]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(imports.sort(), ['arena.mjs', 'back.mjs', 'build.mjs', 'costcase.mjs', 'estate.mjs', 'fusion.mjs', 'gear.mjs', 'hero.mjs', 'kardart.mjs', 'kardart.pins.mjs', 'kardpng.mjs', 'raid.mjs', 'samples.mjs', 'ui.mjs']);
+  assert.deepEqual(imports.sort(), ['arena.mjs', 'back.mjs', 'basis.mjs', 'build.mjs', 'costcase.mjs', 'estate.mjs', 'fusion.mjs', 'gear.mjs', 'hero.mjs', 'kardart.mjs', 'kardart.pins.mjs', 'kardpng.mjs', 'raid.mjs', 'samples.mjs', 'ui.mjs']);
   for (const f of imports) assert.ok(existsSync(new URL('./' + f, import.meta.url)), f + ' exists');
   assert.ok(/<link rel="stylesheet" href="fonts\/pixelwhisperer\.css">/.test(html) && existsSync(new URL('./fonts/pixelwhisperer.css', import.meta.url)) && existsSync(new URL('./fonts/PixelWhisperer.ttf', import.meta.url)), 'the font is served from this site');
   assert.equal(/<(?:script|link|img|iframe|source|video|audio)[^>]+(?:src|href)="(?:https?:)?\/\//.test(html), false, 'no external resource');
@@ -46,8 +46,8 @@ test('every code sample on the page imports names its module really exports (a d
 });
 
 test('the page says what it must: what it is, start here, how it works, blueprint, adoption, proof, limits', () => {
-  for (const id of ['gallery', 'workshop', 'backs', 'back-canvas', 'back-row', 'fusion', 'fusion-canvas', 'lineage-canvas', 'fusion-stats', 'builds', 'build-canvas', 'jobs-canvas', 'build-stats', 'sheet-canvas', 'sheet-msg', 'sd-dl', 'book-canvas', 'book-msg', 'bk-deal', 'bk-dl', 'items', 'item-canvas', 'gear', 'arena', 'arena-canvas', 'raids', 'raid-canvas', 'bosses', 'start', 'how', 'blueprint', 'decide', 'adoption', 'proof', 'limits', 'estate', 'ui', 'estate-canvas', 'font-sample', 'icons', 'key-face', 'cost-form', 'cost-out', 'cost-msg', 'c-cards', 'c-percard', 'c-hours', 'c-rate']) assert.ok(ids.has(id), 'section #' + id);
-  for (const word of ['paintArt', 'append-only', 'integer', 'witness', 'synthwave-v1', 'THEME_IDS', 'Thomas Frumkin', 'Kar', 'CEO', 'CFO', 'COO', 'CTO and CISO', 'The cost case', 'Risks, answered straight', 'The case for the board', 'Security, data protection and compliance', 'Support and ownership', 'Deployment and roll-out']) assert.ok(html.includes(word), word);
+  for (const id of ['gallery', 'workshop', 'backs', 'back-canvas', 'back-row', 'fusion', 'fusion-canvas', 'lineage-canvas', 'fusion-stats', 'builds', 'build-canvas', 'jobs-canvas', 'build-stats', 'sheet-canvas', 'sheet-msg', 'sd-dl', 'book-canvas', 'book-msg', 'bk-deal', 'bk-dl', 'items', 'item-canvas', 'gear', 'arena', 'arena-canvas', 'raids', 'raid-canvas', 'bosses', 'start', 'how', 'blueprint', 'decide', 'adoption', 'proof', 'limits', 'estate', 'ui', 'estate-canvas', 'font-sample', 'icons', 'key-face', 'cost-form', 'cost-out', 'cost-msg', 'c-cards', 'c-minutes', 'c-fee', 'c-adopt', 'c-themes', 'c-draws', 'c-years', 'c-drawms', 'c-measure', 'cost-src', 'board-verdict', 'paper', 'how-svg']) assert.ok(ids.has(id), 'section #' + id);
+  for (const word of ['paintArt', 'append-only', 'integer', 'witness', 'synthwave-v1', 'THEME_IDS', 'Thomas Frumkin', 'Kar', 'CEO', 'CFO', 'COO', 'CTO and CISO', 'The cost case', 'Risks, answered straight', 'The case for the board', 'Security, data protection and compliance', 'Support and ownership', 'Deployment and roll-out', 'In plain words', 'The white paper', 'AI Native Solutions', 'https://www.ai-nativesolutions.com', 'agreed per deployment', 'MIT-licensed', 'keeps running without us', 'Data protection (UK GDPR and GDPR)']) assert.ok(html.includes(word), word);
   assert.equal(html.toLowerCase().includes('mine' + 'craft'), false, 'the trademark is not used');
 });
 
@@ -78,4 +78,26 @@ test('the credits are on the page, in the README and in CREDITS.md: built by Kar
   for (const p of ['./index.html', '../README.md', './CREDITS.md', './kardart.mjs', './ui.mjs', './estate.mjs', './arena.mjs', './raid.mjs', './gear.mjs', './back.mjs', './fusion.mjs', './build.mjs', './ttf.mjs', './kardpng.mjs']) assert.equal(/Floyd|ThunderStruck|Lumiea/.test(read(p)), false, p + ' credits the art to no one else');
   assert.ok(ids.has('credits'));
   assert.ok(/<a href="#credits">Credits<\/a>/.test(html));
+});
+
+test('the blueprint\x27s mutant counts are the witness\x27s too, one per kernel the gate judges', async () => {
+  const { PAIRS } = await import('../witness-kards.mjs');
+  const printed = [...html.matchAll(/<b data-bp="([^"]+)">(\d+)<\/b>/g)];
+  assert.deepEqual(printed.map((m) => m[1]).sort(), PAIRS.map(([src]) => src).sort(), 'every kernel the witness judges is in the blueprint, once');
+  for (const [, file, n] of printed) assert.equal(Number(n), mutants(readFileSync(new URL('../' + file, import.meta.url), 'utf8')).length, file);
+});
+
+test('how it works is drawn: an inline diagram of paintArt\x27s steps, each second line filled from the live trace', () => {
+  const at = html.indexOf('<svg class="dg" id="how-svg"'), end = html.indexOf('</svg>', at), svg = html.slice(at, end + 6);
+  assert.ok(at > html.indexOf('<section id="how"') && end > at && end < html.indexOf('<section id="blueprint"'), 'the diagram sits, closed, in How it works');
+  for (const step of ['checkFacts', 'whiten', 'reader', 'modelOf', 'scene', 'chrome', 'scale', 'px']) assert.ok(svg.includes(step), 'the diagram names ' + step);
+  for (let k = 1; k <= 8; k++) { assert.ok(svg.includes('id="dg-' + k + '"'), 'step ' + k + ' has a live line'); assert.ok(html.includes("['dg-" + k + "', "), 'the trace fills step ' + k); }
+});
+
+test('the brochure types no figure of its own: no prices, no per-seat wording, no timing typed into the page', () => {
+  const page = html.replace(/<script[\s\S]*?<\/script>/g, '');
+  assert.equal(/per[- ]seat/i.test(html), false, 'no per-seat wording');
+  assert.equal(/[£$€]\s?\d/.test(page), false, 'no money figure typed into the page: the cost case computes them');
+  assert.equal(/\d\s*ms\b/.test(page), false, 'no draw time typed into the page: it is measured on the reader\x27s device');
+  assert.ok(html.includes("costCase(BASIS, input)") && html.includes('sourcesOf(BASIS)'), 'the cost case reads the sourced basis, and the page lists its sources');
 });
