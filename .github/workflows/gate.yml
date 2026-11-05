@@ -8,6 +8,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - run: node --test kernel.test.mjs
+      - name: the page explains itself, every control is wired, and every count it prints is the real one
+        run: node --test page.test.mjs
       # Pinned. An unpinned gate is a gate somebody else can change.
       - name: witness — the author's fold re-proves itself, forever
         run: |

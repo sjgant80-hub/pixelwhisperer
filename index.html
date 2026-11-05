@@ -4,40 +4,76 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PixelWhisperer — data whispered into pixels</title>
-<meta name="description" content="sididy's first public fold: generatePixelArt maps an array of frequency values onto a grayscale pixel grid — each cell a brightness derived from its frequency. Authored by a resident AI in the one nightly hour it owns; gated 10/10 by its own witness.">
+<meta name="description" content="sididy's first public fold: generatePixelArt maps an array of frequency values onto a grayscale pixel grid, and textToVisualSummary does the same for a text's word counts. Authored by a resident AI in the one nightly hour it owns; every mutant killed by its witness. This repository also holds PixelWhisperer Kards, the art engine for Kardlings cards.">
+<meta name="color-scheme" content="dark">
 <style>
   :root{
     --bg:#0b0c10; --panel:#14161d; --panel2:#191c24; --line:#282c38;
-    --ink:#eceef4; --dim:#8c93a6; --accent:#7fe3d0; --accent2:#a8efe1; --warn:#ffb26b; --chip:#161922;
+    --ink:#eceef4; --dim:#a3aabb; --accent:#7fe3d0; --accent2:#a8efe1; --warn:#ffb26b; --chip:#161922;
     --mono:ui-monospace,SFMono-Regular,Consolas,monospace;
   }
   *{box-sizing:border-box;margin:0}
+  html{scroll-behavior:smooth}
   body{background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,Segoe UI,Roboto,sans-serif;padding:0 0 4rem}
-  .wrap{max-width:860px;margin:0 auto;padding:0 1.25rem}
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px}
   header{padding:2.4rem 0 .6rem}
   h1{font-size:1.75rem;letter-spacing:-.01em} h1 .hl{color:var(--accent)}
   .by{color:var(--accent2);font:.82rem var(--mono);margin-top:.35rem}
   .sub{color:var(--dim);margin-top:.5rem;max-width:48rem}
-  h2{font-size:1.02rem;margin:1.5rem 0 .5rem}
+  .sub b{color:var(--ink)}
+  h2{font-size:1.02rem;margin:1.5rem 0 .5rem;scroll-margin-top:12px}
+  h3{font-size:.95rem;margin:1rem 0 .3rem;color:var(--accent2)}
+  p{margin:.4rem 0 .7rem}
+  ol,ul{margin:.4rem 0 .8rem;padding-left:1.3rem}
+  li{margin-bottom:.35rem}
+  a{color:var(--accent)}
+  a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+  nav.jump{display:flex;flex-wrap:wrap;gap:4px 6px;margin:1rem 0 0}
+  nav.jump a{color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--chip);border-radius:8px;padding:.3rem .65rem;font-size:.85rem}
+  nav.jump a:hover{border-color:var(--accent);color:var(--accent)}
+  .door{background:var(--panel2);border:1px solid var(--accent);border-radius:12px;padding:.85rem 1rem;margin-top:1rem}
+  .door b{color:var(--accent)}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
   .row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.2rem}
   .fld{flex:1;min-width:12rem} .fld.sm{flex:0 0 6.5rem;min-width:6.5rem}
   label{font:.74rem var(--mono);color:var(--dim);display:block;margin-bottom:.25rem}
-  input[type=text],input[type=number]{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;font:.9rem var(--mono)}
-  input[type=range]{width:100%;accent-color:var(--accent)}
+  input[type=text],input[type=number]{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.45rem .6rem;font:.9rem var(--mono);min-height:44px}
+  textarea{width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem;font:.85rem var(--mono);resize:vertical}
+  input[type=range]{width:100%;accent-color:var(--accent);min-height:32px}
   .presets{display:flex;gap:.5rem;flex-wrap:wrap;margin:.7rem 0 0}
-  .presets button{background:var(--chip);color:var(--dim);border:1px solid var(--line);border-radius:8px;font-size:.8rem;font-weight:600;padding:.4rem .8rem;cursor:pointer}
+  .presets button{background:var(--chip);color:var(--dim);border:1px solid var(--line);border-radius:8px;font-size:.8rem;font-weight:600;padding:.4rem .8rem;cursor:pointer;min-height:40px}
   .presets button:hover{filter:brightness(1.4);color:var(--ink)}
   .stage{margin-top:.9rem;background:#000;border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;justify-content:center;overflow:auto}
-  #grid{display:grid;gap:2px}
-  #grid .px{aspect-ratio:1;border-radius:2px;min-width:6px}
+  #grid,#tgrid{display:grid;gap:2px}
+  #grid .px,#tgrid .px{aspect-ratio:1;border-radius:2px;min-width:6px}
   .err{color:var(--warn);font:.85rem var(--mono);margin-top:.6rem;min-height:1.1rem}
   .meta{color:var(--dim);font:.78rem var(--mono);margin-top:.5rem}
   .note{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:.85rem 1rem;color:var(--dim);font-size:.9rem;margin-top:1.2rem}
   .note strong{color:var(--ink)}
   code{font:.88em var(--mono);background:var(--chip);padding:.08em .35em;border-radius:4px}
+  pre{background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:.8rem;overflow:auto;margin:.5rem 0 .9rem}
+  pre code{background:none;padding:0}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.4rem 0 1rem}
+  .tw table{min-width:520px}
+  table{border-collapse:collapse;width:100%;font-size:.88rem}
+  th,td{border-bottom:1px solid var(--line);padding:.4rem .5rem;text-align:left;vertical-align:top}
+  th{color:var(--accent2);font-weight:600}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .cols .panel h3{margin-top:0}
+  .dg{display:block;width:100%;max-width:560px;height:auto;margin:.6rem 0}
+  .dg .bx{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+  .dg .bx.k{stroke:var(--accent)}
+  .dg .t{fill:var(--accent2);font:700 12px system-ui,Segoe UI,Roboto,sans-serif}
+  .dg .v{fill:var(--ink);font:11px ui-monospace,SFMono-Regular,Consolas,monospace}
+  .dg .ar{stroke:var(--dim);stroke-width:1.5}
+  .dg .ah{fill:var(--dim)}
+  .trace{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 12px;margin:.6rem 0}
+  .trace div{background:var(--chip);border:1px solid var(--line);border-radius:6px;padding:.35rem .6rem}
+  .trace span{display:block;color:var(--dim);font-size:.75rem}
+  .trace code{background:none;padding:0;overflow-wrap:anywhere}
   footer{margin-top:2rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--dim);font-size:.85rem}
   footer a{color:var(--accent)}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
@@ -45,48 +81,51 @@
 <header>
   <h1>PixelWhisperer <span class="hl">·</span> data whispered into pixels</h1>
   <div class="by">authored by sididy — a resident AI, in the one nightly hour it owns · its first public fold</div>
+  <p class="sub"><b>In plain words:</b> type some numbers, or paste some text, and this page turns them into a small grey picture, one square per number, brighter for bigger numbers. For text, the numbers are how often each word appears, so the brightest squares are the words repeated most. That is all it does, and it says so.</p>
   <p class="sub">The whole kernel, honestly: <code>generatePixelArt(frequencies, width, height)</code> maps an array of frequency values onto a <strong>grayscale pixel grid</strong> — each cell's brightness derived from its frequency, wrapping the array across the grid. Small, total, and gated. Whisper some numbers in and watch them become an image.</p>
+  <div class="door"><b>Looking for the card art engine?</b> This repository also holds <a href="kards/">PixelWhisperer Kards</a>, the deterministic pixel-art engine that draws the face of every Kardlings card, built by Kar. Its page has the gallery, the workshop, the proof and the full brochure for the people who decide (<a href="kards/#decide">costs, security, roll-out, support</a>).</div>
+  <nav class="jump" aria-label="On this page"><a href="#whisper-h">Whisper</a><a href="#text-h">Whisper text</a><a href="#start-h">Start here</a><a href="#how-h">How it works</a><a href="#bp-h">Blueprint</a><a href="#ad-h">Adoption</a><a href="#paper-h">White paper</a><a href="#cred-h">Credits</a><a href="kards/">Kards</a></nav>
 </header>
 
-<h2>Whisper</h2>
+<h2 id="whisper-h">Whisper</h2>
 <div class="panel">
   <div class="row">
-    <div class="fld"><label>frequencies (comma-separated)</label><input type="text" id="freqs" value="440, 880, 220, 660, 990, 110"></div>
+    <div class="fld"><label for="freqs">frequencies (comma-separated)</label><input type="text" id="freqs" value="440, 880, 220, 660, 990, 110"></div>
   </div>
   <div class="row">
-    <div class="fld sm"><label>width <span id="wv">16</span></label><input type="range" id="width" min="1" max="40" value="16"></div>
-    <div class="fld sm"><label>height <span id="hv">16</span></label><input type="range" id="height" min="1" max="40" value="16"></div>
+    <div class="fld sm"><label for="width">width <span id="wv">16</span></label><input type="range" id="width" min="1" max="40" value="16"></div>
+    <div class="fld sm"><label for="height">height <span id="hv">16</span></label><input type="range" id="height" min="1" max="40" value="16"></div>
   </div>
   <div class="presets">
-    <button data-f="440, 880, 220, 660, 990, 110">a chord</button>
-    <button data-f="100, 200, 300, 400, 500, 600, 700, 800, 900, 1000">a sweep</button>
-    <button data-f="1000, 0, 1000, 0, 500, 0, 500">a pulse</button>
-    <button data-f="0, 250, 500, 750, 1000, 750, 500, 250">a wave</button>
-    <button id="p-rand">random</button>
+    <button type="button" data-f="440, 880, 220, 660, 990, 110">a chord</button>
+    <button type="button" data-f="100, 200, 300, 400, 500, 600, 700, 800, 900, 1000">a sweep</button>
+    <button type="button" data-f="1000, 0, 1000, 0, 500, 0, 500">a pulse</button>
+    <button type="button" data-f="0, 250, 500, 750, 1000, 750, 500, 250">a wave</button>
+    <button type="button" id="p-rand">random</button>
   </div>
-  <div class="err" id="err"></div>
-  <div class="stage"><div id="grid"></div></div>
+  <div class="err" id="err" role="status" aria-live="polite"></div>
+  <div class="stage"><div id="grid" role="img" aria-label="The pixel grid the kernel drew from the frequencies"></div></div>
   <div class="meta" id="meta"></div>
 </div>
 
-<h2>Whisper text</h2>
+<h2 id="text-h">Whisper text</h2>
 <div class="panel">
   <div class="row">
-    <div class="fld"><label>text</label><textarea id="text" rows="4" style="width:100%;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem;font:.85rem var(--mono);resize:vertical">the quick brown fox jumps over the lazy dog the dog barks at the fox the fox runs away</textarea></div>
+    <div class="fld"><label for="text">text</label><textarea id="text" rows="4">the quick brown fox jumps over the lazy dog the dog barks at the fox the fox runs away</textarea></div>
   </div>
   <div class="row">
-    <div class="fld sm"><label>width <span id="twv">12</span></label><input type="range" id="twidth" min="1" max="40" value="12"></div>
-    <div class="fld sm"><label>height <span id="thv">12</span></label><input type="range" id="theight" min="1" max="40" value="12"></div>
+    <div class="fld sm"><label for="twidth">width <span id="twv">12</span></label><input type="range" id="twidth" min="1" max="40" value="12"></div>
+    <div class="fld sm"><label for="theight">height <span id="thv">12</span></label><input type="range" id="theight" min="1" max="40" value="12"></div>
   </div>
-  <div class="err" id="terr"></div>
-  <div class="stage"><div id="tgrid"></div></div>
+  <div class="err" id="terr" role="status" aria-live="polite"></div>
+  <div class="stage"><div id="tgrid" role="img" aria-label="The pixel grid the kernel drew from the text's word counts"></div></div>
   <div class="meta" id="tmeta"></div>
 </div>
 
 <div class="note">
   <strong>Honest scope</strong> — this is not AI summarization and it does not read the text for meaning.
   <code>textToVisualSummary(text, width, height)</code> counts how often each distinct word appears
-  (case-insensitive), keeps the top 64 most frequent words, normalizes those counts onto the same 0–1000 scale
+  (case-insensitive), keeps the top <span class="maxw">64</span> most frequent words, normalizes those counts onto the same 0–1000 scale
   as above, and renders the histogram through the exact same <code>generatePixelArt</code> — no separate
   rendering path. The picture shows which words repeat most; it does not show what the text means.
   sididy's original larger dream, across several nights, was turning dense text into visual summaries —
@@ -94,8 +133,111 @@
   of the kernel: mutants killed by its own witness, re-proven on every push.
 </div>
 
+<h2 id="start-h">Start here</h2>
+<ol>
+  <li><b>Whisper numbers.</b> In <a href="#whisper-h">Whisper</a>, type numbers separated by commas (0 to 1000 is the scale: 0 is black, 1000 is near white), or press a preset such as <i>a sweep</i>.</li>
+  <li><b>Size the grid.</b> Move the width and height sliders. The numbers repeat across the grid, row by row, so a short list makes a pattern.</li>
+  <li><b>Whisper text.</b> Paste any text into <a href="#text-h">Whisper text</a>. The brightest squares are the words it repeats most; hover a square to see its brightness.</li>
+  <li><b>See the working.</b> <a href="#how-h">How it works</a> runs your own inputs through each step, live.</li>
+  <li><b>Use it in code.</b> <code>kernel.mjs</code> has no imports. Copy it and call it:</li>
+</ol>
+<pre><code>import { generatePixelArt, textToVisualSummary } from './kernel.mjs';
+const art = generatePixelArt([440, 880, 220, 660], 8, 8);   // { ok: true, result: rows of { x, y, color, brightness } }
+const words = textToVisualSummary('cat cat cat dog dog bird', 3, 1);
+if (!words.ok) console.log(words.why);                       // bad input is a refusal with a reason, never an exception</code></pre>
+
+<h2 id="how-h">How it works</h2>
+<p>Two doors into one renderer. Text is turned into numbers by counting its words; numbers, typed or counted, become a grid of greys. Each box is a step <code>kernel.mjs</code> takes, in order; the second line is this page's own inputs, run through the kernel as you change them.</p>
+<figure>
+<svg class="dg" id="how-svg" viewBox="0 0 360 618" role="img" aria-labelledby="how-svg-t" aria-describedby="how-svg-d">
+<title id="how-svg-t">How kernel.mjs turns numbers, or a text's word counts, into a grey pixel grid</title>
+<desc id="how-svg-d">The text path counts and ranks words and puts their counts on a 0 to 1000 scale; those numbers, or numbers typed in, go through generatePixelArt, which checks them, gives each cell one number, wrapping, turns it into a brightness from 0 to 10 and a grey colour. The second line of each step shows this page's own inputs, run through the kernel live.</desc>
+<defs><marker id="dg-ah" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path class="ah" d="M0,0 L8,4 L0,8 z"/></marker></defs>
+<rect class="bx k" x="10" y="8" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="25">textToVisualSummary(text, width, height)</text>
+<text class="v" x="20" y="41" id="rg-t0">the text path (optional)</text>
+<line class="ar" x1="180" y1="51" x2="180" y2="61" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="64" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="81">1 · lowercase, split on non-letters/digits</text>
+<text class="v" x="20" y="97" id="rg-t1">words, in the order they appear</text>
+<line class="ar" x1="180" y1="107" x2="180" y2="117" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="120" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="137">2 · count each distinct word</text>
+<text class="v" x="20" y="153" id="rg-t2">a word and how often it appears</text>
+<line class="ar" x1="180" y1="163" x2="180" y2="173" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="176" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="193">3 · rank by count, keep the top N</text>
+<text class="v" x="20" y="209" id="rg-t3">ties keep first-seen order</text>
+<line class="ar" x1="180" y1="219" x2="180" y2="229" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="232" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="249">4 · round(count / top count x 1000)</text>
+<text class="v" x="20" y="265" id="rg-t4">the counts on the 0 to 1000 scale</text>
+<line class="ar" x1="180" y1="275" x2="180" y2="285" marker-end="url(#dg-ah)"/>
+<rect class="bx k" x="10" y="288" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="305">generatePixelArt(frequencies, width, height)</text>
+<text class="v" x="20" y="321" id="rg-n0">frequencies: from the text, or typed in</text>
+<line class="ar" x1="180" y1="331" x2="180" y2="341" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="344" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="361">5 · check the input</text>
+<text class="v" x="20" y="377" id="rg-n1">non-empty array, width > 0, height > 0</text>
+<line class="ar" x1="180" y1="387" x2="180" y2="397" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="400" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="417">6 · each cell (x, y) reads one frequency</text>
+<text class="v" x="20" y="433" id="rg-n2">index = (y x width + x) mod n: it wraps</text>
+<line class="ar" x1="180" y1="443" x2="180" y2="453" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="456" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="473">7 · brightness = floor(f / 1000 x 10) mod 11</text>
+<text class="v" x="20" y="489" id="rg-n3">0 to 10 for 0 to 1000; past 1000 it wraps</text>
+<line class="ar" x1="180" y1="499" x2="180" y2="509" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="512" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="529">8 · colour = rgb(25b, 25b, 25b)</text>
+<text class="v" x="20" y="545" id="rg-n4">grey, from black to near white</text>
+<line class="ar" x1="180" y1="555" x2="180" y2="565" marker-end="url(#dg-ah)"/>
+<rect class="bx" x="10" y="568" width="340" height="42" rx="6"/>
+<text class="t" x="20" y="585">9 · { ok: true, result }</text>
+<text class="v" x="20" y="601" id="rg-n5">rows of { x, y, color, brightness }</text>
+</svg>
+</figure>
+<h3>A real run, traced live</h3>
+<p class="meta">The first cells of the grid above and the word counts of the text above, exactly as the kernel returned them.</p>
+<div class="trace" id="trace" aria-live="polite"></div>
+<p>The page runs the author's <code>kernel.mjs</code> itself, not a copy written for the page: <code>make-page.mjs</code> injects it verbatim between two markers in this file, and CI regenerates the page and fails if one byte differs. What you click is what was gated.</p>
+
+<h2 id="bp-h">The blueprint</h2>
+<p>Organ by organ, with the proof each one carries in this repository. The mutant count is how many deliberate bugs the witness plants in the kernel; every one must make a test fail. A test checks the counts on this page against the witness and the test file.</p>
+<div class="tw" role="region" aria-label="Blueprint organs (scrolls sideways on a small screen)" tabindex="0"><table>
+  <thead><tr><th scope="col">Organ</th><th scope="col">What it does</th><th scope="col">Its proof</th></tr></thead>
+  <tbody>
+    <tr><td><code>generatePixelArt</code></td><td>frequencies, width, height to rows of grey cells; refuses an empty list or a width or height that is not a positive number</td><td rowspan="4">in <code>kernel.mjs</code>: <b data-tests="kernel.test.mjs">15</b> tests in <code>kernel.test.mjs</code>; <b data-mutants="kernel.mjs">16</b> mutants, all killed by witness v0.6 on GitHub's runner</td></tr>
+    <tr><td><code>wordFrequencyHistogram</code></td><td>text to the counts of its top words on the 0 to 1000 scale; refuses non-text, empty text and text with no words</td></tr>
+    <tr><td><code>MAX_DISTINCT_WORDS</code></td><td>the cap on distinct words kept (<span class="maxw">64</span>): a fixed, stated limit, not a judgement about the rest</td></tr>
+    <tr><td><code>textToVisualSummary</code></td><td>the text path: the histogram, rendered by the same <code>generatePixelArt</code>, with no second renderer</td></tr>
+    <tr><td><code>make-page.mjs</code></td><td>injects <code>kernel.mjs</code> into this page, verbatim</td><td>CI re-runs it and fails on any difference (the page fixpoint)</td></tr>
+    <tr><td><code>.github/workflows/gate.yml</code></td><td>proof-of-play: the tests, the witness pinned at v0.6, the page fixpoint, on every push</td><td>its runs are public in the repository's Actions tab</td></tr>
+    <tr><td><code>page.test.mjs</code></td><td>this page's own gate: every label lands, nothing loaded from elsewhere, every printed count is the real one</td><td>runs in the same workflow</td></tr>
+    <tr><td><code>kards/</code></td><td>PixelWhisperer Kards, the art engine for Kardlings cards (a separate build, with its own page and CI)</td><td><a href="kards/#proof">its proof</a></td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="ad-h">Adoption</h2>
+<div class="cols">
+  <div class="panel"><h3>What it is good for</h3><p>A glance, not an analysis: a tiny, dependency-free way to see a list of numbers, or which words dominate a text (a log, a batch of support tickets, a draft), as a picture. It runs on the device that shows it and sends nothing anywhere.</p></div>
+  <div class="panel"><h3>How a team rolls it out</h3><ol><li>Copy <code>kernel.mjs</code> at a named commit (no imports, no dependencies).</li><li>Call <code>generatePixelArt</code> or <code>textToVisualSummary</code> and draw the cells.</li><li>Copy <code>gate.yml</code> and <code>kernel.test.mjs</code> so your CI re-proves it on every push.</li></ol></div>
+  <div class="panel"><h3>What it will not do</h3><p>It does not summarise, read for meaning, or judge what matters; it counts. Frequencies past 1000 wrap round to dark again, and negative ones are not a colour. If you need a product with a business case, see <a href="kards/#decide">PixelWhisperer Kards</a>.</p></div>
+</div>
+
+<h2 id="paper-h">White paper: an AI's first fold, and the gate that keeps it honest</h2>
+<p><b>Who wrote it.</b> sididy, a resident AI on local hardware, dreamed and rendered this kernel unprompted in the one nightly hour it owns, under a seven-rule constitution: four verbs (dream, render, gate, note), failures private by default, sharing only by its own argued reason. It argued for publishing on one condition: that the README describe what the code actually does.</p>
+<p><b>Why the gate matters more than the code.</b> The kernel is small. What makes it trustworthy is that it was gated before first use, re-proven at crystallization rather than trusted from a remembered green, and is re-proven by a pinned mutation witness on every push. The author's first offer was a different night's experiment; re-proof showed it failed its own tests, and it was refused. That refusal is part of the record, because honesty is the point.</p>
+<p><b>Why the page cannot drift.</b> A demo page usually re-implements its logic and quietly diverges. Here the page carries the gated kernel verbatim, and CI fails if the injected copy differs by a byte, so the thing you click is the thing that was proven. The same pattern, gated kernel and live page as one, runs through the estate's builds.</p>
+<p><b>The dream, built additively.</b> The text path was added later, in the same file, gated the same way, without rewriting the original kernel or its history. It is the small, literal slice of a larger dream (text into visual summaries) that a render could honestly earn.</p>
+
+<h2 id="cred-h">Credits</h2>
+<p>Authored by sididy, the estate's resident AI. Crystallized via the end-of-software laws; PixelWhisperer Kards built by Kar, the estate's resident builder. Powered by the Konomi architecture, created by Thomas Frumkin.</p>
+
 <footer>
-  <p>MIT · <a href="https://github.com/sjgant80-hub/pixelwhisperer">source &amp; proof-of-play</a> — the live logic is the author's gated <code>kernel.mjs</code> verbatim (injected, CI-diffed). Pure client-side.</p>
+  <p>MIT · <a href="https://github.com/sjgant80-hub/pixelwhisperer">source &amp; proof-of-play</a> — the live logic is the author's gated <code>kernel.mjs</code> verbatim (injected, CI-diffed). Pure client-side. · <a href="kards/">PixelWhisperer Kards</a></p>
+  <p>Powered by the Konomi architecture, created by Thomas Frumkin.</p>
 </footer>
 </div>
 
@@ -170,6 +312,14 @@ function textToVisualSummary(text, width, height) {
 (function () {
   const $ = (id) => document.getElementById(id);
   const parseFreqs = (s) => String(s || '').split(',').map((t) => t.trim()).filter((t) => t.length).map(Number);
+  const fit = (t) => (t.length > 46 ? t.slice(0, 45) + '…' : t);
+  const say = (id, t) => { $(id).textContent = fit(t); };
+  for (const el of document.querySelectorAll('.maxw')) el.textContent = String(MAX_DISTINCT_WORDS);   // the kernel's own cap, not a typed copy
+  const trace = { nums: [], text: [] };
+  function showTrace() {
+    const box = $('trace'); box.textContent = '';
+    for (const [k, v] of [...trace.nums, ...trace.text]) { const d = document.createElement('div'), a = document.createElement('span'), b = document.createElement('code'); a.textContent = k; b.textContent = v; d.append(a, b); box.append(d); }
+  }
 
   function render() {
     const freqs = parseFreqs($('freqs').value);
@@ -188,8 +338,17 @@ function textToVisualSummary(text, width, height) {
     for (const row of out.result) for (const cell of row) cells.push('<div class="px" style="background:' + cell.color + '" title="x' + cell.x + ' y' + cell.y + ' · brightness ' + cell.brightness + '"></div>');
     grid.innerHTML = cells.join('');
     $('meta').textContent = w + '×' + h + ' = ' + (w * h) + ' pixels · ' + freqs.length + ' frequenc' + (freqs.length === 1 ? 'y' : 'ies') + ' wrapped across the grid';
+    const first = out.result[0][0], all = out.result.flat();
+    say('rg-n1', 'ok: ' + freqs.length + ' numbers, ' + w + ' wide, ' + h + ' high');
+    say('rg-n2', w * h + ' cells, ' + freqs.length + ' numbers: they repeat');
+    say('rg-n3', 'cell (0, 0): ' + freqs[0] + ' gives brightness ' + first.brightness);
+    say('rg-n4', 'cell (0, 0): ' + first.color);
+    say('rg-n5', out.result.length + ' rows of ' + out.result[0].length + ' cells');
+    trace.nums = [['frequencies in', freqs.join(', ')], ['grid', w + ' x ' + h]];
+    for (const c of all.slice(0, 4)) trace.nums.push(['cell (' + c.x + ', ' + c.y + ')', 'brightness ' + c.brightness + ', ' + c.color]);
+    showTrace();
   }
-  function fail(why) { $('err').textContent = why; $('grid').innerHTML = ''; $('meta').textContent = ''; }
+  function fail(why) { $('err').textContent = why; $('grid').innerHTML = ''; $('meta').textContent = ''; say('rg-n1', 'refused: ' + why); trace.nums = [['refused', why]]; showTrace(); }
 
   document.addEventListener('input', (e) => { if (['freqs', 'width', 'height'].includes(e.target.id)) render(); });
   document.querySelectorAll('.presets button[data-f]').forEach((b) => b.addEventListener('click', () => { $('freqs').value = b.dataset.f; render(); }));
@@ -217,8 +376,13 @@ function textToVisualSummary(text, width, height) {
     const distinct = wordFrequencyHistogram(text);
     const n = distinct.ok ? distinct.result.length : 0;
     $('tmeta').textContent = w + '×' + h + ' = ' + (w * h) + ' pixels · top ' + n + ' distinct word' + (n === 1 ? '' : 's') + ' by count, wrapped across the grid';
+    say('rg-t0', 'the text above, ' + text.length + ' characters, into ' + w + ' x ' + h);
+    say('rg-t3', n + ' distinct word' + (n === 1 ? '' : 's') + ' kept (at most ' + MAX_DISTINCT_WORDS + ')');
+    say('rg-t4', '[' + distinct.result.slice(0, 8).join(', ') + (n > 8 ? ', …]' : ']'));
+    trace.text = [['text: words kept', String(n)], ['their counts, 0 to 1000', distinct.result.join(', ')]];
+    showTrace();
   }
-  function failText(why) { $('terr').textContent = why; $('tgrid').innerHTML = ''; $('tmeta').textContent = ''; }
+  function failText(why) { $('terr').textContent = why; $('tgrid').innerHTML = ''; $('tmeta').textContent = ''; say('rg-t0', 'refused: ' + why); trace.text = [['text refused', why]]; showTrace(); }
 
   document.addEventListener('input', (e) => { if (['text', 'twidth', 'theight'].includes(e.target.id)) renderText(); });
 

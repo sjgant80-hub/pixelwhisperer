@@ -1,6 +1,8 @@
 # pixelwhisperer
 
 > **Live: https://sjgant80-hub.github.io/pixelwhisperer/kards/** - PixelWhisperer Kards, the pixel-art engine that draws the face of every Kardlings card. Gallery, theme switcher, make-your-own, and the proof, all drawn in your browser by the same file the card uses.
+>
+> **Live: https://sjgant80-hub.github.io/pixelwhisperer/** - PixelWhisperer, sididy's first fold: numbers, or a text's word counts, whispered into a grey pixel grid, with how it works traced live and a door to Kards.
 
 ## PixelWhisperer Kards - the art engine for Kardlings cards
 
@@ -42,13 +44,13 @@ Also exported: `checkFacts(facts)` (the same validation on its own: `{ ok, f } |
 
 ```
 node --test kards/*.test.mjs        # determinism pins, refusals, every fact shows, 1,000 ids -> 1,000 Kardlings, static source check
-node witness-kards.mjs              # the mutation witness over kardart, kardpng, ui, ttf, estate, arena, raid, gear, back, fusion, build and costcase: every mutant killed, none baselined
+node witness-kards.mjs              # the mutation witness (v0.6) over kardart, kardpng, ui, ttf, estate, arena, raid, gear, back, fusion, build, hero and costcase: every mutant killed, none baselined
 node tools/kards-font.mjs           # write the UI font (kards/fonts/); --check for CI
 node tools/kards-gallery.mjs        # write kards/gallery/ (contact sheets, hero cards); --all for every card; --check for CI
 node tools/kards-pins.mjs <themeId> # print the pins for a NEW theme
 ```
 
-CI (`.github/workflows/kards.yml`) runs all of it on every push. Preview PNGs come from `kards/kardpng.mjs`, a tiny deterministic PNG writer (stored deflate, CRC-32). `kards/costcase.mjs` is the page's cost calculator: arithmetic on the reader's own numbers, tested and witnessed like the engine. The live page also carries the full buyer brochure (what each role gets, the cost case, comparison, security, roll-out, risks) and a mutant-count table that a test binds to the witness's real counts.
+CI (`.github/workflows/kards.yml`) runs all of it on every push; the mutation harness is witness v0.6 (`.witness/witness.mjs` and `.witness/runner.mjs`, vendored byte for byte), and CI checks it against the v0.6 tag, its commit and its hashes before it runs. Preview PNGs come from `kards/kardpng.mjs`, a tiny deterministic PNG writer (stored deflate, CRC-32). `kards/costcase.mjs` is the page's cost case: what a year of card art costs a team today against what it costs with the engine, from the reader's own counts, the draw time measured on the reader's device, and four sourced figures (UK median hourly wage, CPI, non-domestic electricity price, laptop processor power) read from `kards/vendor/basis.json`, copied byte for byte from the estate's sourced basis (`kards/vendor/SOURCES.json` names the commit and hash; a test checks both). No price of ours appears in it. The live page also carries the full buyer brochure (what each role gets, the cost case, comparison, security and data protection, roll-out, support and ownership, risks, the case for the board), a white paper, a How-it-works diagram traced live from the workshop card, and a blueprint and proof table whose mutant counts a test binds to the witness's real counts.
 
 ### Adding a theme
 
@@ -208,10 +210,11 @@ const art = textToVisualSummary('cat cat cat dog dog bird', 3, 1);
 
 ```bash
 node --test kernel.test.mjs
+node --test page.test.mjs      # the root page: it explains itself, and every count it prints is the real one
 ```
 
-CI re-proves it with a pinned mutation gate on every push.
+CI re-proves it with a pinned mutation gate (witness v0.6) on every push.
 
-MIT ([LICENSE](LICENSE)). Built on the Konomi architecture, created by Thomas Frumkin. Crystallized via the
+MIT ([LICENSE](LICENSE)). Powered by the Konomi architecture, created by Thomas Frumkin. Crystallized via the
 [end-of-software](https://github.com/sjgant80-hub/end-of-software) laws; the author's
 world runs on [si-didy](https://github.com/sjgant80-hub/fall-remember)'s organs.
