@@ -64,3 +64,10 @@ test('the door to Kards lands: every link into kards/ names a file and a section
   assert.ok(links.length >= 3);
   for (const [, file, anchor] of links) { assert.ok(existsSync(new URL('./kards/' + (file || 'index.html'), import.meta.url))); if (anchor) assert.ok(kid.has(anchor), 'kards/#' + anchor); }
 });
+
+test('the browser enforces it too: a content security policy allows this site only, and no connection at all', () => {
+  const csp = (html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/) || [])[1] || '';
+  assert.ok(html.indexOf('http-equiv="Content-Security-Policy"') < html.indexOf('<script'), 'set before any script');
+  for (const d of ["default-src 'self'", "connect-src 'none'", "object-src 'none'", "frame-src 'none'", "worker-src 'none'", "base-uri 'none'", "form-action 'none'"]) assert.ok(csp.split('; ').includes(d), d);
+  assert.equal(/https?:|\*|\/\//.test(csp), false, 'no other origin is named');
+});

@@ -36,7 +36,7 @@ test('a build: read once, and anything that is not one refused with a reason', (
   assert.ok([KINDS, ROLES, METHODS, SIZES, ...Object.values(ROLES)].every(Object.isFrozen));
   const k = checkBuild(KIT);
   assert.equal(k.ok, true);
-  assert.deepEqual(k.b, { job: { set: 'hospital', title: 'The Waiting Room', bar: 600000 }, kind: 'kit', parts: [{ id: id('lead'), ri: 2, gate: 571000, role: 'lead' }, { id: id('n1'), ri: 1, gate: 552000, role: 'node' }, { id: id('n2'), ri: 3, gate: 560500, role: 'node' }, { id: id('tool'), ri: null, gate: null, role: 'tool' }], gate: 612400, cases: 240, combo: true, finder: 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07', reruns: 7, method: null, student: null, reveal: false, best: 571000, lift: 41400, name: comboName(KIT).name });
+  assert.deepEqual(k.b, { job: { set: 'hospital', title: 'The Waiting Room', bar: 600000 }, kind: 'kit', parts: [{ id: id('lead'), ri: 2, gate: 571000, role: 'lead' }, { id: id('n1'), ri: 1, gate: 552000, role: 'node' }, { id: id('n2'), ri: 3, gate: 560500, role: 'node' }, { id: id('tool'), ri: null, gate: null, role: 'tool' }], gate: 612400, cases: 240, combo: true, finder: 'a3f1d2c4b5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e9c07', reruns: 7, method: null, student: null, reveal: false, verdict: null, build: null, best: 571000, lift: 41400, name: comboName(KIT).name });
   assert.equal(checkBuild(PARTY).b.name, null, 'a build that is not a combo carries no name');
   assert.deepEqual(checkBuild(TRAIN).b.student, { id: id('student'), ri: 1, size: 'tiny' });
   assert.equal(checkBuild({ ...TRAIN, student: { id: id('student'), size: 'base' } }).b.student.ri, null, 'a student not held here');
@@ -472,7 +472,84 @@ test('the build book: a job\'s proven builds ranked on one page, each with its s
   for (const b of BOOKS) assert.deepEqual(colours(leaf(b, 'lcd-v1')).filter((c) => ![0x0f1210, 0x4a5048, 0x9aa095, 0xd8dccf].includes(c)), [], 'the pocket screen is four shades');
 });
 
-test('the pins: builds, the job board, the build sheets and the build book, frozen byte for byte', () => {
+// the build card read from the game's receipt: its sealed verdict and its name (the fielding titles), drawn as they are
+const GP = [{ id: id('ga'), rarity: 'rare', role: 'member', gate: 571000, title: 'Triage Sentinel' }, { id: id('gb'), rarity: 'uncommon', role: 'member', gate: 560500, title: 'Ward Watch' }, { id: id('gc'), role: 'member', title: 'Night Nurse' }];
+const GAME = { job: JOB, kind: 'party', parts: GP, gate: 612400, cases: 240, reruns: 3, verdict: 'combo', name: 'Triage Sentinel' + X + 'Ward Watch', finder: KEY[0] };
+const DIP = { ...GAME, parts: GP.slice(0, 2), gate: 568000, verdict: 'plain', finder: undefined };   // a dip of 0.003 GATE: inside the game's margin
+const lone = (title, finder) => ({ job: JOB, kind: 'kit', parts: [{ id: id('lone'), rarity: 'epic', role: 'lead', gate: 571000, title }, { id: id('lone-tool'), role: 'tool' }], gate: 590000, verdict: 'combo', name: title, ...(finder ? { finder } : {}) });
+const VERDICT_BUILDS = [GAME, { ...GAME, reveal: true }, DIP, { ...DIP, gate: 560000, verdict: 'anti' }, lone('Q'.repeat(19), KEY[1]), lone('Q'.repeat(22)), { ...GAME, build: sha('build-combo') }];
+
+test('the game\'s verdict and name, from its receipt: the card draws exactly them, and refuses what the numbers cannot carry', () => {
+  const g = checkBuild(GAME);
+  assert.equal(g.ok, true, g.why);
+  assert.deepEqual([g.b.combo, g.b.verdict, g.b.name, g.b.lift], [true, 'combo', 'Triage Sentinel' + X + 'Ward Watch', 41400]);
+  assert.equal(checkBuild({ ...GAME, name: 'Ward Watch' + X + 'Triage Sentinel' }).b.name, 'Ward Watch' + X + 'Triage Sentinel', 'the titles in any order');
+  assert.equal(checkBuild({ ...GAME, name: undefined }).b.name, comboName(GAME).name, 'no name given: the grown one');
+  assert.equal(checkBuild({ ...GAME, verdict: undefined, combo: true }).b.name, comboName(GAME).name, 'a name without its verdict is not read');
+  assert.equal(checkBuild({ ...GAME, verdict: null, combo: true, name: 'TYPED' }).ok, true, 'nor checked');
+  assert.equal(checkBuild({ ...GAME, combo: true }).ok, true, 'combo agrees with the verdict');
+  for (const [verdict, combo] of [['combo', false], ['plain', true], ['anti', true]]) refused(checkBuild({ ...DIP, gate: verdict === 'combo' ? 612400 : 560000, verdict, combo, finder: undefined }), /^combo and the verdict must agree$/);
+  assert.deepEqual([checkBuild({ ...DIP, combo: false }).b.combo, checkBuild(DIP).b.combo, checkBuild(DIP).b.name], [false, false, null], 'a plain build is no combo and wears no name');
+  for (const verdict of ['win', '', 5, true, 'COMBO']) refused(checkBuild({ ...GAME, verdict }), /^the verdict is the game's: combo, anti or plain$/);
+  refused(checkBuild({ ...GAME, gate: undefined, cases: undefined }), /^a verdict is on a measured build with a part to beat$/);
+  refused(checkBuild({ ...GAME, parts: GP.map((p) => ({ ...p, gate: undefined })), name: undefined }), /^a verdict is on a measured build with a part to beat$/);
+  for (const gate of [571000, 571001]) refused(checkBuild({ ...DIP, gate, verdict: 'anti' }), /^only a build that does worse than its best part is an anti-combo$/);
+  assert.equal(checkBuild({ ...DIP, gate: 570999, verdict: 'anti' }).b.verdict, 'anti', 'one millionth worse is');
+  refused(checkBuild({ ...GAME, gate: 571000 }), /^only a build that beats its best part is a combo$/);
+  assert.equal(checkBuild({ ...GAME, gate: 571001 }).ok, true);
+  for (const gate of [571000, 590000, 540000]) assert.equal(checkBuild({ ...DIP, gate }).ok, true, 'plain at any lift');
+  const NAMED = /^the game's name for a build is the titles of the parts that carry a GATE, each once, joined by " \u00d7 " \(each 1 to 24 of A-Z a-z 0-9 space & \. - and the apostrophe\)$/;
+  for (const name of ['Triage Sentinel', 'Triage Sentinel' + X + 'Ward Watch' + X + 'Night Nurse', 'Triage Sentinel' + X + 'Triage Sentinel', 'Triage Sentinel' + X + 'Ward Watchers', 'Triage Sentinel ' + X + 'Ward Watch', 'Triage Sentinel' + X + 'Ward Watch' + X, 5, '', ['Triage Sentinel', 'Ward Watch']]) refused(checkBuild({ ...GAME, name }), NAMED);
+  refused(checkBuild({ ...GAME, parts: [GP[0], { ...GP[1], title: undefined }, GP[2]], name: 'Triage Sentinel' }), NAMED, 'every fielding part carries its title');
+  for (const title of ['', 'Q'.repeat(25), 'Ward~Watch', 5]) refused(checkBuild({ ...lone(title), name: title }), NAMED, 'a title is a card\'s: ' + title);
+  for (const title of ['Q', 'Q'.repeat(24), "Dr. O'Neil & Co-op"]) assert.equal(checkBuild(lone(title)).b.name, title);
+  assert.equal(checkBuild({ ...GAME, parts: [{ ...GP[0], title: 'Ward Watch' }, GP[1]], name: 'Ward Watch' + X + 'Ward Watch' }).ok, true, 'two cards may share a title');
+  assert.equal(checkBuild({ ...DIP, name: 'Ward Watch' }).ok, false, 'a plain build\'s name is checked too');
+
+  // drawn: the verdict as given, so a dip the game calls plain carries no ANTI-COMBO; the game's name on the gold ribbon
+  const rows = (px, a, b) => px.subarray(a * 192 * 3, b * 192 * 3), ribbon = (b) => rows(draw(b), 252, 270);
+  assert.equal(same(draw({ ...FUSION, verdict: 'anti' }), draw(FUSION)), true, 'the game\'s anti-combo, as the sign drew it');
+  assert.equal(same(ribbon({ ...FUSION, verdict: 'plain' }), ribbon({ ...FUSION, gate: 770582 })), true, 'a dip the game calls plain: no ribbon');
+  assert.equal(same(ribbon({ ...FUSION, verdict: 'plain' }), ribbon(FUSION)), false);
+  assert.equal(same(ribbon({ ...DIP, verdict: null, name: undefined }), ribbon({ ...DIP, gate: 560000, verdict: 'anti' })), true, 'without a verdict the sign is drawn, as before');
+  const { combo, ...unsaid } = KIT;
+  assert.equal(same(draw({ ...unsaid, verdict: 'combo' }), draw(KIT)), true, 'the game\'s combo, as one called a combo');
+  assert.equal(same(draw({ ...KIT, verdict: 'combo' }), draw(KIT)), true);
+  assert.equal(same(ribbon(GAME), ribbon({ ...GAME, name: undefined })), false, 'the game\'s name, not the grown one');
+  assert.equal(same(ribbon(GAME), ribbon({ ...GAME, name: 'Ward Watch' + X + 'Triage Sentinel' })), false, 'in its order');
+  assert.equal(rgb(draw(GAME), 0, 0, 192), 0xffd23c, 'framed in gold');
+  // the ribbon holds 26 letters beside a finder's face, 29 without: a longer name is cut with an ellipsis
+  const at = (n, k, c) => 'Q'.repeat(k) + c + 'Q'.repeat(n - k - 1), lit = (title, finder) => ribbon(lone(title, finder));
+  assert.equal(same(lit(at(18, 17, 'Q'), KEY[1]), lit(at(18, 17, 'R'), KEY[1])), false, '8 + 18 letters fit beside the face');
+  assert.equal(same(lit(at(19, 18, 'Q'), KEY[1]), lit(at(19, 18, 'R'), KEY[1])), true, 'the 27th is cut');
+  assert.equal(same(lit(at(19, 17, 'Q'), KEY[1]), lit(at(19, 17, 'R'), KEY[1])), true, 'and the 26th is the ellipsis');
+  assert.equal(same(lit(at(19, 16, 'Q'), KEY[1]), lit(at(19, 16, 'R'), KEY[1])), false, 'the 25th is drawn');
+  assert.equal(same(lit(at(21, 20, 'Q')), lit(at(21, 20, 'R'))), false, '8 + 21 letters fit without one');
+  assert.equal(same(lit(at(22, 21, 'Q')), lit(at(22, 21, 'R'))), true);
+  assert.equal(same(lit(at(22, 20, 'Q')), lit(at(22, 20, 'R'))), true, 'the 29th is the ellipsis');
+  assert.equal(same(lit(at(22, 19, 'Q')), lit(at(22, 19, 'R'))), false, 'the 28th is drawn');
+  assert.equal(same(lit(at(22, 19, 'Q')), lit(at(22, 19, 'Q') + 'Q')), true, 'past the cut, nothing more is drawn');
+  // the receipt's build id, given with its verdict: the sigil grown from it, as on the sheet and in the book, whatever the recipe
+  const medallion = (b) => { const px = draw(b), out = []; for (let y = 40; y < 93; y++) for (let x = 70; x < 123; x++) out.push(rgb(px, x, y, 192)); return out; };
+  const swapped = { ...GAME, parts: [GP[1], GP[0], GP[2]] }, BID = sha('build-combo');
+  assert.notDeepEqual(medallion(GAME), medallion(swapped), 'the recipe grows the sigil');
+  assert.deepEqual(medallion({ ...GAME, build: BID }), medallion({ ...swapped, build: BID }), 'the build id grows it, whatever the order');
+  assert.notDeepEqual(medallion({ ...GAME, build: BID }), medallion(GAME));
+  assert.notDeepEqual(medallion({ ...GAME, build: BID }), medallion({ ...GAME, build: sha('build-other') }));
+  assert.equal(checkBuild({ ...GAME, build: BID }).b.build, BID);
+  assert.equal(same(draw({ ...GAME, verdict: undefined, combo: true, build: BID }), draw({ ...GAME, verdict: undefined, combo: true })), true, 'an id without its verdict is not read');
+  assert.equal(checkBuild({ ...GAME, verdict: undefined, combo: true, build: BID }).b.build, null);
+  for (const build of ['x', BID.toUpperCase(), BID + '0', BID.slice(1), 5]) refused(checkBuild({ ...GAME, build }), /^the build id from the receipt is 64 lowercase hex characters$/);
+  for (const t of THEME_IDS) {
+    const h = createHash('sha256');
+    for (const b of VERDICT_BUILDS) { const px = draw(b, t); assert.equal(same(px, draw(b, t)), true); h.update(px); }
+    PINS['verdict ' + t] = h.digest('hex');
+  }
+  for (const b of VERDICT_BUILDS) assert.deepEqual(colours(draw(b, 'lcd-v1')).filter((c) => ![0x0f1210, 0x4a5048, 0x9aa095, 0xd8dccf].includes(c)), [], 'the pocket screen is four shades');
+  for (const x of [{ ...GAME, get verdict() { throw new Error('toxic'); } }, { ...GAME, name: new Proxy({}, { get() { throw new Error('x'); } }) }]) { assert.doesNotThrow(() => paintBuild(x, 'synthwave-v1', 192, 280)); assert.equal(checkBuild(x).ok, false); }
+});
+
+test('the pins: builds, the job board, the build sheets, the build book and the cards drawn from a verdict, frozen byte for byte', () => {
   const want = {
     'synthwave-v1': '4c3f86d5d914ea95db0e143c96db7b3dff76d193eb34733ec7427217caaf95ea',
     'blockcraft-v1': 'cac4ed0fe350a0ee0f2eb9341e928f56b313f1c218ed1df5112db7a1969acd59',
@@ -497,8 +574,13 @@ test('the pins: builds, the job board, the build sheets and the build book, froz
     'book memphis-v1': '5590f51830aa7209e36051ee74d6b37506ca8d6c836861c88ddb59a945df5e3e',
     'book blueprint-v1': '40805058a376edc2d86345d8783cfb3b607097b4ef93c37264e3f4a8e55b3972',
     'book sizes': '834b55ebb030994fd1db7c53eb283a737b04efd206fbe90ac13ae281cf440873',
+'verdict synthwave-v1': '5f5e9d7e7e76a8ed7ebadae0ac6c586a12893ec056864146b4ddf8ad5faaf4d7',
+    'verdict blockcraft-v1': 'f74316a00f9bb189ac6b7ef5f79fdb6d82a7e5b062a7d17f557645c97ca972d6',
+    'verdict lcd-v1': 'e426179824f1ea7954ce3ab7537304f86efdbaf09973a2912859ec4d756cd3d6',
+    'verdict memphis-v1': 'fec9763904a5393fc8651264cf94ff0d86c1f4971d18f4dbc39eb0f4277ba973',
+    'verdict blueprint-v1': '22b0dd2cd2e5a53b5c1605436bf14cc9cf9299e2456098b105a785569ae2be3d',
   };
-  assert.deepEqual(Object.keys(PINS).sort(), [...THEME_IDS, ...THEME_IDS.map((t) => 'jobs ' + t), 'sizes', ...THEME_IDS.map((t) => 'sheet ' + t), 'sheet sizes', ...THEME_IDS.map((t) => 'book ' + t), 'book sizes'].sort());
+  assert.deepEqual(Object.keys(PINS).sort(), [...THEME_IDS, ...THEME_IDS.map((t) => 'jobs ' + t), 'sizes', ...THEME_IDS.map((t) => 'sheet ' + t), 'sheet sizes', ...THEME_IDS.map((t) => 'book ' + t), 'book sizes', ...THEME_IDS.map((t) => 'verdict ' + t)].sort());
   assert.deepEqual(PINS, want);
 });
 

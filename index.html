@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:,">
 <title>PixelWhisperer — data whispered into pixels</title>
 <meta name="description" content="sididy's first public fold: generatePixelArt maps an array of frequency values onto a grayscale pixel grid, and textToVisualSummary does the same for a text's word counts. Authored by a resident AI in the one nightly hour it owns; every mutant killed by its witness. This repository also holds PixelWhisperer Kards, the art engine for Kardlings cards.">
 <meta name="color-scheme" content="dark">
@@ -221,7 +223,7 @@ if (!words.ok) console.log(words.why);                       // bad input is a r
 
 <h2 id="ad-h">Adoption</h2>
 <div class="cols">
-  <div class="panel"><h3>What it is good for</h3><p>A glance, not an analysis: a tiny, dependency-free way to see a list of numbers, or which words dominate a text (a log, a batch of support tickets, a draft), as a picture. It runs on the device that shows it and sends nothing anywhere.</p></div>
+  <div class="panel"><h3>What it is good for</h3><p>A glance, not an analysis: a tiny, dependency-free way to see a list of numbers, or which words dominate a text (a log, a batch of support tickets, a draft), as a picture. It runs on the device that shows it and sends nothing anywhere; this page's content security policy tells the browser to load nothing from any other site and to open no connection at all.</p></div>
   <div class="panel"><h3>How a team rolls it out</h3><ol><li>Copy <code>kernel.mjs</code> at a named commit (no imports, no dependencies).</li><li>Call <code>generatePixelArt</code> or <code>textToVisualSummary</code> and draw the cells.</li><li>Copy <code>gate.yml</code> and <code>kernel.test.mjs</code> so your CI re-proves it on every push.</li></ol></div>
   <div class="panel"><h3>What it will not do</h3><p>It does not summarise, read for meaning, or judge what matters; it counts. Frequencies past 1000 wrap round to dark again, and negative ones are not a colour. If you need a product with a business case, see <a href="kards/#decide">PixelWhisperer Kards</a>.</p></div>
 </div>

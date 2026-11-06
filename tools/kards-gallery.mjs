@@ -5,7 +5,7 @@
 //                                          cards: the four sample items, a duel and a raid per theme, a fallen boss, the eight bosses,
 //                                          the inventory icons, an estate holding items, the card backs (signed and unsigned), and the
 //                                          Fusion Lab (fusing, kept, refused per theme) with a fused card's family tree, builds and
-//                                          the job board, the build sheets (four at 1x, and one at the share size), pages of
+//                                          the job board, the build sheets (four at 1x, and one at the share size, and the same four receipts as build cards), pages of
 //                                          the build book, and two heroes' plates in every theme
 //   node tools/kards-gallery.mjs --all      also write every sample card, each theme, at the DIGI card's size (384 x 560) into kards/gallery/full/
 //   node tools/kards-gallery.mjs --check    exit 1 unless the committed files are exactly what the engine draws now (CI runs this)
@@ -67,6 +67,7 @@ export function gallery(all = false) {
   files.set('builds.png', png(...buildSheet()));
   files.set('jobs.png', scene2(paintJobs(JOBS, 'synthwave-v1', 480, 320), 480, 320));
   files.set('sheets.png', png(...sheetsSheet()));
+  files.set('verdicts.png', png(...verdictSheet()));
   files.set('books.png', png(...booksSheet()));
   files.set('heroes.png', png(...heroesSheet()));
   files.set('sheet-share.png', (() => { const r = paintSheet(SHEETS[0], 'blockcraft-v1', 1200, 630); if (!r.ok) throw new Error(r.why); return png(r.px, 1200, 630); })());
@@ -191,6 +192,13 @@ function booksSheet() {   // the sample pages of the build book at 1x, two by tw
   const SW = 400, SH = 210, px = new Uint8Array(SW * 2 * SH * 2 * 3);
   BOOK_PAGES.forEach((b, i) => { const r = paintBook(b, 'synthwave-v1', SW, SH); if (!r.ok) throw new Error(r.why); const ox = (i % 2) * SW, oy = Math.floor(i / 2) * SH; for (let y = 0; y < SH; y++) px.set(r.px.subarray(y * SW * 3, (y + 1) * SW * 3), ((oy + y) * SW * 2 + ox) * 3); });
   return [px, SW * 2, SH * 2];
+}
+// the sample build sheets' receipts drawn as build cards, handed the game's verdict and name, so the card says what the sheet says
+const cardOf = (s) => ({ job: s.job, kind: 'party', parts: s.receipt.parts.map((p) => ({ id: p.card, role: 'member', title: p.title, ...(s.held && !s.held.includes(p.card) ? {} : { rarity: SAMPLES.find((c) => c.id === p.card).rarity }), ...(p.joined ? { gate: p.alone } : {}) })), gate: s.receipt.gate, cases: s.receipt.n, reruns: s.proof ? s.proof.keys.length : 0, verdict: s.receipt.verdict, name: s.receipt.name, build: s.receipt.build, ...(s.receipt.verdict === 'combo' && s.proof && s.proof.finder ? { finder: s.proof.finder } : {}) });
+function verdictSheet() {   // those cards at 1x, side by side
+  const CW = 192, CH = 280, W2 = SHEETS.length * CW, px = new Uint8Array(W2 * CH * 3);
+  SHEETS.forEach((s, i) => { const r = paintBuild(cardOf(s), 'synthwave-v1', CW, CH); if (!r.ok) throw new Error(r.why); for (let y = 0; y < CH; y++) px.set(r.px.subarray(y * CW * 3, (y + 1) * CW * 3), (y * W2 + i * CW) * 3); });
+  return [px, W2, CH];
 }
 function sheetsSheet() {   // the sample build sheets at 1x, two by two
   const SW = 400, SH = 210, px = new Uint8Array(SW * 2 * SH * 2 * 3);

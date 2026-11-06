@@ -8,7 +8,10 @@
 // learned from, its own GATE. The published rule buildLift says what it adds: its GATE minus the best GATE among its parts. A
 // build may be drawn as a combo only when that lift is above zero; one below zero is drawn as an ANTI-COMBO, because parts that
 // make each other worse are a lesson too. Which builds are combos is the game's sealed rule (a margin, re-runs from distinct keys);
-// the painter only refuses a combo the numbers cannot carry. Every build has a sigil, a rune grown from its recipe (its kind, and
+// the painter only refuses a combo the numbers cannot carry. Given the game's own verdict from its receipt, the card draws exactly
+// that verdict (a dip inside the game's margin is plain, not an anti-combo), and given the game's name with it (the fielding
+// cards' titles joined by " x ", checked against the titles the parts carry), a combo wears that name; given the receipt's build
+// id too, its sigil is grown from that id, as on its sheet and in the book. Every build has a sigil, a rune grown from its recipe (its kind, and
 // each part's role and id in order), and a combo has a name grown the same way from two fixed word tables (comboName), never
 // typed: the same recipe always makes the same sigil and the same name. The first key to prove a combo is credited on its card by
 // that key's face. A card the device does not hold is drawn as "?", never invented. paintJobs draws the job board: each job a note
@@ -60,17 +63,24 @@ function card(p, what) {   // a part or a student: { id, rarity? (none: not held
 
 /**
  * Check a build. build: { job: { set (DATASETS), title? (at most 24 of A-Z a-z 0-9 space & ' . -), bar (GATE in millionths, up to
- * 1010000) }, kind (KINDS), parts: [{ id, rarity?, role (ROLES[kind]), gate? }] (1 to 6, each card once), gate?: the build's GATE on
+ * 1010000) }, kind (KINDS), parts: [{ id, rarity?, role (ROLES[kind]), gate?, title? }] (1 to 6, each card once), gate?: the build's GATE on
  * the job, held out, cases?: how many held-out cases it was measured on (1 to 999999, with gate), reruns?: distinct keys that
  * re-ran it (0 to 99999), combo?: true when the game's sealed rule makes it a combo (its lift must be above zero), finder?: the
  * Ed25519 public key (64 lowercase hex) of the first key to prove the combo, method? and student?: { id, rarity?, size (SIZES) }
- * (a training run's, and only a training run's), reveal?: true to draw COMBO FOUND (a combo's first showing) }. A kit has one lead; a fusion two parents; a party 2 to 6
+ * (a training run's, and only a training run's), reveal?: true to draw COMBO FOUND (a combo's first showing), verdict?: the game's
+ * sealed verdict from its receipt ('combo' | 'anti' | 'plain', on a measured build with a part to beat: a combo lifts, an
+ * anti-combo drops; given, the card draws exactly that verdict, so a dip inside the game's margin is drawn plain), name?: the
+ * game's name for the build from the same receipt, read only with its verdict: the titles of the parts that carry a GATE (the
+ * fielding ones), each once and in any order, joined by " \u00d7 " (each such part then carries its card's title, 1 to 24 of the
+ * title's characters), so it is never typed; a combo wears it in place of the grown name), build?: the build's id from the same
+ * receipt (64 lowercase hex), read only with its verdict: the card's sigil is then grown from it, as the sheet's and the book's are }.
+ * A kit has one lead; a fusion two parents; a party 2 to 6
  * members; a training run its method and its student, whose GATE is the build's. -> { ok: true, b } | { ok: false, why }
  */
 export function checkBuild(x) {
   try {
     if (!isObj(x)) return no('the build must be an object');
-    const { job, kind, parts, gate = null, cases = null, combo = false, finder = null, reruns = 0, method = null, student = null, reveal = false } = x;
+    const { job, kind, parts, gate = null, cases = null, combo: said = false, finder = null, reruns = 0, method = null, student = null, reveal = false, verdict = null, name: given = null, build: rid = null } = x;
     const J = jobOf(job);
     if (!J.ok) return J;
     if (!KINDS.includes(kind)) return no('kind must be kit, party, fusion or training');
@@ -101,13 +111,30 @@ export function checkBuild(x) {
     } else if (method !== null || student !== null) return no('method and student describe a training run');
     if (cases !== null && (!Number.isInteger(cases) || cases < 1 || cases > 999999)) return no('cases is how many held-out cases it was measured on: a whole number from 1 to 999999');
     if (cases !== null && gate === null) return no('cases count the cases a measured build was scored on');
-    if (typeof combo !== 'boolean' || typeof reveal !== 'boolean') return no('combo and reveal must be true or false');
+    if (typeof said !== 'boolean' || typeof reveal !== 'boolean') return no('combo and reveal must be true or false');
     const L = liftOf(gate, ps);
+    if (verdict !== null) {   // the game's own word, from its receipt: drawn as it is, checked only against what the numbers carry
+      if (!VERDICTS.includes(verdict)) return no('the verdict is the game\'s: combo, anti or plain');
+      if (L.lift === null) return no('a verdict is on a measured build with a part to beat');
+      if (x.combo !== undefined && said !== (verdict === 'combo')) return no('combo and the verdict must agree');
+      if (verdict === 'anti' && !(L.lift < 0)) return no('only a build that does worse than its best part is an anti-combo');
+    }
+    const combo = said || verdict === 'combo';
     if (combo && !(L.lift > 0)) return no('only a build that beats its best part is a combo');
+    const known = verdict !== null && rid !== null;   // the receipt's build id, read with its verdict: the sigil the sheet and the book draw
+    if (known && !isKey(rid)) return no('the build id from the receipt is 64 lowercase hex characters');
+    const named = verdict !== null && given !== null;   // a name is read only with the verdict it came with, and only as the parts' own titles
+    if (named && !namedBy(given, parts.filter((p, i) => ps[i].gate !== null).map((p) => p.title))) return no('the game\'s name for a build is the titles of the parts that carry a GATE, each once, joined by " \u00d7 " (each 1 to 24 of A-Z a-z 0-9 space & . - and the apostrophe)');
     if (finder !== null && (!combo || typeof finder !== 'string' || finder.length !== 64 || !Array.from(finder).every((ch) => HEX.includes(ch)))) return no('the finder of a combo is its first prover\'s public key: 64 lowercase hex characters');
     if (reveal && !combo) return no('a reveal shows a combo');
-    return { ok: true, b: { job: J.j, kind, parts: ps, gate, cases, combo, finder, reruns, method, student: S, reveal, ...L, name: combo ? nameOf(kind, ps) : null } };
+    return { ok: true, b: { job: J.j, kind, parts: ps, gate, cases, combo, finder, reruns, method, student: S, reveal, verdict, build: known ? rid : null, ...L, name: combo ? (named ? given : nameOf(kind, ps)) : null } };
   } catch (e) { return no('the build could not be read'); }
+}
+function namedBy(name, titles) {   // the game's name: these titles (each a card's, 1 to 24 of its characters), each once, joined by ' x '
+  if (typeof name !== 'string' || !titles.every((t) => typeof t === 'string' && t.length > 0 && t.length < 25 && Array.from(t).every((ch) => TITLE.includes(ch)))) return false;
+  const left = titles.slice();
+  for (const word of name.split(TIMES)) { const k = left.indexOf(word); if (k < 0) return false; left.splice(k, 1); }
+  return left.length === 0;
 }
 
 function liftOf(gate, ps) {   // the best GATE among the parts that carry one, and what the build adds to it
@@ -211,7 +238,7 @@ export function paintBuild(build, themeId, w, h) {
     for (const i of span(0, 3)) { rect(cv, i, i, LW - 2 * i, 1, frame); rect(cv, i, LH - 1 - i, LW - 2 * i, 1, frame); rect(cv, i, i, 1, LH - 2 * i, frame); rect(cv, LW - 1 - i, i, 1, LH - 2 * i, frame); }
 
     // the sigil, in its medallion; a reveal sets it in rays of gold
-    const S = buildSigil(build), cx = 96, cy = 66;
+    const S = B.build === null ? buildSigil(build) : sigilFrom(B.build), cx = 96, cy = 66;   // the receipt's build id, when given, as on its sheet
     if (B.reveal) for (const t of span(0, 16)) { const dx = [0, 2, 4, 6, 8, 6, 4, 2, 0, -2, -4, -6, -8, -6, -4, -2][t], dy = [-8, -6, -4, -2, 0, 2, 4, 6, 8, 6, 4, 2, 0, -2, -4, -6][t]; for (const s of span(4, 8)) rect(cv, cx + dx * s, cy + dy * s, 2, 2, GOLD[t % 2]); }
     rect(cv, cx - 28, cy - 28, 56, 56, frame); rect(cv, cx - 26, cy - 26, 52, 52, L.panel);
 
@@ -254,10 +281,11 @@ export function paintBuild(build, themeId, w, h) {
     // its name, as a combo, with its finder's face; or the lesson of an anti-combo
     if (B.combo) {
       rect(cv, 6, 252, LW - 12, 18, GOLD[0]); rect(cv, 6, 252, LW - 12, 1, 0xffffff); rect(cv, 6, 269, LW - 12, 1, GOLD[1]);
-      centred(cv, 'COMBO \u00b7 ' + B.name, B.finder ? 102 : 96, 257, 0xffffff, GOLD[1]);
+      const said = 'COMBO \u00b7 ' + B.name, room = B.finder ? 26 : 29;   // letters the ribbon holds beside the finder's face, or without it
+      centred(cv, said.length > room ? said.slice(0, room - 1) + '\u2026' : said, B.finder ? 102 : 96, 257, 0xffffff, GOLD[1]);
       if (B.finder) { const f = identicon(B.finder, 1); for (const q of span(0, 100)) dot(cv, 11 + (q % 10), 256 + div(q, 10), inked(L, (f.px[q * 3] << 16) | (f.px[q * 3 + 1] << 8) | f.px[q * 3 + 2])); }
     }
-    else if (lift !== null && lift < 0) { rect(cv, 6, 252, LW - 12, 18, 0x7a1020); centred(cv, 'ANTI-COMBO', 96, 257, 0xffd0d0, 0x3a0810); }
+    else if (lift !== null && lift < 0 && B.verdict !== 'plain') { rect(cv, 6, 252, LW - 12, 18, 0x7a1020); centred(cv, 'ANTI-COMBO', 96, 257, 0xffd0d0, 0x3a0810); }
 
     if (L.lcd) for (const y of span(0, LH)) for (const x of span(0, LW)) {   // the pocket screen: every pixel one of its four shades
       const q = at(cv, x, y);

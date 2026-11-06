@@ -101,3 +101,19 @@ test('the brochure types no figure of its own: no prices, no per-seat wording, n
   assert.equal(/\d\s*ms\b/.test(page), false, 'no draw time typed into the page: it is measured on the reader\x27s device');
   assert.ok(html.includes("costCase(BASIS, input)") && html.includes('sourcesOf(BASIS)'), 'the cost case reads the sourced basis, and the page lists its sources');
 });
+
+test('the counts typed into the page before any script runs are the registry\x27s: how many themes there are', async () => {
+  const { THEMES } = await import('./kardart.mjs');
+  const n = Object.keys(THEMES).length, WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'], page = html.replace(/<script[\s\S]*?<\/script>/g, '');
+  assert.equal(Number(page.match(/<b id="n-themes">(\d+)<\/b>/)[1]), n, 'the badge, before the script fills it');
+  const said = [...page.matchAll(/\b(one|two|three|four|five|six|seven|eight|nine|ten) (?:themes|worlds)\b/g)];
+  assert.ok(said.length >= 2, 'the page says how many');
+  for (const m of said) assert.equal(WORDS.indexOf(m[1]), n, m[0]);
+});
+
+test('the browser enforces it too: a content security policy allows this site only, and no connection at all', () => {
+  const csp = (html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/) || [])[1] || '';
+  assert.ok(html.indexOf('http-equiv="Content-Security-Policy"') < html.indexOf('<script'), 'set before any script');
+  for (const d of ["default-src 'self'", "connect-src 'none'", "object-src 'none'", "frame-src 'none'", "worker-src 'none'", "base-uri 'none'", "form-action 'none'"]) assert.ok(csp.split('; ').includes(d), d);
+  assert.equal(/https?:|\*|\/\//.test(csp), false, 'no other origin is named');
+});
