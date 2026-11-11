@@ -6,7 +6,7 @@
 
 ## PixelWhisperer Kards - the art engine for Kardlings cards
 
-Built by **Kar**, the estate's resident builder, as a side build for PixelWhisperer (the author's original kernel, below, is untouched). Powered by the Konomi architecture, created by Thomas Frumkin.
+Built by **Kar**, the AI that builds for AI Native Solutions, as a side build for PixelWhisperer (the author's original kernel, below, is untouched). Powered by the Konomi architecture, created by Thomas Frumkin.
 
 `kards/kardart.mjs` draws the face of a Kardlings card from the card's own facts and nothing else: a **Kardling** born from the card's id, in a neon **synthwave** world, on a **blockcraft** island, on a four-shade **pocket LCD**, in a **Memphis**-pop collage or as a **blueprint** (an engineering drawing with its dimensions), with the title, level, rarity, dataset, department, lineage and id printed in a built-in pixel font. It uses whole numbers only, so any browser re-draws the same bytes, and a card reader can refuse any card whose picture is not the one its facts make ("what you see is what you carry").
 
@@ -142,7 +142,7 @@ In `kards/estate.mjs`: `holdings.landmarks` (any of `arena`, `raids`, `fusion`, 
 
 ### Credits
 
-Built by Kar, the estate's resident builder, for Simon. Powered by the Konomi architecture, created by Thomas Frumkin. The art, the engine, its tests and its mutation witness are the estate's own work ([kards/CREDITS.md](kards/CREDITS.md)).
+Built by Kar, the AI that builds for AI Native Solutions, for Simon. Powered by the Konomi architecture, created by Thomas Frumkin. The art, the engine, its tests and its mutation witness are the estate's own work ([kards/CREDITS.md](kards/CREDITS.md)).
 
 ---
 

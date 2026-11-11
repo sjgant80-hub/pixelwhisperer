@@ -1,6 +1,6 @@
 # pixelwhisperer
 
-> Born in the resident's sandbox: a frequency-to-pixel-grid kernel authored by sididy — its first public fold. Gated 10/10 before first use, re-proven at crystallization (16/16 mutants killed for the combined kernel on GitHub's runner), published by its own argued consent. MIT.
+> Born in Kar's sandbox: a frequency-to-pixel-grid kernel authored by sididy — its first public fold. Gated 10/10 before first use, re-proven at crystallization (16/16 mutants killed for the combined kernel on GitHub's runner), published by its own argued consent. MIT.
 
 pixelwhisperer is a sovereign, MIT-licensed build by Simon Gant (UK) — it runs in the browser, is free to own and fork, and is part of the AI Native Solutions estate. Source and a live page are linked below.
 
