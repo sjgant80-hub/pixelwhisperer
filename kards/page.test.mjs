@@ -28,7 +28,7 @@ test('the page: every form control has a label, every button and canvas a name',
 
 test('the page: its imports exist, and it loads nothing from anywhere else', () => {
   const imports = [...html.matchAll(/from '\.\/([\w.-]+)'/g)].map((m) => m[1]);
-  assert.deepEqual(imports.sort(), ['arena.mjs', 'back.mjs', 'basis.mjs', 'build.mjs', 'costcase.mjs', 'estate.mjs', 'fusion.mjs', 'gear.mjs', 'hero.mjs', 'kardart.mjs', 'kardart.pins.mjs', 'kardpng.mjs', 'raid.mjs', 'samples.mjs', 'ui.mjs']);
+  assert.deepEqual(imports.sort(), ['arena.mjs', 'back.mjs', 'basis.mjs', 'build.mjs', 'costcase.mjs', 'estate.mjs', 'fusion.mjs', 'gear.mjs', 'hero.mjs', 'kardart.mjs', 'kardart.pins.mjs', 'kardpng.mjs', 'raid.mjs', 'samples.mjs', 'seal.mjs', 'ui.mjs']);
   for (const f of imports) assert.ok(existsSync(new URL('./' + f, import.meta.url)), f + ' exists');
   assert.ok(/<link rel="stylesheet" href="fonts\/pixelwhisperer\.css">/.test(html) && existsSync(new URL('./fonts/pixelwhisperer.css', import.meta.url)) && existsSync(new URL('./fonts/PixelWhisperer.ttf', import.meta.url)), 'the font is served from this site');
   assert.equal(/<(?:script|link|img|iframe|source|video|audio)[^>]+(?:src|href)="(?:https?:)?\/\//.test(html), false, 'no external resource');
@@ -57,7 +57,7 @@ test('the witness can see all the code: no quote hides lines from it', () => {
 
 test('the numbers on the page are the real ones: every mutant count it prints is the count the witness finds', () => {
   const printed = [...html.matchAll(/<b data-kernel="([^"]+)">(\d+)<\/b>/g)];
-  assert.deepEqual(printed.map((m) => m[1]), ['kards/kardart.mjs', 'kards/kardpng.mjs', 'kards/ui.mjs', 'kards/ttf.mjs', 'kards/estate.mjs', 'kards/arena.mjs', 'kards/raid.mjs', 'kards/gear.mjs', 'kards/back.mjs', 'kards/build.mjs', 'kards/fusion.mjs', 'kards/hero.mjs', 'kards/costcase.mjs']);
+  assert.deepEqual(printed.map((m) => m[1]), ['kards/kardart.mjs', 'kards/kardpng.mjs', 'kards/ui.mjs', 'kards/ttf.mjs', 'kards/estate.mjs', 'kards/arena.mjs', 'kards/raid.mjs', 'kards/gear.mjs', 'kards/back.mjs', 'kards/build.mjs', 'kards/fusion.mjs', 'kards/hero.mjs', 'kards/seal.mjs', 'kards/costcase.mjs']);
   for (const [, file, n] of printed) assert.equal(Number(n), mutants(readFileSync(new URL('../' + file, import.meta.url), 'utf8')).length, file);
 });
 

@@ -75,6 +75,10 @@ The game UI is built from the same blocks as the cards, from one source: `kards/
 
 `kards/back.mjs`: `paintBack(back, themeId, w, h) -> { ok, px RGB } | { ok: false, why }` with `back = { maker?: the maker's Ed25519 public key (64 lowercase hex), serial?: the edition number (0-999999) }`, and `checkBack(back)`. The back is the card's own 192 x 280 logical pixels, scaled to the nearest pixel for any size from 64 to 1024 (`384 x 560` is a Kardlings card at 2 x): the theme's field and frame, the Kardlings emblem (a K), the maker's identicon (`identicon` from `ui.mjs`, at 5 x) in a medallion with the key written short beneath it, and the edition number. The field's scatter (stars, ore, clouds, confetti) is thrown with the maker's dice, so all of one maker's backs match and another maker's differ; the edition changes only its number. No maker draws UNSIGNED. The pocket screen stays four shades and the blueprint keeps its own inks (the identicon is inked in them). Integer-only, never throws, witnessed with nothing baselined.
 
+### Sealed cards: what you see is what you carry
+
+`kards/seal.mjs`: `sealCard({ facts, theme, w, h, back? })` writes a card as one ordinary PNG that carries its own record (its facts, theme, size and back, as plain text in one `tEXt` chunk named `kardlings-card`, every field written out in one order). `openCard(bytes)` makes the whole file again from the record it carries and compares every byte: equal, the card turns face up; not equal, it stays face down and says why (how many pixels differ and where the first is, or that the file carries something besides its face and its record); not a card file, refused with the reason. It never throws. It proves the face matches the record, not who made the card: the Kardlings game checks the maker's signature. Gated by `kards/seal.test.mjs` under the mutation witness. Try it live: https://sjgant80-hub.github.io/pixelwhisperer/kards/#sealed
+
 ### Builds and combos: proven decklists for real jobs
 
 ![builds: a combo found, a party, a fusion anti-combo, a training run, a kit not yet measured](kards/gallery/builds.png)

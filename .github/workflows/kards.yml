@@ -16,7 +16,7 @@ jobs:
           cmp .witness/witness.mjs /tmp/witness/witness.mjs
           cmp .witness/runner.mjs /tmp/witness/runner.mjs
           printf '%s  %s\n' 9918297aa5f8fc4e1d26d9e6b25226f56102fdc04f0c634155bfcba1c086ef48 .witness/witness.mjs e85f13b1b30c40c045bcb7997a5d73808c14684dcd161c4a2ea14caaf47c3a0e .witness/runner.mjs | sha256sum -c -
-      - name: mutation witness - every mutant of every kernel (art and items, png, cost case, UI kit, font, estate, arena, raids, kit slots, card backs, Fusion Lab, campaign, read-back, builds, build sheet, build book, hero plate) killed, none baselined
+      - name: mutation witness - every mutant of every kernel (art and items, png, cost case, UI kit, font, estate, arena, raids, kit slots, card backs, Fusion Lab, campaign, read-back, builds, build sheet, build book, hero plate, sealed cards) killed, none baselined
         run: node witness-kards.mjs | tee witness.txt
       - name: the gallery images are exactly what the engine draws
         run: node tools/kards-gallery.mjs --check

@@ -151,7 +151,7 @@ canvas.estate{aspect-ratio:auto;max-width:100%}
 </div></header>
 
 <nav class="jump" aria-label="On this page"><div class="wrap">
-  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#builds">Builds</a><a href="#hero">Hero</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#paper">White paper</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
+  <a href="#gallery">Gallery</a><a href="#workshop">Make your own</a><a href="#backs">Card backs</a><a href="#sealed">Sealed cards</a><a href="#items">Items</a><a href="#estate">Estate</a><a href="#arena">Arena</a><a href="#fusion">Fusion Lab</a><a href="#builds">Builds</a><a href="#hero">Hero</a><a href="#raids">Raids</a><a href="#ui">UI kit</a><a href="#start">Start here</a><a href="#how">How it works</a><a href="#blueprint">Blueprint</a><a href="#paper">White paper</a><a href="#decide">For decision-makers</a><a href="#adoption">Adoption</a><a href="#proof">Proof</a><a href="#limits">Limits</a><a href="#credits">Credits</a>
 </div></nav>
 
 <main class="wrap">
@@ -219,6 +219,59 @@ paintBack({ maker: publicKeyHex, serial: 123 }, 'synthwave-v1', 384, 560)   // {
 // maker: the maker's Ed25519 public key, 64 lowercase hex; leave it out for an unsigned card. serial: the edition, 0 to 999999, or left out.
 // The back is 192 x 280 logical pixels, scaled to the nearest pixel for any size from 64 to 1024: 384 x 560 is a Kardlings card at 2 x.</code></pre>
   <p><b>What it refuses, and what a change can break.</b> A key that is not 64 lowercase hex characters, an edition outside 0 to 999999, a theme it does not know and a size outside 64 to 1024 are each refused with a plain reason (the message under the picture above is that reason), and nothing throws. The scatter is seeded by the first 16 characters of the maker's key, and the identicon folds in all 64 (about 40 bits of pattern and colour, so two makers' marks rarely match; the key written beneath it tells them apart, and the key itself is what Kardlings checks). Every theme's backs are pinned by sha256 in the tests, so no change to a published back lands silently: CI goes red until it is made on purpose.</p>
+</section>
+
+<section id="sealed" aria-labelledby="sealed-h">
+  <h2 id="sealed-h">Sealed cards: what you see is what you carry</h2>
+  <p><b>In plain words.</b> A Kardlings card travels as one ordinary PNG file, and the file holds two things: the <b>picture</b> of the card's face, and the card's <b>record</b> (its facts, its theme, its size, and its back if it has one), written as plain text inside the file. A card that arrives starts <b>face down</b>. The reader takes the record, draws the whole file again from it, and compares the two files byte by byte. If every byte matches, the card turns <b>face up</b>. If one pixel or one letter differs, it stays face down and says what is wrong: how many pixels differ and where the first one is, or that the file carries something besides its face and its record. You cannot change the picture without the record catching it, or change the record without the picture catching it.</p>
+  <p class="hint">Try it: <b>Seal the workshop card</b> makes a sealed file from the card in the <a href="#workshop">workshop</a>, with the back you set in <a href="#backs">Card backs</a>, and opens it here: it starts face down, then turns face up. Then break it on purpose. <b>Change one pixel</b> flips the colour of a single pixel, <b>Change one word</b> changes one letter of the card's name in its record, and <b>Add a hidden note</b> slips an extra line of text into the file. Each time the page also fixes the file's checksums, as a forger would, so the only thing that can catch the change is drawing the card again. <b>Open the untouched file</b> goes back to the file as sealed. <b>Download the sealed card</b> saves the file you are looking at, and <b>Open a card file</b> reads any PNG from your device: nothing is uploaded, it is all checked in this page.</p>
+  <p><b>Three words, in plain terms.</b> A <b>byte</b> is one of the small numbers (0 to 255) a file is made of; this card's file is about 646,000 of them. A <b>chunk</b> is one labelled part of a PNG file: the header, the picture, the end, and here one more, the record. A <b>checksum</b> is a number stored with each chunk that changes if any byte of that chunk changes, so a damaged file is caught at once; a forger can work checksums out again, which is why the real check is drawing the card again.</p>
+  <div class="work">
+    <div class="preview">
+      <canvas class="card" id="seal-canvas" width="384" height="560" role="img" aria-label="A sealed card, face down until it is checked"></canvas>
+      <p class="msg" id="seal-msg" role="status" aria-live="polite"></p>
+    </div>
+    <form class="panel" id="seal-form" autocomplete="off" novalidate>
+      <div class="actions full"><button type="button" class="act" id="s-seal">Seal the workshop card</button><button type="button" class="act alt" id="s-dl">Download the sealed card</button></div>
+      <div class="full"><label for="s-file">Open a card file (a PNG from your device; it stays on your device)</label><input id="s-file" type="file" accept="image/png,.png"></div>
+      <div class="actions full"><button type="button" class="act alt" id="s-pixel">Change one pixel</button><button type="button" class="act alt" id="s-word">Change one word</button><button type="button" class="act alt" id="s-note">Add a hidden note</button><button type="button" class="act alt" id="s-again">Open the untouched file</button><span class="msg" id="s-act" role="status" aria-live="polite"></span></div>
+      <div class="full"><h3 style="margin:.2em 0">What the check found</h3></div>
+      <div class="trace full" id="s-stats" aria-live="polite"></div>
+    </form>
+  </div>
+  <h3>The record this file carries</h3>
+  <p>It is plain text, so anyone can read it; nothing in it is secret, and nothing is hidden from you. It sits in the file under the name <code>kardlings-card</code>.</p>
+  <pre id="s-record" tabindex="0" aria-label="The card record carried in the file"></pre>
+  <h3>How it works, step by step</h3>
+  <pre aria-label="The flow of sealing and opening a card" tabindex="0">SEAL   the card's facts, theme and size (and its back)
+         |  paintArt          draws the face as pixels
+         |  pngOf             writes an ordinary PNG
+         |  + one text chunk  the record, right after the header
+         v
+       one file: the face and its record
+
+OPEN   a file that says it is a card
+         |  read every chunk  each checksum, then the one record
+         |  sealCard(record)  the whole file made again from the record
+         |  compare           every byte, first to last
+         v
+       all equal   -&gt;  FACE UP
+       any differ  -&gt;  FACE DOWN, and why: which pixel, or what else it carries</pre>
+  <ol>
+    <li><b>Seal.</b> The face is drawn from the record by the same engine that draws every card on this page, so the record decides every pixel. The record is written out in one fixed order with every field present, so one card has exactly one record and one file.</li>
+    <li><b>Open.</b> The reader checks the file is a PNG, checks every chunk's checksum, and finds exactly one card record. A file with no record, two records, a damaged chunk, a record that is not plain text, or a record that is not a card is refused with the reason.</li>
+    <li><b>Make it again.</b> From that record alone, the reader seals the card again and compares the new file with the one it was given. Equal, byte for byte: face up. The numbers in <b>What the check found</b> above are this exact run in your browser.</li>
+    <li><b>Say why.</b> When the files differ, the reader decodes the pixels and names the first one that differs (x across, y down, from the top left), or says the face is right but the file carries more, such as an extra note or the record's fields in another order.</li>
+  </ol>
+<pre><code>import { sealCard, openCard } from './kards/seal.mjs';
+
+const sealed = sealCard({ facts, theme: 'synthwave-v1', w: 384, h: 560, back: { maker: publicKeyHex, serial: 123 } });
+// { ok: true, png: Uint8Array, card, px } | { ok: false, why }   the same card always makes the same file
+const seen = openCard(sealed.png);
+// { ok: true, face: 'up', card, px }                              exactly the file its record makes
+// { ok: true, face: 'down', card, why, differ, at }               a card, but not that file: why, in plain words
+// { ok: false, why }                                              not a card file at all; it never throws</code></pre>
+  <p><b>What it does not do, and what a change can break.</b> It proves the face matches the record. It does not prove who made the card: the maker's mark on the back names a key, and the Kardlings game checks the maker's signature with that key. A card saved again by another program (an image editor that compresses the picture differently) is not the same file any more, so it stays face down with that reason: seal it again from its record. The face inside a sealed card is exactly the face this page draws, so the pinned themes keep sealed cards stable too; a change to a published theme turns CI red before it could turn a good card face down.</p>
 </section>
 
 <section id="items" aria-labelledby="items-h">
@@ -527,6 +580,7 @@ const face = identicon(publicKeyHex, 4);                          // { ok, size:
     <li><b>Tinker.</b> Open it in the workshop and change a fact: the title, the level, the rarity, a parent. Watch where each one lands on the card (the anatomy below shows the map).</li>
     <li><b>Take it.</b> Download the PNG or copy the link. Every card is a pure function of its facts, so the same link shows the same card on any device.</li>
     <li><b>Play.</b> Make an item card, hold items on your estate and watch TALKER open, play a duel in the arena a case at a time, and run a boss down to 0.6 in a raid. Every one of those pictures is drawn from its facts the same way a card is.</li>
+    <li><b>Seal it.</b> In <a href="#sealed">Sealed cards</a>, seal your card into one file that carries its own record, then change one pixel or one word and watch it stay face down.</li>
     <li><b>Build with it.</b> One import and one call draws a card's face, for any size from 64 to 1024 pixels:</li>
   </ol>
 <pre><code>import { paintArt, checkFacts, THEMES } from './kards/kardart.mjs';
@@ -641,6 +695,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td><code>fusion.mjs</code></td><td>the Fusion Lab: <code>paintFusion</code>, <code>checkFusion</code> and the published verdict <code>fusionVerdict</code> (kept only when a try beats both parents); the parents on their pedestals, the chamber, every try against the line to beat; <code>paintLineage</code>, a fused card's family tree in blocks.</td><td><code>fusion.test.mjs</code>; <b data-bp="kards/fusion.mjs">118</b> mutants, all killed</td></tr>
       <tr><td><code>build.mjs</code></td><td>builds and combos: <code>paintBuild</code> (a build card: its sigil, its Kardlings on one platform, its lift, the bar, its re-runs, COMBO or ANTI-COMBO, and the game's own verdict and name when its receipt hands them over), the published rule <code>buildLift</code>, <code>buildSigil</code> (a rune grown from the recipe), <code>paintJobs</code> (the job board), <code>paintSheet</code> (a whole build on one share picture) and <code>paintBook</code> (a job's proven builds, ranked).</td><td><code>build.test.mjs</code>; <b data-bp="kards/build.mjs">368</b> mutants, all killed</td></tr>
       <tr><td><code>hero.mjs</code></td><td>the hero plate: <code>paintHero</code> and <code>checkHero</code>; a hero's crest under a crown, its name and class, and six gems lit or hollow as its record says.</td><td><code>hero.test.mjs</code>; <b data-bp="kards/hero.mjs">33</b> mutants, all killed</td></tr>
+      <tr><td><code>seal.mjs</code></td><td>sealed cards: <code>sealCard</code> (a card's face and its record in one PNG, the record in one text chunk after the header, every field written out in one order) and <code>openCard</code> (face up only when the file is exactly the file its record makes; face down with the first pixel that differs, or what else the file carries; refused with a reason when it is not a card file); <code>recordOf</code>, the one record a card has.</td><td><code>seal.test.mjs</code> (read back with the platform's own inflate and an independent checksum, every refusal, every way a file can differ, a fuzz of broken files); <b data-bp="kards/seal.mjs">63</b> mutants, all killed</td></tr>
       <tr><td><code>kardpng.mjs</code></td><td>a tiny deterministic PNG writer (stored deflate, CRC-32) for previews and downloads.</td><td><code>kardpng.test.mjs</code>; <b data-bp="kards/kardpng.mjs">16</b> mutants, all killed; CI re-draws the gallery PNGs and compares them byte for byte</td></tr>
       <tr><td><code>costcase.mjs</code></td><td>the cost case for the people who decide: today's card art against the engine's, from the reader's counts, the sourced basis and the measured draw time.</td><td><code>costcase.test.mjs</code> (the arithmetic spelled out apart from the kernel, every boundary, every refusal); <b data-bp="kards/costcase.mjs">20</b> mutants, all killed</td></tr>
       <tr><td><code>basis.mjs</code> and <code>vendor/basis.json</code></td><td>the sourced figures the cost case reads, copied byte for byte from the estate's basis, with where each came from.</td><td><code>costcase.test.mjs</code> checks the file's SHA-256 against <code>vendor/SOURCES.json</code> and that the module the page imports is the same JSON</td></tr>
@@ -801,7 +856,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
       <tr><td>Every fact shows</td><td>changing any one fact changes the pixels, and a test checks the change lands only where that fact lives.</td></tr>
       <tr><td>1,000 ids, 1,000 Kardlings</td><td>1,000 random ids, 1,000 sequential ids and every single-bit change give distinct Kardlings; all are symmetric, connected, with eyes.</td></tr>
       <tr><td>Integer-only, browser-safe</td><td>a static check of the source: no banned <code>Math</code> calls, no <code>Date</code>, no float literals, one division, no imports.</td></tr>
-      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">314</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">139</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">368</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab, <b data-kernel="kards/hero.mjs">33</b> in the hero plate and <b data-kernel="kards/costcase.mjs">20</b> in the cost case, all killed. CI runs it on every push.</td></tr>
+      <tr><td>The tests would notice a bug</td><td>a mutation witness flips every comparison, logic operator and &plusmn;1 in the code and the tests must kill every mutant, with nothing baselined: <b data-kernel="kards/kardart.mjs">314</b> mutants in the engine, <b data-kernel="kards/kardpng.mjs">16</b> in the PNG writer, <b data-kernel="kards/ui.mjs">44</b> in the UI kit, <b data-kernel="kards/ttf.mjs">55</b> in the font writer, <b data-kernel="kards/estate.mjs">251</b> in the estate painter, <b data-kernel="kards/arena.mjs">139</b> in the arena, <b data-kernel="kards/raid.mjs">134</b> in the raids, <b data-kernel="kards/gear.mjs">75</b> in the kit slots, <b data-kernel="kards/back.mjs">57</b> in the card backs, <b data-kernel="kards/build.mjs">368</b> in builds, combos, the build sheet and the build book, <b data-kernel="kards/fusion.mjs">118</b> in the Fusion Lab, <b data-kernel="kards/hero.mjs">33</b> in the hero plate, <b data-kernel="kards/seal.mjs">63</b> in sealed cards and <b data-kernel="kards/costcase.mjs">20</b> in the cost case, all killed. CI runs it on every push.</td></tr>
     </tbody>
   </table></div>
   <h3>Check it in your own browser</h3>
@@ -819,6 +874,7 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
     <li>A theme, once published, is frozen. That is the point, and also the cost: a mistake in a published theme is fixed by a new theme, never by an edit.</li>
     <li>"Blockcraft" is a style name for blocky voxel art, "Pocket LCD" for a four-shade handheld look, "Memphis" for the 1980s design movement and "Blueprint" for the engineering drawing. None is affiliated with, or derived from, any game or product.</li>
     <li>The arena draws the duel it is given: who hit, who missed and how it ended. Deciding a duel, or refusing one, is the game's job; this page's demo deals random cases. A raid shows GATE to four decimal places, measured in millionths.</li>
+    <li>A sealed card proves its face matches its record, not who made it: the Kardlings game checks the maker's signature. A sealed file saved again by another program stays face down until it is sealed again from its record.</li>
     <li>I own functional correctness. The last inch of taste in the art is the owner's to judge.</li>
   </ul>
 </section>
@@ -837,7 +893,8 @@ if (!art.ok) console.log(art.why);                       // bad input is a refus
 
 <script type="module">
 import { THEMES, FORMS, TIERS, GEAR, KIT_SLOTS, paintArt, spriteOf, checkFacts } from './kardart.mjs';
-import { pngOf } from './kardpng.mjs';
+import { pngOf, crc32, adler32 } from './kardpng.mjs';
+import { sealCard, openCard, KEYWORD } from './seal.mjs';
 import { SAMPLES } from './samples.mjs';
 import { PINS } from './kardart.pins.mjs';
 import { costCase, verdict, sourcesOf, DEFAULTS } from './costcase.mjs';
@@ -1118,6 +1175,96 @@ $('#b-dl').addEventListener('click', () => {
   if (!r.ok) return said('Fix the back first.');
   savePNG(r.px, 384, 560, 'back-' + (b.maker ? b.maker.slice(0, 8) : 'unsigned') + '-' + t + '.png'); said('Downloaded.');
 });
+
+// ── sealed cards: one file that carries its face and its record, face up only when it makes itself again byte for byte ───────
+const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const be32 = (n) => [n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+const joinBytes = (parts) => { const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let at = 0; for (const p of parts) { out.set(p, at); at += p.length; } return out; };
+function chunksOf(file) {   // the page's own reader, used only to make the tampered copies below
+  const out = [];
+  for (let at = 8; at + 12 <= file.length; ) { const n = ((file[at] << 24) | (file[at + 1] << 16) | (file[at + 2] << 8) | file[at + 3]) >>> 0; out.push({ type: String.fromCharCode(...file.subarray(at + 4, at + 8)), data: file.slice(at + 8, at + 8 + n) }); at += 12 + n; }
+  return out;
+}
+const fileOf = (chunks) => joinBytes([Uint8Array.from(PNG_SIG), ...chunks.flatMap((c) => { const body = joinBytes([Uint8Array.from(c.type, (ch) => ch.charCodeAt(0)), c.data]); return [Uint8Array.from(be32(c.data.length)), body, Uint8Array.from(be32(crc32(body)))]; })]);
+const KEYB = Uint8Array.from(KEYWORD + '\0', (ch) => ch.charCodeAt(0));
+const recordChunk = (chunks) => chunks.find((c) => c.type === 'tEXt' && KEYB.every((b, i) => c.data[i] === b));
+const recordText = (file) => { const c = recordChunk(chunksOf(file)); return c ? String.fromCharCode(...c.data.subarray(KEYB.length)) : null; };
+let sealedFile = null, sealedPx = null, shownFile = null, shownName = '', showing = 0;
+const sealSaid = saidIn('#s-act');
+function sealFacts() {   // the workshop's card as it is now, and the back as Card backs has it (when that back is a back)
+  const b = readBack(), back = checkBack(b).ok ? b : undefined;
+  return { facts: lastGood || SAMPLES[0], theme: workTheme, w: 384, h: 560, ...(back ? { back } : {}) };
+}
+function showSealed(file, name, how) {
+  shownFile = file; shownName = name;
+  const mine = ++showing;   // a newer file shown before this one turns over wins: its flip never paints over it
+  const r = openCard(file), cv = $('#seal-canvas'), m = $('#seal-msg'), text = recordText(file);
+  $('#s-record').textContent = text === null ? '(this file carries no card record)' : text;
+  const remade = r.ok ? sealCard(r.card).png : null;
+  let match = 0;
+  if (remade) for (let i = 0; i < Math.min(remade.length, file.length); i++) if (remade[i] === file[i]) match++;
+  const rows = [['FILE', name], ['ITS SIZE', file.length.toLocaleString('en-GB') + ' bytes'], ['ITS RECORD', text === null ? 'none' : text.length + ' characters of plain text']];
+  if (remade) rows.push(['MADE AGAIN FROM THE RECORD', remade.length.toLocaleString('en-GB') + ' bytes'], ['BYTES IN THE SAME PLACE THAT MATCH', match.toLocaleString('en-GB') + ' of ' + Math.max(remade.length, file.length).toLocaleString('en-GB')]);
+  rows.push(['THE VERDICT', !r.ok ? 'refused: not a card file' : r.face === 'up' ? 'FACE UP' : 'FACE DOWN']);
+  if (r.ok && r.face === 'down' && r.differ) rows.push(['PIXELS THAT DIFFER', r.differ.toLocaleString('en-GB')]);
+  stats($('#s-stats'), rows);
+  const theme = r.ok ? r.card.theme : 'synthwave-v1', back = r.ok && r.card.back ? r.card.back : {};
+  putRGB(cv, paintBack(back, theme, 384, 560).px, 384, 560);   // every card arrives face down
+  if (!r.ok) { m.className = 'msg bad'; m.textContent = 'Refused, not a card file: ' + r.why + '.'; cv.setAttribute('aria-label', 'Face down. ' + m.textContent); return; }
+  if (r.face === 'down') { m.className = 'msg bad'; m.textContent = 'FACE DOWN. ' + (how ? how + ' ' : '') + 'This file is not the file its record makes: ' + r.why + '.'; cv.setAttribute('aria-label', 'Face down: the back of the card. ' + m.textContent); return; }
+  m.className = 'msg ok'; m.textContent = 'Face down: checking every byte…';
+  const turn = () => { if (mine !== showing) return; putRGB(cv, r.px, r.card.w, r.card.h); m.textContent = 'FACE UP. Every byte of the file is the file its record makes. ' + (r.card.facts.form ? r.card.facts.name : describe(r.card.facts)) + '.'; cv.setAttribute('aria-label', 'Face up: ' + m.textContent); };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return turn();
+  setTimeout(() => { if (mine !== showing) return; cv.style.transform = 'scaleX(0)'; setTimeout(() => { turn(); cv.style.transform = ''; }, 140); }, 450);
+}
+function sealNow() {
+  const s = sealCard(sealFacts());
+  if (!s.ok) { $('#seal-msg').className = 'msg bad'; $('#seal-msg').textContent = 'Could not seal the card: ' + s.why + '.'; return; }
+  sealedFile = s.png; sealedPx = s.px;
+  showSealed(sealedFile, 'kard-' + s.card.facts.id.slice(0, 8) + '-' + s.card.theme + '-sealed.png');
+}
+const needSealed = () => { if (!sealedFile) sealNow(); return sealedFile; };
+$('#s-seal').addEventListener('click', () => { sealNow(); sealSaid('Sealed and opened.'); });
+$('#s-again').addEventListener('click', () => { showSealed(needSealed(), 'the untouched sealed file'); sealSaid('The file as sealed.'); });
+$('#s-pixel').addEventListener('click', () => {
+  const file = needSealed(), cs = chunksOf(file), idat = cs.find((c) => c.type === 'IDAT'), x = 192, y = 200;
+  const ri = y * (1 + 384 * 3) + 1 + x * 3, si = 2 + 5 * (Math.floor(ri / 65535) + 1) + ri;   // where that pixel's red sits in the stored stream
+  idat.data[si] ^= 0xff;
+  const raw = new Uint8Array(560 * 1153);   // and the picture's own checksum (Adler-32, the last 4 bytes of the stream), as a forger would
+  for (let r = 0; r < 560; r++) raw.set(sealedPx.subarray(r * 1152, (r + 1) * 1152), r * 1153 + 1);
+  raw[ri] ^= 0xff;
+  idat.data.set(be32(adler32(raw)), idat.data.length - 4);
+  showSealed(fileOf(cs), 'the sealed file with one pixel changed', 'One pixel changed, at x ' + x + ', y ' + y + ', and every checksum fixed.');
+  sealSaid('One pixel changed.');
+});
+$('#s-word').addEventListener('click', () => {
+  const file = needSealed(), cs = chunksOf(file), c = recordChunk(cs), rec = JSON.parse(String.fromCharCode(...c.data.subarray(KEYB.length)));
+  const key = rec.facts.form ? 'name' : 'title', was = rec.facts[key], last = was.slice(-1), swap = last === 'X' ? 'Y' : 'X';
+  rec.facts[key] = was.slice(0, -1) + swap;
+  c.data = joinBytes([KEYB, Uint8Array.from(JSON.stringify(rec), (ch) => ch.charCodeAt(0))]);
+  showSealed(fileOf(cs), 'the sealed file with one word changed', 'The record now says "' + rec.facts[key] + '" where the face says "' + was + '", and every checksum fixed.');
+  sealSaid('One word changed.');
+});
+$('#s-note').addEventListener('click', () => {
+  const file = needSealed(), cs = chunksOf(file);
+  cs.splice(2, 0, { type: 'tEXt', data: Uint8Array.from('Comment\0a hidden note', (ch) => ch.charCodeAt(0)) });
+  showSealed(fileOf(cs), 'the sealed file with a hidden note', 'A hidden note was slipped in after the record.');
+  sealSaid('A note added.');
+});
+$('#s-dl').addEventListener('click', () => {
+  const file = shownFile || needSealed(), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([file], { type: 'image/png' })); a.download = /\.png$/.test(shownName) ? shownName : 'kard-sealed.png'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  sealSaid('Downloaded the file shown.');
+});
+$('#s-file').addEventListener('change', async (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  if (f.size > 4000000) { $('#seal-msg').className = 'msg bad'; $('#seal-msg').textContent = 'That file is larger than any card, so it was not read.'; return; }
+  showSealed(new Uint8Array(await f.arrayBuffer()), f.name);
+  sealSaid('Opened ' + f.name + '.');
+});
+sealNow();
 
 // ── the estate builder ──────────────────────────────────────────────────────────────────────────────────────────────
 const RARS = ['common', 'uncommon', 'rare', 'epic', 'legendary'], SETS = ['telco', 'shop', 'bank', 'adult', 'hospital', 'credit', 'custom'];
