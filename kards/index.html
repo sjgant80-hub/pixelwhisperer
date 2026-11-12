@@ -240,7 +240,7 @@ paintBack({ maker: publicKeyHex, serial: 123 }, 'synthwave-v1', 384, 560)   // {
     </form>
   </div>
   <h3>The record this file carries</h3>
-  <p>It is plain text, so anyone can read it; nothing in it is secret, and nothing is hidden from you. It sits in the file under the name <code>kardlings-card</code>.</p>
+  <p>It is plain text, so anyone can read it; nothing in it is secret, and nothing is hidden from you. It sits in the file under the name <code>kardlings-card</code>, and holds exactly these fields, in this order: <code>v</code> (the record's version, 1), <code>theme</code>, <code>w</code> and <code>h</code> (the size in pixels), <code>facts</code> (a Kardling's id, title, dataset, department, level, rarity, generation and parents, or an item's form, id, name, source, tier, licence, kit flag and retires line) and, only when the card has one, <code>back</code> (the maker's public key and the edition number).</p>
   <pre id="s-record" tabindex="0" aria-label="The card record carried in the file"></pre>
   <h3>How it works, step by step</h3>
   <pre aria-label="The flow of sealing and opening a card" tabindex="0">SEAL   the card's facts, theme and size (and its back)
